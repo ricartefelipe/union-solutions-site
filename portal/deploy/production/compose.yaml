@@ -1,0 +1,330 @@
+# Implantação inicial do portal em uma única VPS, com Docker Compose.
+# Use portal-prod.sh. Ponto único de falha: é disponibilidade inicial, não alta disponibilidade.
+#
+# Só o proxy publica portas (80 e 443). Portas publicadas pelo Docker podem passar por cima de regras do firewall do host,
+# por isso nenhum outro serviço tem `ports:`.
+#
+# Redes:
+#   publica     proxy
+#   borda       proxy, web e provedor de identidade
+#   aplicacao   web, API, provedor de identidade e antivírus
+#   dados       web (sessões), API, provedor de identidade, banco, armazenamento e operações
+#   saida       quem precisa de internet: API e provedor (SMTP), antivírus (assinaturas), operações (backup externo)
+name: union-portal-prod
+
+x-comum: &comum
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "5"
+
+services:
+  proxy:
+    <<: *comum
+    build: ./proxy
+    environment:
+      PORTAL_HOST: ${PORTAL_HOST:?}
+      PORTAL_ACME_EMAIL: ${PORTAL_ACME_EMAIL:?}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - proxy-data:/data
+      - proxy-config:/config
+    networks: [publica, borda]
+    depends_on:
+      frontend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8081/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  postgres:
+    <<: *comum
+    build: ./postgres
+    user: "70:70"
+    cap_drop: [ALL]
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks: [dados]
+    stop_grace_period: 60s
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  db-init:
+    build: ./ops
+    restart: "no"
+    command: ["/ops/db-init.sh"]
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      PORTAL_DB_PASSWORD: ${PORTAL_DB_PASSWORD:?}
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD:?}
+      PORTAL_SESSION_DB_PASSWORD: ${PORTAL_SESSION_DB_PASSWORD:?}
+    networks: [dados]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  armazenamento:
+    <<: *comum
+    image: chrislusf/seaweedfs:4.51@sha256:f7a49e3f3972ebed5be2ed4befa4a0c68eb7bdddba6e692d42729ceb545134b8
+    user: "1000:1000"
+    cap_drop: [ALL]
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        umask 077
+        cat > /tmp/s3.json <<JSON
+        {"identities":[
+          {"name":"portal","credentials":[{"accessKey":"$$PORTAL_S3_ACCESS_KEY","secretKey":"$$PORTAL_S3_SECRET_KEY"}],"actions":["Read:$$PORTAL_S3_BUCKET","Write:$$PORTAL_S3_BUCKET","List:$$PORTAL_S3_BUCKET","Tagging:$$PORTAL_S3_BUCKET"]},
+          {"name":"operacao","credentials":[{"accessKey":"$$PORTAL_S3_OPS_ACCESS_KEY","secretKey":"$$PORTAL_S3_OPS_SECRET_KEY"}],"actions":["Admin","Read","Write","List"]}
+        ]}
+        JSON
+        exec weed server -dir=/data -master.volumeSizeLimitMB=1024 -volume.max=0 -s3 -s3.port=8333 -s3.config=/tmp/s3.json
+    environment:
+      PORTAL_S3_BUCKET: ${PORTAL_S3_BUCKET:-portal-private}
+      PORTAL_S3_ACCESS_KEY: ${PORTAL_S3_ACCESS_KEY:?}
+      PORTAL_S3_SECRET_KEY: ${PORTAL_S3_SECRET_KEY:?}
+      PORTAL_S3_OPS_ACCESS_KEY: ${PORTAL_S3_OPS_ACCESS_KEY:?}
+      PORTAL_S3_OPS_SECRET_KEY: ${PORTAL_S3_OPS_SECRET_KEY:?}
+    tmpfs:
+      - /tmp:uid=1000,gid=1000,mode=700
+    volumes:
+      - armazenamento-data:/data
+    networks: [dados]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:9333/cluster/status && nc -z 127.0.0.1 8333"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+
+  storage-init:
+    build: ./ops
+    restart: "no"
+    command: ["/ops/storage-init.sh"]
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    environment:
+      PORTAL_S3_BUCKET: ${PORTAL_S3_BUCKET:-portal-private}
+      PORTAL_S3_OPS_ACCESS_KEY: ${PORTAL_S3_OPS_ACCESS_KEY:?}
+      PORTAL_S3_OPS_SECRET_KEY: ${PORTAL_S3_OPS_SECRET_KEY:?}
+    networks: [dados]
+    depends_on:
+      armazenamento:
+        condition: service_healthy
+
+  # A imagem oficial inicia como root para preparar pastas e entrega os processos ao usuário clamav.
+  clamav:
+    <<: *comum
+    image: clamav/clamav:1.5@sha256:bda39705e291105049c3936e2803ac90b955172af8030f94f05dce1252df6c6d
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    volumes:
+      - clamav-db:/var/lib/clamav
+    networks: [aplicacao, saida]
+    healthcheck:
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 30s
+      timeout: 15s
+      retries: 20
+      start_period: 180s
+
+  keycloak:
+    <<: *comum
+    build:
+      context: ../keycloak
+      target: producao
+    command: ["start", "--optimized", "--import-realm"]
+    cap_drop: [ALL]
+    environment:
+      KC_HOSTNAME: ${PORTAL_PUBLIC_URL:?}/identidade
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+      KC_PROXY_TRUSTED_ADDRESSES: ${PORTAL_BORDA_SUBNET:-172.30.200.0/24}
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD:?}
+      KC_DB_POOL_INITIAL_SIZE: "2"
+      KC_DB_POOL_MIN_SIZE: "2"
+      KC_DB_POOL_MAX_SIZE: "20"
+      KC_DB_POOL_MAX_LIFETIME: 15m
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_BOOTSTRAP_ADMIN_USERNAME:?}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD:?}
+      PORTAL_PUBLIC_URL: ${PORTAL_PUBLIC_URL:?}
+      PORTAL_WEB_CLIENT_SECRET: ${PORTAL_WEB_CLIENT_SECRET:?}
+      PORTAL_KEYCLOAK_ADMIN_SECRET: ${PORTAL_KEYCLOAK_ADMIN_SECRET:?}
+      PORTAL_KC_SSL_REQUIRED: external
+      PORTAL_KC_BROWSER_FLOW: portal-browser-mfa
+      PORTAL_SMTP_HOST: ${PORTAL_SMTP_HOST:?}
+      PORTAL_SMTP_PORT: ${PORTAL_SMTP_PORT:?}
+      PORTAL_MAIL_FROM: ${PORTAL_MAIL_FROM:?}
+      PORTAL_SMTP_USER: ${PORTAL_SMTP_USER:?}
+      PORTAL_SMTP_PASSWORD: ${PORTAL_SMTP_PASSWORD:?}
+      PORTAL_KC_SMTP_AUTH: "true"
+      PORTAL_KC_SMTP_STARTTLS: "true"
+    networks: [borda, aplicacao, dados, saida]
+    depends_on:
+      postgres:
+        condition: service_healthy
+        restart: true
+      db-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/9000 &&
+          printf 'GET /identidade/health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 &&
+          grep -q '"status": "UP"' <&3
+      interval: 15s
+      timeout: 8s
+      retries: 30
+      start_period: 60s
+
+  backend:
+    <<: *comum
+    build: ../../backend
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+    environment:
+      QUARKUS_PROFILE: prod
+      PORTAL_PUBLIC_URL: ${PORTAL_PUBLIC_URL:?}
+      PORTAL_DB_URL: jdbc:postgresql://postgres:5432/portal
+      PORTAL_DB_USER: portal
+      PORTAL_DB_PASSWORD: ${PORTAL_DB_PASSWORD:?}
+      PORTAL_OIDC_INTERNAL_URL: http://keycloak:8080/identidade/realms/union-portal
+      PORTAL_OIDC_ISSUER: ${PORTAL_PUBLIC_URL:?}/identidade/realms/union-portal
+      PORTAL_KEYCLOAK_INTERNAL_URL: http://keycloak:8080/identidade
+      PORTAL_KEYCLOAK_ADMIN_SECRET: ${PORTAL_KEYCLOAK_ADMIN_SECRET:?}
+      PORTAL_BOOTSTRAP_ADMIN_EMAIL: ${PORTAL_BOOTSTRAP_ADMIN_EMAIL:-}
+      PORTAL_PRODUCT_LINK_HOSTS: ${PORTAL_PRODUCT_LINK_HOSTS:-}
+      PORTAL_S3_ENDPOINT: http://armazenamento:8333
+      PORTAL_S3_REGION: us-east-1
+      PORTAL_S3_BUCKET: ${PORTAL_S3_BUCKET:-portal-private}
+      PORTAL_S3_ACCESS_KEY: ${PORTAL_S3_ACCESS_KEY:?}
+      PORTAL_S3_SECRET_KEY: ${PORTAL_S3_SECRET_KEY:?}
+      PORTAL_S3_PATH_STYLE: "true"
+      PORTAL_CLAMD_HOST: clamav
+      PORTAL_SMTP_HOST: ${PORTAL_SMTP_HOST:?}
+      PORTAL_SMTP_PORT: ${PORTAL_SMTP_PORT:?}
+      PORTAL_SMTP_USER: ${PORTAL_SMTP_USER:?}
+      PORTAL_SMTP_PASSWORD: ${PORTAL_SMTP_PASSWORD:?}
+      PORTAL_MAIL_FROM: ${PORTAL_MAIL_FROM:?}
+    networks: [aplicacao, dados, saida]
+    depends_on:
+      postgres:
+        condition: service_healthy
+        restart: true
+      db-init:
+        condition: service_completed_successfully
+      storage-init:
+        condition: service_completed_successfully
+      keycloak:
+        condition: service_healthy
+      clamav:
+        condition: service_healthy
+
+  frontend:
+    <<: *comum
+    build:
+      context: ../../frontend
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/.next/cache:uid=100,gid=101
+    environment:
+      PORTAL_ENV: production
+      PORTAL_PUBLIC_URL: ${PORTAL_PUBLIC_URL:?}
+      PORTAL_API_URL: http://backend:8080
+      PORTAL_OIDC_ISSUER: ${PORTAL_PUBLIC_URL:?}/identidade/realms/union-portal
+      PORTAL_OIDC_INTERNAL_URL: http://keycloak:8080/identidade/realms/union-portal
+      PORTAL_OIDC_CLIENT_ID: portal-web
+      PORTAL_OIDC_CLIENT_SECRET: ${PORTAL_WEB_CLIENT_SECRET:?}
+      PORTAL_SESSION_SECRET: ${PORTAL_SESSION_SECRET:?}
+      PORTAL_SESSION_DB_URL: postgres://portal_web:${PORTAL_SESSION_DB_PASSWORD:?}@postgres:5432/portal_sessao
+      PORTAL_TRUST_FORWARDED_FOR: "true"
+    networks: [borda, aplicacao, dados]
+    depends_on:
+      backend:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+
+  # Só roda quando chamado por portal-prod.sh (backup, restauração, reconciliação).
+  ops:
+    build: ./ops
+    profiles: [ops]
+    restart: "no"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      PORTAL_DB_PASSWORD: ${PORTAL_DB_PASSWORD:?}
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD:?}
+      PORTAL_S3_BUCKET: ${PORTAL_S3_BUCKET:-portal-private}
+      PORTAL_S3_OPS_ACCESS_KEY: ${PORTAL_S3_OPS_ACCESS_KEY:?}
+      PORTAL_S3_OPS_SECRET_KEY: ${PORTAL_S3_OPS_SECRET_KEY:?}
+      RESTIC_REPOSITORY: ${RESTIC_REPOSITORY:-}
+      RESTIC_PASSWORD: ${RESTIC_PASSWORD:-}
+      AWS_ACCESS_KEY_ID: ${PORTAL_BACKUP_S3_ACCESS_KEY:-}
+      AWS_SECRET_ACCESS_KEY: ${PORTAL_BACKUP_S3_SECRET_KEY:-}
+      PORTAL_BACKUP_KEEP_DAILY: ${PORTAL_BACKUP_KEEP_DAILY:-}
+      PORTAL_BACKUP_KEEP_WEEKLY: ${PORTAL_BACKUP_KEEP_WEEKLY:-}
+      PORTAL_BACKUP_KEEP_MONTHLY: ${PORTAL_BACKUP_KEEP_MONTHLY:-}
+      PORTAL_BACKUP_MIN_FREE_MB: ${PORTAL_BACKUP_MIN_FREE_MB:-2048}
+      PORTAL_BACKUP_TIMEOUT_SECONDS: ${PORTAL_BACKUP_TIMEOUT_SECONDS:-14400}
+    volumes:
+      - backup-staging:/staging
+      - backup-local:/repositorio-local
+    networks: [dados, saida]
+
+networks:
+  publica:
+  borda:
+    internal: true
+    ipam:
+      config:
+        - subnet: ${PORTAL_BORDA_SUBNET:-172.30.200.0/24}
+  aplicacao:
+    internal: true
+  dados:
+    internal: true
+  saida:
+
+volumes:
+  proxy-data:
+  proxy-config:
+  postgres-data:
+  armazenamento-data:
+  clamav-db:
+  backup-staging:
+  backup-local:

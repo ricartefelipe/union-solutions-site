@@ -2,7 +2,9 @@
 
 Site estático em português do Brasil, feito com [Astro](https://astro.build) e TypeScript. O build gera arquivos em `dist/` e não exige servidor Node em produção.
 
-O estado desta entrega, as evidências e os bloqueios estão em [`docs/FECHAMENTO.md`](docs/FECHAMENTO.md).
+Para publicar, comece por [`docs/PUBLICACAO.md`](docs/PUBLICACAO.md). O estado desta entrega e as evidências estão em [`docs/FECHAMENTO.md`](docs/FECHAMENTO.md).
+
+O portal do cliente é uma aplicação separada, com servidor e serviços próprios: não é publicado junto com este site. Veja [`portal/README.md`](portal/README.md).
 
 ## Instalação e execução
 
@@ -95,6 +97,7 @@ Preencha `.env` com dados reais e apague as linhas que não usar. **Os valores e
 | `PUBLIC_CONTACT_WHATSAPP` | WhatsApp, com DDI, DDD e número. |
 | `PUBLIC_CONTACT_PHONE` | Telefone, opcional. Sozinho, não conta como canal de contato. |
 | `PUBLIC_COMPANY_ADDRESS`, `PUBLIC_COMPANY_CNPJ` | Dados opcionais exibidos no rodapé. |
+| `PUBLIC_PORTAL_URL` | URL HTTPS do portal do cliente. Com valor, mostra "Área do cliente" no cabeçalho e no menu móvel. Sem valor, o botão não é gerado. |
 
 Sem domínio, os metadados que dependem dele são omitidos; título, descrição e os demais continuam publicados. E-mail, WhatsApp ou URL malformados interrompem o build.
 
@@ -180,11 +183,7 @@ Não há servidor Node em produção: a Hostinger só serve os arquivos de `dist
 1. No hPanel, abra o gerenciador de arquivos do site e entre em `public_html`.
 2. Envie o **conteúdo** de `dist/`, não a pasta `dist` em si. Em `public_html` devem ficar `index.html`, `404.html`, `_astro/`, `brand/`, `og/`, `produtos/`, `servicos/`, `contato/`, `sobre/` e os demais arquivos.
 
-   Para enviar um único arquivo e extrair no servidor:
-
-   ```bash
-   (cd dist && zip -r ../site-union-solutions.zip .)
-   ```
+   Para enviar um único arquivo e extrair no servidor, gere o pacote validado com `sh scripts/empacotar-site.sh`, descrito em [`docs/PUBLICACAO.md`](docs/PUBLICACAO.md).
 
 3. Confirme que `.htaccess` chegou, pois arquivos com ponto podem ficar ocultos no gerenciador. Ele define a página 404 e o redirecionamento para HTTPS.
 4. Se houver uma página padrão da hospedagem em `public_html`, confira o que é e remova apenas o que não for do site.
@@ -195,7 +194,7 @@ Para atualizar o site, gere o build de novo e substitua os arquivos. Apague os a
 ### Conferência depois de publicar
 
 ```bash
-DOMINIO=https://SUBSTITUIR-DOMINIO.invalid
+DOMINIO=https://unionsolutions.tech
 for rota in / /produtos/ /produtos/hookguard/ /produtos/filenorm/ /produtos/assinaflow/ /produtos/archlens/ /produtos/fluxe-b2b-suite/ /produtos/comercialcloud/ /servicos/ /servicos/consultoria/ /servicos/arquitetura/ /servicos/desenvolvimento/ /sobre/ /contato/ /robots.txt /sitemap-index.xml /og/union-solutions.png /nao-existe/; do
   printf '%s %s\n' "$(curl -s -o /dev/null -w '%{http_code}' "$DOMINIO$rota")" "$rota"
 done
@@ -203,8 +202,8 @@ done
 
 Espera-se `200` em todas, exceto `/nao-existe/`, que deve responder `404` com a página do site. Confira também:
 
-- `curl -sI http://seu-dominio/` redireciona para `https://`;
-- `curl -sI https://seu-dominio/produtos` redireciona para `/produtos/`. O `astro preview` local responde 404 nesse caso; a conferência vale para a hospedagem;
+- `curl -sI http://unionsolutions.tech/` redireciona para `https://`;
+- `curl -sI https://unionsolutions.tech/produtos` redireciona para `/produtos/`. O `astro preview` local responde 404 nesse caso; a conferência vale para a hospedagem;
 - a página `/contato/` mostra o modo esperado, e um link de produto chega com o assunto correto;
 - no modo formulário, faça um envio real para um destino autorizado e confirme que a mensagem chegou;
 - se a página 404 do site não aparecer, a hospedagem não aplicou o `.htaccess`: confira se ele está em `public_html`.

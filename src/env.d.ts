@@ -3,6 +3,7 @@
 interface ImportMetaEnv {
   readonly PUBLIC_SITE_URL?: string;
   readonly PUBLIC_CONTACT_FORM_ENDPOINT?: string;
+  readonly PUBLIC_PORTAL_URL?: string;
   readonly PUBLIC_CONTACT_EMAIL?: string;
   readonly PUBLIC_CONTACT_PHONE?: string;
   readonly PUBLIC_CONTACT_WHATSAPP?: string;
