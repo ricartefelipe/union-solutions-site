@@ -1,0 +1,8 @@
+---
+import ServicePage from '../../components/ServicePage.astro';
+import { services } from '../../data/services';
+
+const service = services.find((item) => item.slug === 'consultoria')!;
+---
+
+<ServicePage service={service} />

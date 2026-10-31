@@ -1,0 +1,150 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Arrow from '../../components/Arrow.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import PageHero from '../../components/PageHero.astro';
+import TechStack from '../../components/TechStack.astro';
+import { engagementModels, services } from '../../data/services';
+---
+
+<BaseLayout
+  title="Serviços"
+  description="Consultoria em tecnologia, arquitetura de software e desenvolvimento sob medida, da investigação do problema à implantação do sistema, conforme a necessidade da sua empresa."
+>
+  <PageHero
+    title="Da decisão técnica ao sistema em uso."
+    intro="Consultoria, arquitetura e desenvolvimento podem ser contratados separadamente ou em conjunto, conforme o momento da sua empresa."
+  >
+    <a slot="actions" class="btn" href="/contato/">Conversar sobre meu projeto<Arrow /></a>
+  </PageHero>
+
+  <section aria-label="Serviços oferecidos">
+    <div class="wrap">
+      <ul class="services__list">
+        {services.map((service) => (
+          <li class="reveal">
+            <h2><a href={`/servicos/${service.slug}/`}>{service.name}</a></h2>
+            <div>
+              <p class="muted">{service.summary}</p>
+              <a class="text-link" href={`/servicos/${service.slug}/`}>Ver detalhes<span class="sr-only"> de {service.name}</span><Arrow /></a>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section surface-mist">
+    <div class="wrap split">
+      <h2>Como escolher por onde começar</h2>
+      <ul class="choose">
+        <li>
+          <h3>O problema ainda não está claro?</h3>
+          <p class="muted">A consultoria investiga o que está acontecendo e indica o que fazer a seguir.</p>
+        </li>
+        <li>
+          <h3>Há uma decisão de estrutura pela frente?</h3>
+          <p class="muted">A arquitetura define como a solução será organizada e como vai evoluir.</p>
+        </li>
+        <li>
+          <h3>Já se sabe o que precisa ser construído?</h3>
+          <p class="muted">O desenvolvimento sob medida implementa a solução de acordo com seus processos.</p>
+        </li>
+        <li>
+          <h3>A necessidade é específica e talvez já tenha solução?</h3>
+          <p class="muted">Vale conhecer os <a href="/produtos/">produtos próprios</a> e avaliar a aderência à sua operação.</p>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap split">
+      <div class="split__sticky">
+        <h2>Modalidades de contratação</h2>
+        <p class="muted models-note">Prazos e valores dependem do escopo e são apresentados na proposta.</p>
+      </div>
+      <ul class="rows">
+        {engagementModels.map((model) => (
+          <li>
+            <h3>{model.title}</h3>
+            <p class="muted">{model.text}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <div class="surface-mist">
+    <TechStack />
+  </div>
+
+  <CtaBand
+    title="Não sabe qual serviço é o adequado?"
+    text="Não é preciso chegar com essa resposta. Conte seu cenário e avaliamos o caminho com você."
+    label="Falar com a Union Solutions"
+    href="/contato/"
+  />
+</BaseLayout>
+
+<style>
+  .services__list li {
+    display: grid;
+    gap: var(--space-3) clamp(2rem, 6vw, 5rem);
+    padding-block: var(--space-6);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .services__list li:last-child {
+    border-bottom: 0;
+  }
+
+  .services__list h2 {
+    color: var(--brand);
+  }
+
+  .services__list h2 a {
+    text-decoration: none;
+  }
+
+  .services__list h2 a:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+  }
+
+  .services__list p {
+    max-width: var(--measure);
+    margin-bottom: var(--space-1);
+  }
+
+  @media (min-width: 62rem) {
+    .services__list li {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    }
+  }
+
+  .choose li {
+    padding-block: var(--space-4);
+    border-top: 1px solid var(--line-strong);
+  }
+
+  .choose li:first-child {
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .choose h3 {
+    margin-bottom: var(--space-1);
+    font-size: 1.25rem;
+  }
+
+  .choose a {
+    color: var(--brand);
+    font-weight: 600;
+  }
+
+  .models-note {
+    max-width: 34ch;
+    margin-top: var(--space-3);
+  }
+</style>

@@ -1,0 +1,62 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Arrow from '../components/Arrow.astro';
+import Meander from '../components/Meander.astro';
+---
+
+<BaseLayout title="Página não encontrada" description="A página que você procura não foi encontrada no site da Union Solutions." noindex>
+  <section class="not-found surface-dark">
+    <Meander class="not-found__art" turns={5} radius={110} height={320} gap={26} nodes={false} />
+    <div class="wrap not-found__inner">
+      <span class="eyebrow">Erro 404</span>
+      <h1>Página não encontrada.</h1>
+      <p class="lede muted">O endereço pode ter mudado ou estar incorreto. Veja o que a Union Solutions oferece ou fale conosco.</p>
+      <div class="btn-row">
+        <a class="btn" href="/">Ir para o início<Arrow /></a>
+        <a class="btn btn--ghost" href="/produtos/">Produtos</a>
+        <a class="btn btn--ghost" href="/servicos/">Serviços</a>
+        <a class="btn btn--ghost" href="/contato/">Contato</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .not-found {
+    position: relative;
+    overflow: hidden;
+    padding-block: clamp(3.5rem, 2rem + 6vw, 7rem);
+  }
+
+  .not-found :global(.not-found__art) {
+    position: absolute;
+    top: 50%;
+    left: 66%;
+    display: none;
+    width: 70rem;
+    max-width: none;
+    overflow: visible;
+    color: var(--on-dark);
+    opacity: 0.32;
+    transform: translateY(-50%);
+  }
+
+  @media (min-width: 75rem) {
+    .not-found :global(.not-found__art) {
+      display: block;
+    }
+  }
+
+  .not-found__inner {
+    position: relative;
+  }
+
+  h1 {
+    max-width: 16ch;
+    font-size: var(--text-h1-home);
+  }
+
+  .lede {
+    margin-block: var(--space-4) var(--space-5);
+  }
+</style>

@@ -1,0 +1,29 @@
+{
+  "name": "union-portal-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "node node_modules/next/dist/bin/next dev -p 3100",
+    "build": "node node_modules/next/dist/bin/next build",
+    "start": "node node_modules/next/dist/bin/next start -p 3100",
+    "typecheck": "node node_modules/typescript/bin/tsc --noEmit",
+    "check:brand": "node scripts/check-brand.mjs",
+    "test:session": "sh tests/run-session-tests.sh"
+  },
+  "dependencies": {
+    "@fontsource-variable/hanken-grotesk": "5.3.0",
+    "@fontsource-variable/outfit": "5.3.0",
+    "jose": "6.2.14",
+    "next": "16.4.3",
+    "pg": "8.23.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.1",
+    "@types/pg": "8.23.1",
+    "@types/react": "19.2.7",
+    "@types/react-dom": "19.2.3",
+    "typescript": "5.9.3"
+  }
+}

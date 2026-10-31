@@ -1,0 +1,80 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-suporte-produtos
+      author: union-solutions
+      changes:
+        - sql:
+            splitStatements: true
+            sql: |
+              CREATE TABLE ticket (
+                id uuid PRIMARY KEY,
+                tenant_id uuid NOT NULL REFERENCES organization (id),
+                project_id uuid,
+                subject varchar(200) NOT NULL,
+                description text NOT NULL,
+                category varchar(20) NOT NULL CHECK (category IN ('QUESTION', 'INCIDENT', 'CHANGE', 'ACCESS', 'OTHER')),
+                priority varchar(20) NOT NULL DEFAULT 'NORMAL' CHECK (priority IN ('LOW', 'NORMAL', 'HIGH', 'URGENT')),
+                status varchar(20) NOT NULL DEFAULT 'OPEN'
+                  CHECK (status IN ('OPEN', 'IN_PROGRESS', 'WAITING_CLIENT', 'RESOLVED', 'CLOSED')),
+                opened_by uuid NOT NULL REFERENCES app_user (id),
+                assignee_id uuid REFERENCES app_user (id),
+                sla_due_at timestamptz,
+                created_at timestamptz NOT NULL,
+                updated_at timestamptz NOT NULL,
+                version bigint NOT NULL DEFAULT 0,
+                CONSTRAINT ticket_tenant_uq UNIQUE (tenant_id, id),
+                CONSTRAINT ticket_project_fk FOREIGN KEY (tenant_id, project_id) REFERENCES project (tenant_id, id)
+              );
+              CREATE INDEX ticket_tenant_idx ON ticket (tenant_id, status, updated_at DESC);
+
+              CREATE TABLE ticket_comment (
+                id uuid PRIMARY KEY,
+                tenant_id uuid NOT NULL,
+                ticket_id uuid NOT NULL,
+                author_id uuid NOT NULL REFERENCES app_user (id),
+                body text NOT NULL,
+                internal boolean NOT NULL DEFAULT false,
+                created_at timestamptz NOT NULL,
+                CONSTRAINT ticket_comment_ticket_fk FOREIGN KEY (tenant_id, ticket_id) REFERENCES ticket (tenant_id, id)
+              );
+              CREATE INDEX ticket_comment_ticket_idx ON ticket_comment (ticket_id, created_at);
+
+              CREATE TABLE ticket_attachment (
+                id uuid PRIMARY KEY,
+                tenant_id uuid NOT NULL,
+                ticket_id uuid NOT NULL,
+                file_id uuid NOT NULL,
+                internal boolean NOT NULL DEFAULT false,
+                created_at timestamptz NOT NULL,
+                CONSTRAINT ticket_attachment_ticket_fk FOREIGN KEY (tenant_id, ticket_id) REFERENCES ticket (tenant_id, id),
+                CONSTRAINT ticket_attachment_file_fk FOREIGN KEY (tenant_id, file_id) REFERENCES stored_file (tenant_id, id)
+              );
+              CREATE INDEX ticket_attachment_ticket_idx ON ticket_attachment (ticket_id);
+
+              CREATE TABLE contracted_product (
+                id uuid PRIMARY KEY,
+                tenant_id uuid NOT NULL REFERENCES organization (id),
+                product_name varchar(160) NOT NULL,
+                commercial_status varchar(20) NOT NULL
+                  CHECK (commercial_status IN ('ACTIVE', 'IMPLEMENTING', 'SUSPENDED', 'ENDED')),
+                access_url varchar(500),
+                support_notes text,
+                sla_note varchar(500),
+                archived_at timestamptz,
+                created_by uuid NOT NULL REFERENCES app_user (id),
+                created_at timestamptz NOT NULL,
+                updated_at timestamptz NOT NULL,
+                version bigint NOT NULL DEFAULT 0,
+                CONSTRAINT contracted_product_tenant_uq UNIQUE (tenant_id, id),
+                CONSTRAINT contracted_product_url_https CHECK (access_url IS NULL OR access_url LIKE 'https://%')
+              );
+              CREATE INDEX contracted_product_tenant_idx ON contracted_product (tenant_id);
+
+              CREATE TABLE contracted_product_document (
+                tenant_id uuid NOT NULL,
+                product_id uuid NOT NULL,
+                document_id uuid NOT NULL,
+                PRIMARY KEY (product_id, document_id),
+                CONSTRAINT cpd_product_fk FOREIGN KEY (tenant_id, product_id) REFERENCES contracted_product (tenant_id, id),
+                CONSTRAINT cpd_document_fk FOREIGN KEY (tenant_id, document_id) REFERENCES document (tenant_id, id)
+              );

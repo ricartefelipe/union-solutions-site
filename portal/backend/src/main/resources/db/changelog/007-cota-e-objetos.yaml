@@ -1,0 +1,30 @@
+databaseChangeLog:
+  - changeSet:
+      id: 007-cota-e-objetos
+      author: union-solutions
+      comment: Contabilização de espaço por objeto presente e registro de objetos gravados fora do commit (reserva e sobras).
+      changes:
+        - sql:
+            splitStatements: true
+            sql: |
+              -- Um arquivo bloqueado ou arquivado continua ocupando espaço enquanto o objeto existir no armazenamento.
+              ALTER TABLE stored_file ADD COLUMN object_present boolean NOT NULL DEFAULT true;
+              -- Antes desta versão, o objeto de um arquivo bloqueado era apagado na rejeição.
+              UPDATE stored_file SET object_present = false WHERE scan_status = 'REJECTED';
+              CREATE INDEX stored_file_quota_idx ON stored_file (tenant_id, size_bytes) WHERE object_present;
+
+              -- Objetos gravados no armazenamento cuja situação no banco ainda não está decidida:
+              --   RESERVA: gravado durante um envio, antes do commit. Conta na cota. Some no commit; na reversão, o objeto é apagado.
+              --   SOBRA: cópia que deveria ter sido apagada e não foi (ex.: quarentena depois da liberação).
+              CREATE TABLE object_ledger (
+                object_key varchar(200) PRIMARY KEY,
+                file_id uuid NOT NULL,
+                tenant_id uuid NOT NULL REFERENCES organization (id),
+                size_bytes bigint NOT NULL CHECK (size_bytes >= 0),
+                kind varchar(10) NOT NULL CHECK (kind IN ('RESERVA', 'SOBRA')),
+                created_at timestamptz NOT NULL,
+                attempts integer NOT NULL DEFAULT 0,
+                last_error varchar(200)
+              );
+              CREATE INDEX object_ledger_tenant_idx ON object_ledger (tenant_id);
+              CREATE INDEX object_ledger_created_idx ON object_ledger (created_at);

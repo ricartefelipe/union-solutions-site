@@ -1,0 +1,2500 @@
+---
+openapi: 3.1.0
+tags:
+- name: Administração
+- name: Convites
+- name: Documentos
+- name: Entregas
+- name: Painel
+- name: Produtos
+- name: Projetos
+- name: Sessão
+- name: Suporte
+components:
+  schemas:
+    ActivityItem:
+      type: object
+      properties:
+        action:
+          type: string
+        summary:
+          type: string
+        projectId:
+          $ref: "#/components/schemas/UUID"
+        projectName:
+          type: string
+        createdAt:
+          $ref: "#/components/schemas/Instant"
+    AttachmentView:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        file:
+          $ref: "#/components/schemas/FileView"
+        internal:
+          type: boolean
+        createdAt:
+          $ref: "#/components/schemas/Instant"
+    AuditView:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        tenantId:
+          $ref: "#/components/schemas/UUID"
+        organizationName:
+          type: string
+        actorId:
+          $ref: "#/components/schemas/UUID"
+        actorEmail:
+          type: string
+        action:
+          type: string
+        resourceType:
+          type: string
+        resourceId:
+          $ref: "#/components/schemas/UUID"
+        projectId:
+          $ref: "#/components/schemas/UUID"
+        summary:
+          type: string
+        correlationId:
+          type: string
+        createdAt:
+          $ref: "#/components/schemas/Instant"
+    CommentInput:
+      type: object
+      required:
+      - body
+      properties:
+        body:
+          type: string
+          pattern: \S
+          maxLength: 8000
+        internal:
+          type: boolean
+    CommentView:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        body:
+          type: string
+        internal:
+          type: boolean
+        authorName:
+          type: string
+        fromUnion:
+          type: boolean
+        createdAt:
+          $ref: "#/components/schemas/Instant"
+    Dashboard:
+      type: object
+      properties:
+        activeProjects:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProjectSummary"
+        upcoming:
+          type: array
+          items:
+            $ref: "#/components/schemas/UpcomingItem"
+        pendingApprovals:
+          type: array
+          items:
+            $ref: "#/components/schemas/PendingApproval"
+        openTickets:
+          type: array
+          items:
+            $ref: "#/components/schemas/TicketSummary"
+        activity:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityItem"
+    Decision:
+      type: string
+      enum:
+      - APPROVED
+      - CHANGES_REQUESTED
+    DecisionInput:
+      type: object
+      required:
+      - decision
+      properties:
+        decision:
+          $ref: "#/components/schemas/Decision"
+        comment:
+          type: string
+          maxLength: 4000
+    DecisionView:
+      type: object
+      properties:
+        decision:
+          $ref: "#/components/schemas/Decision"
+        comment:
+          type: string
+        decidedByName:
+          type: string
+        decidedAt:
+          $ref: "#/components/schemas/Instant"
+    DeliveryDetail:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        projectId:
+          $ref: "#/components/schemas/UUID"
+        projectName:
+          type: string
+        title:
+          type: string
+        dueDate:
+          $ref: "#/components/schemas/LocalDate"
+        currentVersion:
+          type: integer
+          format: int32
+        canManage:
+          type: boolean
+        canApprove:
+          type: boolean
+        versions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DeliveryVersionView"
+    DeliveryInput:
+      type: object
+      required:
+      - title
+      - description
+      properties:
+        title:
+          type: string
+          pattern: \S
+          maxLength: 200
+        description:
+          type: string
+          pattern: \S
+          maxLength: 8000
+        dueDate:
+          $ref: "#/components/schemas/LocalDate"
+        documentVersionIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+            pattern: "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"
+          maxItems: 20
+    DeliverySummary:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        projectId:
+          $ref: "#/components/schemas/UUID"
+        projectName:
+          type: string
+        title:
+          type: string
+        dueDate:
+          $ref: "#/components/schemas/LocalDate"
+        currentVersion:
+          type: integer
+          format: int32
+        currentStatus:
+          $ref: "#/components/schemas/DeliveryVersionStatus"
+        updatedAt:
+          $ref: "#/components/schemas/Instant"
+    DeliveryVersionInput:
+      type: object
+      required:
+      - description
+      properties:
+        description:
+          type: string
+          pattern: \S
+          maxLength: 8000
+        documentVersionIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+            pattern: "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"
+          maxItems: 20
+    DeliveryVersionStatus:
+      type: string
+      enum:
+      - PUBLISHED
+      - AWAITING_APPROVAL
+      - APPROVED
+      - CHANGES_REQUESTED
+      - SUPERSEDED
+    DeliveryVersionView:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        versionNo:
+          type: integer
+          format: int32
+        description:
+          type: string
+        status:
+          $ref: "#/components/schemas/DeliveryVersionStatus"
+        publishedByName:
+          type: string
+        publishedAt:
+          $ref: "#/components/schemas/Instant"
+        approvalRequestedAt:
+          $ref: "#/components/schemas/Instant"
+        decision:
+          $ref: "#/components/schemas/DecisionView"
+        documents:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentVersionLink"
+    DocCategory:
+      type: string
+      enum:
+      - PROPOSAL
+      - CONTRACT
+      - DESIGN
+      - REPORT
+      - OTHER
+    DocVisibility:
+      type: string
+      enum:
+      - INTERNAL
+      - CLIENT_ADMINS
+      - PARTICIPANTS
+    DocumentDetail:
+      type: object
+      properties:
+        document:
+          $ref: "#/components/schemas/DocumentView"
+        versions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentVersionView"
+    DocumentPatch:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        category:
+          $ref: "#/components/schemas/DocCategory"
+        visibility:
+          $ref: "#/components/schemas/DocVisibility"
+        status:
+          $ref: "#/components/schemas/RecordStatus"
+        version:
+          type: integer
+          format: int64
+      required:
+      - version
+    DocumentRef:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        title:
+          type: string
+        latestVersionId:
+          $ref: "#/components/schemas/UUID"
+        downloadable:
+          type: boolean
+    DocumentVersionLink:
+      type: object
+      properties:
+        documentId:
+          $ref: "#/components/schemas/UUID"
+        documentVersionId:
+          $ref: "#/components/schemas/UUID"
+        title:
+          type: string
+        versionNo:
+          type: integer
+          format: int32
+        available:
+          type: boolean
+        downloadable:
+          type: boolean
+    DocumentVersionView:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        versionNo:
+          type: integer
+          format: int32
+        file:
+          $ref: "#/components/schemas/FileView"
+        authorName:
+          type: string
+        note:
+          type: string
+        createdAt:
+          $ref: "#/components/schemas/Instant"
+    DocumentView:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        tenantId:
+          $ref: "#/components/schemas/UUID"
+        projectId:
+          $ref: "#/components/schemas/UUID"
+        projectName:
+          type: string
+        title:
+          type: string
+        category:
+          $ref: "#/components/schemas/DocCategory"
+        visibility:
+          $ref: "#/components/schemas/DocVisibility"
+        status:
+          $ref: "#/components/schemas/RecordStatus"
+        currentVersion:
+          type: integer
+          format: int32
+        authorName:
+          type: string
+        createdAt:
+          $ref: "#/components/schemas/Instant"
+        latest:
+          $ref: "#/components/schemas/DocumentVersionView"
+        version:
+          type: integer
+          format: int64
+    FileView:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        name:
+          type: string
+        mediaType:
+          type: string
+        sizeBytes:
+          type: integer
+          format: int64
+        scanStatus:
+          $ref: "#/components/schemas/ScanStatus"
+        downloadable:
+          type: boolean
+    IdentityResult:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/UserView"
+        identityUpdated:
+          type: boolean
+    Instant:
+      type: string
+      format: date-time
+      examples:
+      - 2022-03-10T16:15:50Z
+    InvitationInput:
+      type: object
+      required:
+      - email
+      - role
+      properties:
+        email:
+          type: string
+          pattern: \S
+          maxLength: 254
+        role:
+          $ref: "#/components/schemas/Role"
+        organizationId:
+          $ref: "#/components/schemas/UUID"
+    InvitationPreview:
+      type: object
+      properties:
+        organizationName:
+          type: string
+        role:
+          $ref: "#/components/schemas/Role"
+        emailHint:
+          type: string
+        expiresAt:
+          $ref: "#/components/schemas/Instant"
+    InvitationView:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        email:
+          type: string
+        role:
+          $ref: "#/components/schemas/Role"
+        tenantId:
+          $ref: "#/components/schemas/UUID"
+        organizationName:
+          type: string
+        state:
+          type: string
+        expiresAt:
+          $ref: "#/components/schemas/Instant"
+        createdAt:
+          $ref: "#/components/schemas/Instant"
+    LocalDate:
+      type: string
+      format: date
+      examples:
+      - 2022-03-10
+    Me:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          $ref: "#/components/schemas/Role"
+        organization:
+          $ref: "#/components/schemas/OrganizationRef"
+        demo:
+          type: boolean
+        canInvite:
+          type: boolean
+        canManage:
+          type: boolean
+    MemberInput:
+      type: object
+      properties:
+        responsibility:
+          type: string
+          maxLength: 120
+        canApprove:
+          type: boolean
+    MemberView:
+      type: object
+      properties:
+        userId:
+          $ref: "#/components/schemas/UUID"
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          $ref: "#/components/schemas/Role"
+        responsibility:
+          type: string
+        canApprove:
+          type: boolean
+    MilestoneInput:
+      type: object
+      required:
+      - title
+      properties:
+        title:
+          type: string
+          pattern: \S
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        status:
+          $ref: "#/components/schemas/MilestoneStatus"
+        dueDate:
+          $ref: "#/components/schemas/LocalDate"
+        position:
+          type: integer
+          format: int32
+        version:
+          type: integer
+          format: int64
+    MilestoneStatus:
+      type: string
+      enum:
+      - PENDING
+      - IN_PROGRESS
+      - DONE
+    MilestoneView:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          $ref: "#/components/schemas/MilestoneStatus"
+        dueDate:
+          $ref: "#/components/schemas/LocalDate"
+        position:
+          type: integer
+          format: int32
+        completedAt:
+          $ref: "#/components/schemas/Instant"
+        version:
+          type: integer
+          format: int64
+    OrgStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - ARCHIVED
+    OrganizationInput:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          pattern: \S
+          maxLength: 160
+        legalName:
+          type: string
+          maxLength: 200
+    OrganizationPatch:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 160
+        legalName:
+          type: string
+          maxLength: 200
+        status:
+          $ref: "#/components/schemas/OrgStatus"
+        version:
+          type: integer
+          format: int64
+      required:
+      - version
+    OrganizationRef:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        name:
+          type: string
+    OrganizationView:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        name:
+          type: string
+        legalName:
+          type: string
+        status:
+          $ref: "#/components/schemas/OrgStatus"
+        demo:
+          type: boolean
+        users:
+          type: integer
+          format: int64
+        projects:
+          type: integer
+          format: int64
+        version:
+          type: integer
+          format: int64
+        createdAt:
+          $ref: "#/components/schemas/Instant"
+    PageAuditView:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditView"
+        page:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        total:
+          type: integer
+          format: int64
+    PageDeliverySummary:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/DeliverySummary"
+        page:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        total:
+          type: integer
+          format: int64
+    PageDocumentView:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentView"
+        page:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        total:
+          type: integer
+          format: int64
+    PageInvitationView:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/InvitationView"
+        page:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        total:
+          type: integer
+          format: int64
+    PageOrganizationView:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrganizationView"
+        page:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        total:
+          type: integer
+          format: int64
+    PageProductView:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductView"
+        page:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        total:
+          type: integer
+          format: int64
+    PageProjectSummary:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProjectSummary"
+        page:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        total:
+          type: integer
+          format: int64
+    PageTicketSummary:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TicketSummary"
+        page:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        total:
+          type: integer
+          format: int64
+    PageUserView:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserView"
+        page:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        total:
+          type: integer
+          format: int64
+    PendingApproval:
+      type: object
+      properties:
+        deliveryId:
+          $ref: "#/components/schemas/UUID"
+        deliveryVersionId:
+          $ref: "#/components/schemas/UUID"
+        projectId:
+          $ref: "#/components/schemas/UUID"
+        projectName:
+          type: string
+        title:
+          type: string
+        versionNo:
+          type: integer
+          format: int32
+        requestedAt:
+          $ref: "#/components/schemas/Instant"
+    ProductInput:
+      type: object
+      required:
+      - organizationId
+      - productName
+      - commercialStatus
+      properties:
+        organizationId:
+          $ref: "#/components/schemas/UUID"
+        productName:
+          type: string
+          pattern: \S
+          maxLength: 160
+        commercialStatus:
+          $ref: "#/components/schemas/ProductStatus"
+        accessUrl:
+          type: string
+          maxLength: 500
+        supportNotes:
+          type: string
+          maxLength: 4000
+        slaNote:
+          type: string
+          maxLength: 500
+        documentIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+            pattern: "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"
+          maxItems: 20
+    ProductPatch:
+      type: object
+      properties:
+        productName:
+          type: string
+          minLength: 1
+          maxLength: 160
+        commercialStatus:
+          $ref: "#/components/schemas/ProductStatus"
+        accessUrl:
+          type: string
+          maxLength: 500
+        supportNotes:
+          type: string
+          maxLength: 4000
+        slaNote:
+          type: string
+          maxLength: 500
+        documentIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+            pattern: "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"
+          maxItems: 20
+        archived:
+          type: boolean
+        version:
+          type: integer
+          format: int64
+      required:
+      - version
+    ProductStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - IMPLEMENTING
+      - SUSPENDED
+      - ENDED
+    ProductView:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        tenantId:
+          $ref: "#/components/schemas/UUID"
+        organizationName:
+          type: string
+        productName:
+          type: string
+        commercialStatus:
+          $ref: "#/components/schemas/ProductStatus"
+        accessUrl:
+          type: string
+        supportNotes:
+          type: string
+        slaNote:
+          type: string
+        archived:
+          type: boolean
+        documents:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentRef"
+        version:
+          type: integer
+          format: int64
+        canManage:
+          type: boolean
+    ProjectDetail:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        tenantId:
+          $ref: "#/components/schemas/UUID"
+        organizationName:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        agreedScope:
+          type: string
+        serviceLine:
+          $ref: "#/components/schemas/ServiceLine"
+        status:
+          $ref: "#/components/schemas/ProjectStatus"
+        startDate:
+          $ref: "#/components/schemas/LocalDate"
+        dueDate:
+          $ref: "#/components/schemas/LocalDate"
+        version:
+          type: integer
+          format: int64
+        canManage:
+          type: boolean
+        canApprove:
+          type: boolean
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/MemberView"
+        milestones:
+          type: array
+          items:
+            $ref: "#/components/schemas/MilestoneView"
+        updates:
+          type: array
+          items:
+            $ref: "#/components/schemas/UpdateView"
+    ProjectInput:
+      type: object
+      required:
+      - organizationId
+      - name
+      - serviceLine
+      properties:
+        organizationId:
+          $ref: "#/components/schemas/UUID"
+        name:
+          type: string
+          pattern: \S
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 4000
+        agreedScope:
+          type: string
+          maxLength: 8000
+        serviceLine:
+          $ref: "#/components/schemas/ServiceLine"
+        status:
+          $ref: "#/components/schemas/ProjectStatus"
+        startDate:
+          $ref: "#/components/schemas/LocalDate"
+        dueDate:
+          $ref: "#/components/schemas/LocalDate"
+    ProjectPatch:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 4000
+        agreedScope:
+          type: string
+          maxLength: 8000
+        serviceLine:
+          $ref: "#/components/schemas/ServiceLine"
+        status:
+          $ref: "#/components/schemas/ProjectStatus"
+        startDate:
+          $ref: "#/components/schemas/LocalDate"
+        dueDate:
+          $ref: "#/components/schemas/LocalDate"
+        version:
+          type: integer
+          format: int64
+      required:
+      - version
+    ProjectStatus:
+      type: string
+      enum:
+      - PLANNED
+      - ACTIVE
+      - ON_HOLD
+      - COMPLETED
+      - ARCHIVED
+    ProjectSummary:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        tenantId:
+          $ref: "#/components/schemas/UUID"
+        organizationName:
+          type: string
+        name:
+          type: string
+        serviceLine:
+          $ref: "#/components/schemas/ServiceLine"
+        status:
+          $ref: "#/components/schemas/ProjectStatus"
+        dueDate:
+          $ref: "#/components/schemas/LocalDate"
+        milestonesDone:
+          type: integer
+          format: int64
+        milestonesTotal:
+          type: integer
+          format: int64
+        updatedAt:
+          $ref: "#/components/schemas/Instant"
+    RecordStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - ARCHIVED
+    Role:
+      type: string
+      enum:
+      - UNION_ADMIN
+      - UNION_STAFF
+      - CLIENT_ADMIN
+      - CLIENT_MEMBER
+    RoleChange:
+      type: object
+      required:
+      - role
+      properties:
+        role:
+          $ref: "#/components/schemas/Role"
+    ScanStatus:
+      type: string
+      enum:
+      - PENDING
+      - CLEAN
+      - REJECTED
+      - FAILED
+    ServiceLine:
+      type: string
+      enum:
+      - PRODUCT
+      - CONSULTING
+      - ARCHITECTURE
+      - DEVELOPMENT
+    StaffView:
+      type: object
+      properties:
+        userId:
+          $ref: "#/components/schemas/UUID"
+        email:
+          type: string
+        name:
+          type: string
+    TicketCategory:
+      type: string
+      enum:
+      - QUESTION
+      - INCIDENT
+      - CHANGE
+      - ACCESS
+      - OTHER
+    TicketDetail:
+      type: object
+      properties:
+        ticket:
+          $ref: "#/components/schemas/TicketSummary"
+        description:
+          type: string
+        openedByName:
+          type: string
+        assigneeName:
+          type: string
+        assigneeId:
+          $ref: "#/components/schemas/UUID"
+        version:
+          type: integer
+          format: int64
+        canManage:
+          type: boolean
+        comments:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommentView"
+        attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/AttachmentView"
+    TicketInput:
+      type: object
+      properties:
+        organizationId:
+          $ref: "#/components/schemas/UUID"
+        projectId:
+          $ref: "#/components/schemas/UUID"
+        subject:
+          type: string
+          pattern: \S
+          maxLength: 200
+        description:
+          type: string
+          pattern: \S
+          maxLength: 8000
+        category:
+          $ref: "#/components/schemas/TicketCategory"
+        priority:
+          $ref: "#/components/schemas/TicketPriority"
+      required:
+      - subject
+      - description
+      - category
+      - priority
+    TicketPatch:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/TicketStatus"
+        priority:
+          $ref: "#/components/schemas/TicketPriority"
+        assigneeId:
+          $ref: "#/components/schemas/UUID"
+        slaDueAt:
+          $ref: "#/components/schemas/Instant"
+        version:
+          type: integer
+          format: int64
+      required:
+      - version
+    TicketPriority:
+      type: string
+      enum:
+      - LOW
+      - NORMAL
+      - HIGH
+      - URGENT
+    TicketStatus:
+      type: string
+      enum:
+      - OPEN
+      - IN_PROGRESS
+      - WAITING_CLIENT
+      - RESOLVED
+      - CLOSED
+    TicketSummary:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        tenantId:
+          $ref: "#/components/schemas/UUID"
+        organizationName:
+          type: string
+        projectId:
+          $ref: "#/components/schemas/UUID"
+        projectName:
+          type: string
+        subject:
+          type: string
+        category:
+          $ref: "#/components/schemas/TicketCategory"
+        priority:
+          $ref: "#/components/schemas/TicketPriority"
+        status:
+          $ref: "#/components/schemas/TicketStatus"
+        slaDueAt:
+          $ref: "#/components/schemas/Instant"
+        createdAt:
+          $ref: "#/components/schemas/Instant"
+        updatedAt:
+          $ref: "#/components/schemas/Instant"
+    TokenInput:
+      type: object
+      required:
+      - token
+      properties:
+        token:
+          type: string
+          pattern: \S
+          minLength: 20
+          maxLength: 200
+    UUID:
+      type: string
+      format: uuid
+      pattern: "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"
+    UpcomingItem:
+      type: object
+      properties:
+        kind:
+          type: string
+        id:
+          $ref: "#/components/schemas/UUID"
+        projectId:
+          $ref: "#/components/schemas/UUID"
+        title:
+          type: string
+        projectName:
+          type: string
+        dueDate:
+          $ref: "#/components/schemas/LocalDate"
+    UpdateInput:
+      type: object
+      required:
+      - body
+      properties:
+        body:
+          type: string
+          pattern: \S
+          maxLength: 4000
+    UpdateView:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        body:
+          type: string
+        authorName:
+          type: string
+        createdAt:
+          $ref: "#/components/schemas/Instant"
+    UserStatus:
+      type: string
+      enum:
+      - ACTIVE
+      - DISABLED
+    UserView:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          $ref: "#/components/schemas/Role"
+        tenantId:
+          $ref: "#/components/schemas/UUID"
+        organizationName:
+          type: string
+        status:
+          $ref: "#/components/schemas/UserStatus"
+        createdAt:
+          $ref: "#/components/schemas/Instant"
+  securitySchemes:
+    SecurityScheme:
+      type: openIdConnect
+      description: Authentication
+paths:
+  /v1/audit:
+    get:
+      tags:
+      - Administração
+      parameters:
+      - name: action
+        in: query
+        schema:
+          type: string
+      - name: organizationId
+        in: query
+        schema:
+          $ref: "#/components/schemas/UUID"
+      - name: page
+        in: query
+        schema:
+          type: integer
+          format: int32
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          format: int32
+          maximum: 100
+          minimum: 1
+          default: 50
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PageAuditView"
+      summary: List
+  /v1/dashboard:
+    get:
+      tags:
+      - Painel
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+      summary: Get
+  /v1/deliveries/pending-approvals:
+    get:
+      tags:
+      - Entregas
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PendingApproval"
+      summary: Pending
+  /v1/deliveries/versions/{versionId}/decision:
+    post:
+      tags:
+      - Entregas
+      parameters:
+      - name: versionId
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DecisionInput"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliveryDetail"
+        "400":
+          description: Bad Request
+      summary: Decide
+  /v1/deliveries/versions/{versionId}/request-approval:
+    post:
+      tags:
+      - Entregas
+      parameters:
+      - name: versionId
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliveryDetail"
+      summary: Request
+  /v1/deliveries/{id}:
+    get:
+      tags:
+      - Entregas
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliveryDetail"
+      summary: Get
+  /v1/deliveries/{id}/versions:
+    post:
+      tags:
+      - Entregas
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeliveryVersionInput"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliveryDetail"
+        "400":
+          description: Bad Request
+      summary: Publish
+  /v1/documents:
+    get:
+      tags:
+      - Documentos
+      parameters:
+      - name: category
+        in: query
+        schema:
+          $ref: "#/components/schemas/DocCategory"
+      - name: organizationId
+        in: query
+        schema:
+          $ref: "#/components/schemas/UUID"
+      - name: page
+        in: query
+        schema:
+          type: integer
+          format: int32
+          minimum: 0
+          default: 0
+      - name: projectId
+        in: query
+        schema:
+          $ref: "#/components/schemas/UUID"
+      - name: q
+        in: query
+        schema:
+          type: string
+      - name: size
+        in: query
+        schema:
+          type: integer
+          format: int32
+          maximum: 100
+          minimum: 1
+          default: 25
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PageDocumentView"
+      summary: List
+    post:
+      tags:
+      - Documentos
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                organizationId:
+                  $ref: "#/components/schemas/UUID"
+                projectId:
+                  $ref: "#/components/schemas/UUID"
+                title:
+                  type: string
+                category:
+                  $ref: "#/components/schemas/DocCategory"
+                visibility:
+                  $ref: "#/components/schemas/DocVisibility"
+                note:
+                  type: string
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentView"
+      summary: Create
+  /v1/documents/{id}:
+    patch:
+      tags:
+      - Documentos
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocumentPatch"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentView"
+      summary: Update
+    get:
+      tags:
+      - Documentos
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentDetail"
+      summary: Get
+  /v1/documents/{id}/versions:
+    post:
+      tags:
+      - Documentos
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                note:
+                  type: string
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentView"
+      summary: Add Version
+  /v1/documents/{id}/versions/{versionId}/download:
+    get:
+      tags:
+      - Documentos
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      - name: versionId
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/octet-stream: {}
+      summary: Download
+  /v1/files/{id}/rescan:
+    post:
+      tags:
+      - Administração
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "201":
+          description: Created
+      summary: Rescan
+  /v1/invitations:
+    get:
+      tags:
+      - Convites
+      parameters:
+      - name: organizationId
+        in: query
+        schema:
+          $ref: "#/components/schemas/UUID"
+      - name: page
+        in: query
+        schema:
+          type: integer
+          format: int32
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          format: int32
+          maximum: 100
+          minimum: 1
+          default: 25
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PageInvitationView"
+      summary: List
+    post:
+      tags:
+      - Convites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InvitationInput"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvitationView"
+        "400":
+          description: Bad Request
+      summary: Create
+  /v1/invitations/accept:
+    post:
+      tags:
+      - Convites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenInput"
+        required: true
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+      summary: Accept
+  /v1/invitations/{id}:
+    delete:
+      tags:
+      - Convites
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "204":
+          description: No Content
+      summary: Revoke
+  /v1/me:
+    get:
+      tags:
+      - Sessão
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Me"
+      summary: Me
+  /v1/organizations:
+    get:
+      tags:
+      - Administração
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          format: int32
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          format: int32
+          maximum: 100
+          minimum: 1
+          default: 50
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PageOrganizationView"
+      summary: List
+    post:
+      tags:
+      - Administração
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrganizationInput"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationView"
+        "400":
+          description: Bad Request
+      summary: Create
+  /v1/organizations/{id}:
+    patch:
+      tags:
+      - Administração
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrganizationPatch"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationView"
+      summary: Update
+    get:
+      tags:
+      - Administração
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationView"
+      summary: Get
+  /v1/organizations/{id}/staff:
+    get:
+      tags:
+      - Administração
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StaffView"
+      summary: Staff
+  /v1/organizations/{id}/staff/{userId}:
+    delete:
+      tags:
+      - Administração
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      - name: userId
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "204":
+          description: No Content
+      summary: Unassign
+    put:
+      tags:
+      - Administração
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      - name: userId
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "204":
+          description: No Content
+      summary: Assign
+  /v1/products:
+    get:
+      tags:
+      - Produtos
+      parameters:
+      - name: organizationId
+        in: query
+        schema:
+          $ref: "#/components/schemas/UUID"
+      - name: page
+        in: query
+        schema:
+          type: integer
+          format: int32
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          format: int32
+          maximum: 100
+          minimum: 1
+          default: 25
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PageProductView"
+      summary: List
+    post:
+      tags:
+      - Produtos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductInput"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductView"
+        "400":
+          description: Bad Request
+      summary: Create
+  /v1/products/{id}:
+    patch:
+      tags:
+      - Produtos
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductPatch"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductView"
+      summary: Update
+  /v1/projects:
+    get:
+      tags:
+      - Projetos
+      parameters:
+      - name: organizationId
+        in: query
+        schema:
+          $ref: "#/components/schemas/UUID"
+      - name: page
+        in: query
+        schema:
+          type: integer
+          format: int32
+          minimum: 0
+          default: 0
+      - name: q
+        in: query
+        schema:
+          type: string
+      - name: size
+        in: query
+        schema:
+          type: integer
+          format: int32
+          maximum: 100
+          minimum: 1
+          default: 25
+      - name: status
+        in: query
+        schema:
+          $ref: "#/components/schemas/ProjectStatus"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PageProjectSummary"
+      summary: List
+    post:
+      tags:
+      - Projetos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectInput"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectDetail"
+        "400":
+          description: Bad Request
+      summary: Create
+  /v1/projects/{id}:
+    patch:
+      tags:
+      - Projetos
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectPatch"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectDetail"
+      summary: Update
+    get:
+      tags:
+      - Projetos
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectDetail"
+      summary: Get
+  /v1/projects/{id}/deliveries:
+    get:
+      tags:
+      - Projetos
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      - name: page
+        in: query
+        schema:
+          type: integer
+          format: int32
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          format: int32
+          maximum: 100
+          minimum: 1
+          default: 25
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PageDeliverySummary"
+      summary: Deliveries
+    post:
+      tags:
+      - Projetos
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeliveryInput"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliveryDetail"
+        "400":
+          description: Bad Request
+      summary: Create Delivery
+  /v1/projects/{id}/members/{userId}:
+    put:
+      tags:
+      - Projetos
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      - name: userId
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemberInput"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectDetail"
+        "400":
+          description: Bad Request
+      summary: Set Member
+    delete:
+      tags:
+      - Projetos
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      - name: userId
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectDetail"
+      summary: Remove Member
+  /v1/projects/{id}/milestones:
+    post:
+      tags:
+      - Projetos
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MilestoneInput"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MilestoneView"
+        "400":
+          description: Bad Request
+      summary: Add Milestone
+  /v1/projects/{id}/milestones/{milestoneId}:
+    put:
+      tags:
+      - Projetos
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      - name: milestoneId
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MilestoneInput"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MilestoneView"
+        "400":
+          description: Bad Request
+      summary: Update Milestone
+  /v1/projects/{id}/updates:
+    post:
+      tags:
+      - Projetos
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateInput"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateView"
+        "400":
+          description: Bad Request
+      summary: Add Update
+  /v1/public/invitations/inspect:
+    post:
+      tags:
+      - Convites
+      parameters:
+      - name: X-Portal-Client-Ip
+        in: header
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenInput"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvitationPreview"
+        "400":
+          description: Bad Request
+      summary: Inspect
+  /v1/public/invitations/setup-access:
+    post:
+      tags:
+      - Convites
+      parameters:
+      - name: X-Portal-Client-Ip
+        in: header
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenInput"
+        required: true
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+      summary: Setup
+  /v1/tickets:
+    get:
+      tags:
+      - Suporte
+      parameters:
+      - name: open
+        in: query
+        schema:
+          type: boolean
+          default: false
+      - name: organizationId
+        in: query
+        schema:
+          $ref: "#/components/schemas/UUID"
+      - name: page
+        in: query
+        schema:
+          type: integer
+          format: int32
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          format: int32
+          maximum: 100
+          minimum: 1
+          default: 25
+      - name: status
+        in: query
+        schema:
+          $ref: "#/components/schemas/TicketStatus"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PageTicketSummary"
+      summary: List
+    post:
+      tags:
+      - Suporte
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TicketInput"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketDetail"
+        "400":
+          description: Bad Request
+      summary: Create
+  /v1/tickets/{id}:
+    patch:
+      tags:
+      - Suporte
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TicketPatch"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketDetail"
+      summary: Update
+    get:
+      tags:
+      - Suporte
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketDetail"
+      summary: Get
+  /v1/tickets/{id}/attachments:
+    post:
+      tags:
+      - Suporte
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                internal:
+                  type: boolean
+                  default: false
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketDetail"
+      summary: Attach
+  /v1/tickets/{id}/attachments/{attachmentId}/download:
+    get:
+      tags:
+      - Suporte
+      parameters:
+      - name: attachmentId
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/octet-stream: {}
+      summary: Download
+  /v1/tickets/{id}/comments:
+    post:
+      tags:
+      - Suporte
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentInput"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketDetail"
+        "400":
+          description: Bad Request
+      summary: Comment
+  /v1/users:
+    get:
+      tags:
+      - Administração
+      parameters:
+      - name: organizationId
+        in: query
+        schema:
+          $ref: "#/components/schemas/UUID"
+      - name: page
+        in: query
+        schema:
+          type: integer
+          format: int32
+          minimum: 0
+          default: 0
+      - name: scope
+        in: query
+        schema:
+          type: string
+      - name: size
+        in: query
+        schema:
+          type: integer
+          format: int32
+          maximum: 100
+          minimum: 1
+          default: 50
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PageUserView"
+      summary: List
+  /v1/users/{id}/disable:
+    post:
+      tags:
+      - Administração
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdentityResult"
+      summary: Disable
+  /v1/users/{id}/enable:
+    post:
+      tags:
+      - Administração
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdentityResult"
+      summary: Enable
+  /v1/users/{id}/role:
+    put:
+      tags:
+      - Administração
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleChange"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserView"
+        "400":
+          description: Bad Request
+      summary: Role
+info:
+  title: Portal do Cliente Union Solutions
+  version: 0.1.0
+servers:
+- url: http://localhost:8080
+  description: Auto generated value
+- url: http://0.0.0.0:8080
+  description: Auto generated value

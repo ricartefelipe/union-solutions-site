@@ -1,0 +1,37 @@
+# Dependências e saídas de build
+node_modules/
+dist/
+.astro/
+target/
+.next/
+out/
+*.tsbuildinfo
+portal/frontend/.test-build/
+
+# Configuração local e segredos: nunca versionar. Só os modelos .env.example entram.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.jks
+
+# Evidências, pacotes e resultados de teste: ficam fora do Git por tamanho e por conterem dados de ambientes locais
+artifacts/
+playwright-report/
+test-results/
+portal/e2e/evidencias/
+portal/e2e/backups-teste/
+*.log
+
+# Editores e sistema
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Python auxiliar
+__pycache__/
+*.pyc

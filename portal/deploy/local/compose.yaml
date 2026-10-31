@@ -1,0 +1,190 @@
+# Ambiente local reproduzível do portal. Nada aqui é configuração de produção.
+# Use portal.sh, que gera os segredos locais em .env (não versionado).
+name: union-portal
+
+services:
+  postgres:
+    build: ./postgres
+    environment:
+      POSTGRES_DB: portal
+      POSTGRES_USER: portal
+      POSTGRES_PASSWORD: ${PORTAL_DB_PASSWORD:?rode portal.sh init}
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD:?rode portal.sh init}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portal -d portal && pg_isready -U portal -d keycloak"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Idempotente: também prepara volumes criados por versões anteriores.
+  session-db-init:
+    build: ./postgres
+    restart: "no"
+    entrypoint: ["sh", "/usr/local/bin/init-session-db.sh"]
+    environment:
+      PGHOST: postgres
+      PGUSER: portal
+      PGDATABASE: portal
+      PGPASSWORD: ${PORTAL_DB_PASSWORD:?rode portal.sh init}
+      PORTAL_SESSION_DB_PASSWORD: ${PORTAL_SESSION_DB_PASSWORD:?rode portal.sh init}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  mailpit:
+    image: axllent/mailpit:v1.33.0
+    ports:
+      - "127.0.0.1:${PORTAL_MAILPIT_PORT:-8025}:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.51
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        cat > /tmp/s3.json <<JSON
+        {"identities":[{"name":"portal","credentials":[{"accessKey":"$$PORTAL_S3_ACCESS_KEY","secretKey":"$$PORTAL_S3_SECRET_KEY"}],"actions":["Admin","Read","Write","List","Tagging"]}]}
+        JSON
+        exec weed server -dir=/data -master.volumeSizeLimitMB=256 -volume.max=8 -s3 -s3.port=8333 -s3.config=/tmp/s3.json
+    environment:
+      PORTAL_S3_ACCESS_KEY: ${PORTAL_S3_ACCESS_KEY:?rode portal.sh init}
+      PORTAL_S3_SECRET_KEY: ${PORTAL_S3_SECRET_KEY:?rode portal.sh init}
+    volumes:
+      - seaweedfs-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:9333/cluster/status && nc -z 127.0.0.1 8333"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  clamav:
+    image: clamav/clamav:1.5
+    volumes:
+      - clamav-db:/var/lib/clamav
+    healthcheck:
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 20s
+      timeout: 15s
+      retries: 40
+      start_period: 120s
+
+  keycloak:
+    build:
+      context: ../keycloak
+      target: local
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD:?rode portal.sh init}
+      KC_DB_POOL_INITIAL_SIZE: "2"
+      KC_DB_POOL_MIN_SIZE: "2"
+      KC_DB_POOL_MAX_SIZE: "20"
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin-local
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD:?rode portal.sh init}
+      KC_HOSTNAME: http://localhost:${PORTAL_KEYCLOAK_PORT:-8180}
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+      JAVA_OPTS_APPEND: -Xms256m -Xmx768m
+      PORTAL_PUBLIC_URL: http://localhost:${PORTAL_WEB_PORT:-3100}
+      PORTAL_WEB_CLIENT_SECRET: ${PORTAL_WEB_CLIENT_SECRET:?rode portal.sh init}
+      PORTAL_KEYCLOAK_ADMIN_SECRET: ${PORTAL_KEYCLOAK_ADMIN_SECRET:?rode portal.sh init}
+      PORTAL_KC_SSL_REQUIRED: none
+      # No ambiente local, o segundo fator fica desligado para agilizar o desenvolvimento. A produção usa portal-browser-mfa.
+      PORTAL_KC_BROWSER_FLOW: browser
+      PORTAL_SMTP_HOST: mailpit
+      PORTAL_SMTP_PORT: "1025"
+      PORTAL_MAIL_FROM: portal@dev.invalid
+      PORTAL_SMTP_USER: ""
+      PORTAL_SMTP_PASSWORD: ""
+      PORTAL_KC_SMTP_AUTH: "false"
+      PORTAL_KC_SMTP_STARTTLS: "false"
+    ports:
+      - "127.0.0.1:${PORTAL_KEYCLOAK_PORT:-8180}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/9000 &&
+          printf 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 &&
+          grep -q '"status": "UP"' <&3
+      interval: 10s
+      timeout: 8s
+      retries: 30
+      start_period: 40s
+
+  backend:
+    build: ../../backend
+    environment:
+      QUARKUS_PROFILE: local
+      PORTAL_DB_URL: jdbc:postgresql://postgres:5432/portal
+      PORTAL_DB_USER: portal
+      PORTAL_DB_PASSWORD: ${PORTAL_DB_PASSWORD:?rode portal.sh init}
+      PORTAL_PUBLIC_URL: http://localhost:${PORTAL_WEB_PORT:-3100}
+      PORTAL_OIDC_INTERNAL_URL: http://keycloak:8080/realms/union-portal
+      PORTAL_OIDC_ISSUER: http://localhost:${PORTAL_KEYCLOAK_PORT:-8180}/realms/union-portal
+      PORTAL_KEYCLOAK_INTERNAL_URL: http://keycloak:8080
+      PORTAL_KEYCLOAK_ADMIN_SECRET: ${PORTAL_KEYCLOAK_ADMIN_SECRET:?rode portal.sh init}
+      PORTAL_BOOTSTRAP_ADMIN_EMAIL: ${PORTAL_BOOTSTRAP_ADMIN_EMAIL:-}
+      PORTAL_DEMO_ENABLED: ${PORTAL_DEMO_ENABLED:-false}
+      PORTAL_DEMO_PASSWORD: ${PORTAL_DEMO_PASSWORD:-}
+      PORTAL_PRODUCT_LINK_HOSTS: ${PORTAL_PRODUCT_LINK_HOSTS:-}
+      PORTAL_S3_ENDPOINT: http://seaweedfs:8333
+      PORTAL_S3_ACCESS_KEY: ${PORTAL_S3_ACCESS_KEY:?rode portal.sh init}
+      PORTAL_S3_SECRET_KEY: ${PORTAL_S3_SECRET_KEY:?rode portal.sh init}
+      PORTAL_S3_PATH_STYLE: "true"
+      PORTAL_CLAMD_HOST: clamav
+      PORTAL_SMTP_HOST: mailpit
+      PORTAL_SMTP_PORT: "1025"
+      PORTAL_MAIL_FROM: portal@dev.invalid
+      PORTAL_SCAN_INTERVAL: 3s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      seaweedfs:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ../../frontend
+    environment:
+      PORTAL_ENV: development
+      PORTAL_PUBLIC_URL: http://localhost:${PORTAL_WEB_PORT:-3100}
+      PORTAL_API_URL: http://backend:8080
+      PORTAL_OIDC_ISSUER: http://localhost:${PORTAL_KEYCLOAK_PORT:-8180}/realms/union-portal
+      PORTAL_OIDC_INTERNAL_URL: http://keycloak:8080/realms/union-portal
+      PORTAL_OIDC_CLIENT_ID: portal-web
+      PORTAL_OIDC_CLIENT_SECRET: ${PORTAL_WEB_CLIENT_SECRET:?rode portal.sh init}
+      PORTAL_SESSION_SECRET: ${PORTAL_SESSION_SECRET:?rode portal.sh init}
+      PORTAL_SESSION_DB_URL: postgres://portal_web:${PORTAL_SESSION_DB_PASSWORD:?rode portal.sh init}@postgres:5432/portal_sessao
+    ports:
+      - "127.0.0.1:${PORTAL_WEB_PORT:-3100}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+      session-db-init:
+        condition: service_completed_successfully
+
+volumes:
+  postgres-data:
+  seaweedfs-data:
+  clamav-db:
