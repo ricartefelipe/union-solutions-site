@@ -1,0 +1,125 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Arrow from '../../components/Arrow.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import PageHero from '../../components/PageHero.astro';
+import ProductGlyph from '../../components/ProductGlyph.astro';
+import { productContactUrl, products } from '../../data/products';
+---
+
+<BaseLayout
+  title="Produtos"
+  description="Conheça o HookGuard, o FileNorm, o AssinaFlow, o ArchLens, a Fluxe B2B Suite e o ComercialCloud, e solicite uma demonstração à Union Solutions."
+>
+  <PageHero
+    title="Conheça os produtos da Union Solutions."
+    intro="Soluções para integrações, processamento de arquivos, assinaturas e operações empresariais. Explore os recursos e converse conosco sobre a aplicação no seu negócio."
+  />
+
+  <nav class="index surface-mist" aria-label="Produtos do catálogo">
+    <ul class="wrap">
+      {products.map((product) => <li><a href={`#${product.slug}`}>{product.name}</a></li>)}
+    </ul>
+  </nav>
+
+  <div class="wrap">
+    {products.map((product) => (
+      <section class="product reveal" id={product.slug} aria-labelledby={`${product.slug}-nome`}>
+        <div class="product__copy">
+          <span class="product__area muted">{product.area}</span>
+          <h2 id={`${product.slug}-nome`}>{product.name}</h2>
+          <p class="product__purpose">{product.purpose}</p>
+          <p class="muted">{product.context}</p>
+          <ul class="node-list product__capabilities">
+            {product.capabilities.slice(0, 3).map((capability) => <li>{capability}</li>)}
+          </ul>
+          <div class="btn-row">
+            <a class="btn" href={productContactUrl(product.slug)}>Solicitar demonstração<span class="sr-only"> do {product.name}</span></a>
+            <a class="text-link" href={`/produtos/${product.slug}/`}>Conhecer o produto<span class="sr-only"> {product.name}</span><Arrow /></a>
+          </div>
+        </div>
+        <div class="product__art">
+          <ProductGlyph slug={product.slug} />
+        </div>
+      </section>
+    ))}
+  </div>
+
+  <CtaBand
+    title="Sua operação precisa de uma solução sob medida?"
+    text="Além dos produtos próprios, a Union Solutions oferece consultoria, arquitetura e desenvolvimento para necessidades específicas da sua empresa."
+    label="Conversar sobre meu projeto"
+    href="/contato/"
+    secondary={{ label: 'Conhecer os serviços', href: '/servicos/' }}
+  />
+</BaseLayout>
+
+<style>
+  .index ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--space-5);
+    padding-block: var(--space-2);
+  }
+
+  .index a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    color: var(--brand);
+    font-weight: 600;
+  }
+
+  .product {
+    display: grid;
+    gap: var(--space-5) clamp(2rem, 6vw, 5rem);
+    align-items: center;
+    padding-block: 1.75rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .product:last-child {
+    border-bottom: 0;
+  }
+
+  .product__area {
+    display: block;
+    margin-bottom: var(--space-1);
+    font-size: var(--text-sm);
+    font-weight: 600;
+  }
+
+  h2 {
+    color: var(--brand);
+  }
+
+  .product__purpose {
+    max-width: var(--measure);
+    margin-block: var(--space-2) var(--space-1);
+    font-size: 1.125rem;
+    line-height: 1.4;
+  }
+
+  .product__capabilities {
+    gap: 0;
+    margin-block: var(--space-2) var(--space-4);
+    line-height: 1.5;
+  }
+
+  .product__art {
+    width: 100%;
+    max-width: 20rem;
+    color: var(--brand);
+    --glyph-node-stroke: var(--brand);
+  }
+
+  @media (min-width: 62rem) {
+    .product {
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    }
+
+    .product__art {
+      justify-self: end;
+    }
+  }
+</style>

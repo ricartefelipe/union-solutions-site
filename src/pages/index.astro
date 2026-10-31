@@ -1,0 +1,350 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Arrow from '../components/Arrow.astro';
+import CtaBand from '../components/CtaBand.astro';
+import FounderBlock from '../components/FounderBlock.astro';
+import HomeHero from '../components/HomeHero.astro';
+import ProductGlyph from '../components/ProductGlyph.astro';
+import { homeProducts } from '../data/products';
+
+const fronts = [
+  {
+    title: 'Produtos próprios',
+    text: 'Soluções para necessidades específicas, com demonstração e avaliação de aderência à operação.',
+    href: '/produtos/',
+  },
+  {
+    title: 'Consultoria em tecnologia',
+    text: 'Análise de problemas, orientação técnica e planos de melhoria para sistemas, integrações e processos de engenharia.',
+    href: '/servicos/consultoria/',
+  },
+  {
+    title: 'Arquitetura de software',
+    text: 'Estruturação de novas soluções e evolução de sistemas considerando segurança, desempenho, operação e crescimento.',
+    href: '/servicos/arquitetura/',
+  },
+  {
+    title: 'Desenvolvimento sob medida',
+    text: 'Sistemas, APIs, portais e aplicativos construídos de acordo com os processos e objetivos da sua empresa.',
+    href: '/servicos/desenvolvimento/',
+  },
+];
+
+const problems = [
+  {
+    title: 'Operação dependente de planilhas e tarefas manuais',
+    text: 'Processos de conferência e repasse manual podem virar sistema ou automação.',
+    path: 'Desenvolvimento sob medida',
+    href: '/servicos/desenvolvimento/',
+  },
+  {
+    title: 'Sistemas que precisam trocar informações',
+    text: 'APIs e integrações substituem a redigitação e o envio de arquivos à mão.',
+    path: 'Arquitetura de software',
+    href: '/servicos/arquitetura/',
+  },
+  {
+    title: 'Aplicações difíceis de manter ou lentas',
+    text: 'Um diagnóstico técnico aponta as causas e define o que corrigir primeiro.',
+    path: 'Consultoria em tecnologia',
+    href: '/servicos/consultoria/',
+  },
+  {
+    title: 'Um produto digital para lançar',
+    text: 'Uma primeira versão com escopo delimitado coloca a ideia à prova.',
+    path: 'Desenvolvimento sob medida',
+    href: '/servicos/desenvolvimento/',
+  },
+  {
+    title: 'Decisões de arquitetura que pedem orientação',
+    text: 'Alternativas comparadas e decisões registradas antes da construção.',
+    path: 'Arquitetura de software',
+    href: '/servicos/arquitetura/',
+  },
+  {
+    title: 'Sistemas existentes para modernizar',
+    text: 'Um plano por etapas define o que muda e em que ordem, sem ignorar a operação.',
+    path: 'Consultoria em tecnologia',
+    href: '/servicos/consultoria/',
+  },
+];
+
+const steps = [
+  { title: 'Entendimento do contexto', text: 'O que a empresa precisa, o que já existe e o que limita o trabalho.' },
+  { title: 'Definição de escopo e proposta', text: 'O que será feito, o que fica de fora e como será contratado.' },
+  { title: 'Arquitetura e planejamento', text: 'As decisões técnicas e a sequência de trabalho.' },
+  { title: 'Implementação e validação', text: 'A construção, com verificação do que foi combinado.' },
+  { title: 'Implantação e evolução', text: 'A entrada em uso e os próximos passos, conforme contratação.' },
+];
+---
+
+<BaseLayout description="Produtos próprios, consultoria em tecnologia, arquitetura e desenvolvimento sob medida para empresas que precisam construir, integrar ou modernizar seus sistemas.">
+  <HomeHero />
+
+  <section class="section" aria-labelledby="frentes">
+    <div class="wrap">
+      <h2 id="frentes" class="section-title">Quatro frentes de atuação</h2>
+      <ul class="fronts">
+        {fronts.map((front) => (
+          <li class="reveal">
+            <a href={front.href}>
+              <h3>{front.title}</h3>
+              <p class="muted">{front.text}</p>
+              <Arrow />
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section surface-mist" aria-labelledby="problemas">
+    <div class="wrap">
+      <h2 id="problemas" class="section-title">Problemas que a Union ajuda a resolver</h2>
+      <ul class="problems">
+        {problems.map((item) => (
+          <li class="reveal">
+            <h3>{item.title}</h3>
+            <p class="muted">{item.text}</p>
+            <a class="text-link" href={item.href}>{item.path}<Arrow /></a>
+          </li>
+        ))}
+      </ul>
+      <p class="problems__more">
+        A necessidade é específica? <a href="/produtos/">Veja se um dos produtos já atende.</a>
+      </p>
+    </div>
+  </section>
+
+  <section class="section surface-deep" aria-labelledby="produtos">
+    <div class="wrap">
+      <div class="products-head">
+        <h2 id="produtos">Produtos selecionados</h2>
+        <a class="text-link" href="/produtos/">Ver catálogo completo<Arrow /></a>
+      </div>
+      <ul class="products">
+        {homeProducts.map((product) => (
+          <li class="reveal">
+            <ProductGlyph slug={product.slug} />
+            <span class="products__area muted">{product.area}</span>
+            <h3>{product.name}</h3>
+            <p class="muted">{product.purpose}</p>
+            <a class="text-link" href={`/produtos/${product.slug}/`}>Conhecer o produto<span class="sr-only"> {product.name}</span><Arrow /></a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="como-trabalhamos">
+    <div class="wrap">
+      <h2 id="como-trabalhamos" class="section-title">Como trabalhamos</h2>
+      <ol class="steps">
+        {steps.map((step, index) => (
+          <li class="reveal" style={`--step:${index}`}>
+            <span class="steps__number" aria-hidden="true">{index + 1}</span>
+            <h3>{step.title}</h3>
+            <p class="muted">{step.text}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <section class="section surface-mist">
+    <div class="wrap">
+      <FounderBlock />
+    </div>
+  </section>
+
+  <CtaBand
+    title="O que sua empresa precisa construir ou melhorar?"
+    text="Conte seu cenário. Vamos avaliar se um produto existente, uma consultoria ou uma solução sob medida é o caminho adequado."
+    label="Falar com a Union Solutions"
+    href="/contato/"
+  />
+</BaseLayout>
+
+<style>
+  /* Frentes: quatro entradas com o mesmo peso, em linhas. */
+  .fronts {
+    border-top: 1px solid var(--brand);
+  }
+
+  .fronts a {
+    display: grid;
+    gap: var(--space-2) var(--space-7);
+    padding-block: clamp(1.25rem, 1rem + 1vw, 1.75rem);
+    border-bottom: 1px solid var(--line);
+    text-decoration: none;
+    transition:
+      background-color var(--transition),
+      padding-inline var(--transition);
+  }
+
+  .fronts h3 {
+    color: var(--brand);
+    font-size: var(--text-h2);
+  }
+
+  .fronts :global(.arrow) {
+    width: 1.5rem;
+    height: 1.5rem;
+    color: var(--brand);
+  }
+
+  .fronts a:hover {
+    padding-inline: var(--space-4);
+    background: var(--mist);
+  }
+
+  .fronts a:hover h3 {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+  }
+
+  @media (min-width: 62rem) {
+    .fronts a {
+      grid-template-columns: minmax(0, 6fr) minmax(0, 5fr) 1.5rem;
+      align-items: center;
+    }
+  }
+
+  /* Problemas */
+  .problems {
+    display: grid;
+    gap: var(--space-5) clamp(2rem, 4vw, 3.5rem);
+  }
+
+  .problems li {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--line-strong);
+  }
+
+  .problems h3 {
+    font-size: 1.25rem;
+  }
+
+  .problems .text-link {
+    margin-top: auto;
+    font-size: var(--text-sm);
+  }
+
+  @media (min-width: 40rem) {
+    .problems {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 62rem) {
+    .problems {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .problems__more {
+    margin-top: var(--space-6);
+    font-weight: 500;
+  }
+
+  .problems__more a {
+    color: var(--brand);
+    font-weight: 600;
+  }
+
+  /* Produtos */
+  .products-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-7);
+    margin-bottom: var(--space-6);
+  }
+
+  .products {
+    display: grid;
+    gap: var(--space-7) clamp(2rem, 4vw, 4rem);
+  }
+
+  .products :global(.glyph) {
+    max-width: 18rem;
+    margin-bottom: var(--space-5);
+    color: var(--on-dark);
+  }
+
+  .products__area {
+    display: block;
+    margin-bottom: var(--space-1);
+    font-size: var(--text-sm);
+  }
+
+  .products h3 {
+    margin-bottom: var(--space-2);
+    font-size: var(--text-h2);
+  }
+
+  .products .text-link {
+    margin-top: var(--space-2);
+  }
+
+  @media (min-width: 62rem) {
+    .products {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  /* Etapas: uma escada ascendente, no sentido da evolução. */
+  .steps {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .steps li {
+    position: relative;
+    padding-left: 3.25rem;
+  }
+
+  .steps__number {
+    position: absolute;
+    top: -0.125rem;
+    left: 0;
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    background: var(--brand);
+    color: var(--on-dark);
+    font-family: var(--font-display);
+    font-weight: 500;
+  }
+
+  .steps h3 {
+    margin-bottom: var(--space-1);
+    font-size: 1.125rem;
+  }
+
+  @media (min-width: 62rem) {
+    .steps {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: clamp(1.25rem, 2vw, 2rem);
+      align-items: start;
+    }
+
+    .steps li {
+      margin-top: calc((4 - var(--step)) * 1.25rem);
+      padding-top: 2.5rem;
+      padding-left: 0;
+      border-top: 1px solid var(--brand);
+    }
+
+    .steps__number {
+      top: -1.125rem;
+    }
+  }
+</style>
