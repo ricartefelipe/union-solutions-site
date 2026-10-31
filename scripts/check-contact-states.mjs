@@ -12,6 +12,7 @@ const TEST_SITE = 'https://verificacao-do-site.com.br';
 const TEST_ENDPOINT = 'https://recebimento-de-teste.com.br/contato';
 const TEST_EMAIL = 'contato@verificacao-do-site.com.br';
 const TEST_WHATSAPP = '999700000001';
+const TEST_PORTAL = 'https://portal.verificacao-do-site.com.br';
 const TEST_VALUES = ['verificacao-do-site', 'recebimento-de-teste', TEST_WHATSAPP];
 
 const EMPTY = {
@@ -20,6 +21,7 @@ const EMPTY = {
   PUBLIC_CONTACT_EMAIL: '',
   PUBLIC_CONTACT_WHATSAPP: '',
   PUBLIC_CONTACT_PHONE: '',
+  PUBLIC_PORTAL_URL: '',
   PUBLIC_COMPANY_ADDRESS: '',
   PUBLIC_COMPANY_CNPJ: '',
 };
@@ -38,7 +40,7 @@ const cases = [
     name: 'B: somente e-mail',
     env: { PUBLIC_SITE_URL: TEST_SITE, PUBLIC_CONTACT_EMAIL: TEST_EMAIL },
     publishes: true,
-    expect: (html) => !hasForm(html) && has(html, 'data-direct-contact') && has(html, `href="mailto:${TEST_EMAIL}?subject=`) && !has(html, 'data-channel="whatsapp"'),
+    expect: (html) => !hasForm(html) && has(html, 'data-direct-contact') && has(html, `href="mailto:${TEST_EMAIL}?subject=`) && !has(html, 'data-channel="whatsapp"') && !has(html, 'data-client-portal'),
   },
   {
     name: 'B: somente WhatsApp',
@@ -52,6 +54,13 @@ const cases = [
     publishes: false,
     expect: (html) => !hasForm(html) && has(html, 'data-config-pending') && !has(html, 'data-direct-contact') && !has(html, 'README') && !/PUBLIC_[A-Z]/.test(html),
   },
+  {
+    name: 'Portal configurado: botão Área do cliente',
+    env: { PUBLIC_SITE_URL: TEST_SITE, PUBLIC_CONTACT_EMAIL: TEST_EMAIL, PUBLIC_PORTAL_URL: TEST_PORTAL },
+    publishes: true,
+    expect: (html) => has(html, `href="${TEST_PORTAL}" data-client-portal`) && has(html, 'Área do cliente'),
+  },
+  { name: 'Bloqueio: portal em domínio local', env: { PUBLIC_SITE_URL: TEST_SITE, PUBLIC_CONTACT_EMAIL: TEST_EMAIL, PUBLIC_PORTAL_URL: 'http://localhost:3100' }, publishes: false },
   { name: 'Bloqueio: sem domínio', env: { PUBLIC_CONTACT_EMAIL: TEST_EMAIL }, publishes: false },
   { name: 'Bloqueio: domínio de exemplo', env: { PUBLIC_SITE_URL: 'https://www.example.com', PUBLIC_CONTACT_EMAIL: TEST_EMAIL }, publishes: false },
   { name: 'Bloqueio: domínio local', env: { PUBLIC_SITE_URL: 'http://localhost:4321', PUBLIC_CONTACT_EMAIL: TEST_EMAIL }, publishes: false },

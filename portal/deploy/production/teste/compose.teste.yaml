@@ -1,0 +1,117 @@
+# Ambiente de prova: só acrescenta o que não existe fora do servidor real.
+# Certificados de uma autoridade de teste, SMTP capturado pelo Mailpit e destino de backup isolado.
+# Validações de produção, autenticação, TLS, autorização e antivírus continuam iguais às de deploy/production/compose.yaml.
+services:
+  pki-init:
+    image: alpine:3.22@sha256:2e0b81d60597f449baa56dc25d355367869d2dca4cd57e866f1e2b52af3eb55f
+    restart: "no"
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        cd /pki
+        [ -f ca.crt ] || {
+          for tentativa in 1 2 3 4 5 6; do apk add --no-cache openssl >/dev/null 2>&1 && break; sleep 5; done
+          openssl req -x509 -newkey rsa:2048 -nodes -days 30 -keyout ca.key -out ca.crt -subj "/CN=Autoridade de teste do portal (nao confiavel fora da prova)"
+          for host in "$$PORTAL_HOST" "$$PORTAL_SMTP_HOST"; do
+            openssl req -newkey rsa:2048 -nodes -keyout "$$host.key" -out "$$host.csr" -subj "/CN=$$host"
+            printf 'subjectAltName=DNS:%s\nbasicConstraints=CA:FALSE\nextendedKeyUsage=serverAuth\n' "$$host" > "$$host.ext"
+            openssl x509 -req -in "$$host.csr" -CA ca.crt -CAkey ca.key -CAcreateserial -days 30 -extfile "$$host.ext" -out "$$host.crt" 2>/dev/null
+          done
+          openssl pkcs12 -export -nokeys -in ca.crt -jdktrust anyExtendedKeyUsage -out truststore.p12 -passout pass:prova
+          rm -f ca.key ./*.csr ./*.ext ca.srl
+          chmod 644 ./*
+          printf 'tls /etc/caddy/conf.d/%s.crt /etc/caddy/conf.d/%s.key\n' "$$PORTAL_HOST" "$$PORTAL_HOST" > tls.caddy
+        }
+    environment:
+      PORTAL_HOST: ${PORTAL_HOST:?}
+      PORTAL_SMTP_HOST: ${PORTAL_SMTP_HOST:?}
+    volumes:
+      - pki:/pki
+
+  proxy:
+    ports: !override
+      - "127.0.0.1:18443:443"
+      - "127.0.0.1:18080:80"
+    volumes:
+      - pki:/etc/caddy/conf.d:ro
+    networks:
+      publica:
+        aliases:
+          - ${PORTAL_HOST:?}
+
+  mailpit:
+    image: axllent/mailpit:v1.33.0@sha256:9b3a463be15354c0f0eba91697d80e3e0d8a5623ef0e627cacc836bc17fd5231
+    restart: unless-stopped
+    environment:
+      MP_SMTP_TLS_CERT: /pki/${PORTAL_SMTP_HOST:?}.crt
+      MP_SMTP_TLS_KEY: /pki/${PORTAL_SMTP_HOST:?}.key
+      MP_SMTP_REQUIRE_STARTTLS: "true"
+      MP_SMTP_AUTH_ACCEPT_ANY: "true"
+      MP_SMTP_BIND_ADDR: 0.0.0.0:587
+    volumes:
+      - pki:/pki:ro
+    networks:
+      publica:
+      saida:
+        aliases:
+          - ${PORTAL_SMTP_HOST:?}
+
+  restic-alvo:
+    image: restic/rest-server:0.14.0@sha256:d2aff06f47eb38637dff580c3e6bce4af98f386c396a25d32eb6727ec96214a5
+    restart: unless-stopped
+    environment:
+      DISABLE_AUTHENTICATION: "1"
+    volumes:
+      - repositorio-prova:/data
+    networks: [saida]
+
+  keycloak:
+    environment:
+      KC_TRUSTSTORE_PATHS: /pki/ca.crt
+    volumes:
+      - pki:/pki:ro
+
+  backend:
+    environment:
+      JAVA_OPTS_APPEND: -XX:MaxRAMPercentage=70 -Djavax.net.ssl.trustStore=/pki/truststore.p12 -Djavax.net.ssl.trustStorePassword=prova
+    volumes:
+      - pki:/pki:ro
+
+  # Navegadores reais na mesma rede pública do proxy, sem alterar nada no computador.
+  runner:
+    profiles: [prova]
+    build:
+      context: ../../e2e
+      dockerfile: runner.Dockerfile
+    restart: "no"
+    environment:
+      E2E_PRODUCAO: "true"
+      E2E_MFA: "true"
+      E2E_BASE_URL: ${PORTAL_PUBLIC_URL:?}
+      E2E_MAILPIT_URL: http://mailpit:8025
+      E2E_ADMIN_EMAIL: ${PORTAL_BOOTSTRAP_ADMIN_EMAIL:?}
+      E2E_PRODUCT_URL: https://produtos-prova.unionsolutions.tech/entrar
+      E2E_COMPOSE_PROJECT: ${E2E_COMPOSE_PROJECT:-union-portal-prova}
+      E2E_STORAGE_SERVICE: armazenamento
+      E2E_PG_SUPERUSER: postgres
+      E2E_BROWSER_CHANNEL: chromium
+      E2E_SHOTS_DIR: /evidencias/capturas
+      E2E_STATE_FILE: /evidencias/estado.json
+      E2E_OUTPUT_DIR: /evidencias/resultados
+      NODE_EXTRA_CA_CERTS: /pki/ca.crt
+    volumes:
+      - pki:/pki:ro
+      - evidencias:/evidencias
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks: [publica]
+
+volumes:
+  pki:
+  evidencias:
+    external: true
+    name: union-portal-prova-evidencias
+  repositorio-prova:
+    external: true
+    name: union-portal-prova-repositorio
