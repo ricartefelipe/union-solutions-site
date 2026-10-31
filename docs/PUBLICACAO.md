@@ -93,7 +93,8 @@ Nada abaixo foi executado:
 3. Preencher em `portal/deploy/production/.env`: `PORTAL_SMTP_HOST`, `PORTAL_SMTP_USER`, `PORTAL_SMTP_PASSWORD`, `PORTAL_BOOTSTRAP_ADMIN_EMAIL`, `PORTAL_PRODUCT_LINK_HOSTS`, `RESTIC_REPOSITORY`, `PORTAL_BACKUP_S3_ACCESS_KEY`, `PORTAL_BACKUP_S3_SECRET_KEY`, `PORTAL_BACKUP_KEEP_DAILY`, `PORTAL_BACKUP_KEEP_WEEKLY` e `PORTAL_BACKUP_KEEP_MONTHLY`.
 4. Validar emissão do certificado, entrega de e-mail, backup externo e portas fechadas a partir de fora.
 5. Preencher os campos de `PRIVACIDADE.md` antes de abrir o portal a clientes.
-6. Decidir sobre os achados de vulnerabilidade aceitos em `VULNERABILIDADES.md`, repetindo a análise com a base do dia antes de implantar.
+6. **Decidir sobre os seis achados altos de `VULNERABILIDADES.md`** (aceitar, mitigar antes ou bloquear): nenhum aceite foi registrado, e até a decisão o portal não deve ser aberto a clientes. Repetir a análise com a base do dia antes de implantar.
+7. Na atualização para esta versão, avisar quem estiver logado: todas as sessões anteriores são encerradas (`IMPLANTACAO.md`, "Atualização").
 
 ### Ativar o botão "Área do cliente"
 

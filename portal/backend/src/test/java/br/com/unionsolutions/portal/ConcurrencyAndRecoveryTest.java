@@ -265,6 +265,72 @@ class ConcurrencyAndRecoveryTest extends ApiTestBase {
         as(adminA).get("/v1/documents/" + doc.id() + "/versions/" + doc.versionId() + "/download").then().statusCode(200);
     }
 
+    // ---------- Registros bloqueados anteriores à atualização (changesets 007 e 008) ----------
+
+    @Test
+    void bloqueadosAnterioresContamAteAExclusaoSerConfirmada() {
+        long base = fx.usedBytes(clientA.id);
+        String present = "quarantine/" + clientA.id + "/" + UUID.randomUUID();
+        String absent = "quarantine/" + clientA.id + "/" + UUID.randomUUID();
+        String refused = "quarantine/" + clientA.id + "/" + UUID.randomUUID();
+        storage.objects.put(present, new byte[500]);
+        storage.objects.put(refused, new byte[300]);
+        UUID presentId = fx.rejectedFile(clientA.id, unionAdmin.id, present, 500);
+        UUID absentId = fx.rejectedFile(clientA.id, unionAdmin.id, absent, 200);
+        UUID refusedId = fx.rejectedFile(clientA.id, unionAdmin.id, refused, 300);
+        assertEquals(base + 1000, fx.usedBytes(clientA.id), "depois do changeset 008, todos contam até a confirmação");
+
+        // Armazenamento indisponível: nada é presumido ausente.
+        storage.unavailable = true;
+        try {
+            ledger.reconcile();
+        } finally {
+            storage.unavailable = false;
+        }
+        assertTrue(fx.objectPresent(presentId) && fx.objectPresent(absentId) && fx.objectPresent(refusedId));
+        assertEquals(base + 1000, fx.usedBytes(clientA.id));
+
+        // Exclusão recusada para um deles: só os confirmados deixam de contar.
+        storage.failDeletes = true;
+        try {
+            ledger.reconcile();
+        } finally {
+            storage.failDeletes = false;
+        }
+        assertTrue(fx.objectPresent(presentId) && fx.objectPresent(absentId) && fx.objectPresent(refusedId), "recusa mantém a contabilização");
+        ledger.reconcile();
+        assertFalse(fx.objectPresent(presentId), "objeto presente: apagado e confirmado");
+        assertFalse(fx.objectPresent(absentId), "objeto ausente: exclusão confirma a ausência");
+        assertFalse(fx.objectPresent(refusedId));
+        assertFalse(storage.objects.containsKey(present));
+        assertFalse(storage.objects.containsKey(refused));
+        assertEquals(base, fx.usedBytes(clientA.id), "espaço liberado só depois da confirmação");
+        // Repetir não tem efeito.
+        assertEquals(0, ledger.reconcile());
+        assertEquals(base, fx.usedBytes(clientA.id));
+    }
+
+    @Test
+    void bloqueadoComObjetoPresenteEntraNaCotaDeUmEnvioConcorrente() throws Exception {
+        // Cota de teste: 6100 bytes. Um bloqueado de 2100 bytes ainda presente deixa espaço para só um envio de 2008.
+        String key = "quarantine/" + clientA.id + "/" + UUID.randomUUID();
+        storage.objects.put(key, new byte[2100]);
+        storage.failDeletes = true;
+        try {
+            fx.rejectedFile(clientA.id, unionAdmin.id, key, 2100);
+            String medium = "%PDF-1.7" + "x".repeat(2000);
+            List<Integer> statuses = simultaneous(List.of(
+                    () -> uploadDocument(unionAdmin, projectA, "PARTICIPANTS", "q1.pdf", medium),
+                    () -> uploadDocument(unionAdmin, projectA, "PARTICIPANTS", "q2.pdf", medium),
+                    () -> uploadDocument(unionAdmin, projectA, "PARTICIPANTS", "q3.pdf", medium)));
+            assertEquals(1, statuses.stream().filter(s -> s == 200).count(), statuses.toString());
+            assertEquals(2, statuses.stream().filter(s -> s == 413).count(), statuses.toString());
+            assertTrue(fx.usedBytes(clientA.id) <= 6100);
+        } finally {
+            storage.failDeletes = false;
+        }
+    }
+
     // ---------- Bootstrap: tenta de novo em falha, para depois do aceite ----------
 
     @Test

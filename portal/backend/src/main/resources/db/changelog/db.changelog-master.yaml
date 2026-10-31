@@ -13,3 +13,5 @@ databaseChangeLog:
       file: db/changelog/006-auditoria.yaml
   - include:
       file: db/changelog/007-cota-e-objetos.yaml
+  - include:
+      file: db/changelog/008-objetos-bloqueados.yaml

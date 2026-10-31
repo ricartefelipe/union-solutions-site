@@ -41,8 +41,10 @@ public final class TestSupport {
     @Singleton
     public static class MemoryStorage implements Ports.ObjectStorage {
         public final Map<String, byte[]> objects = new ConcurrentHashMap<>();
-        /** Simula o armazenamento recusando exclusões. */
+        /** Simula o armazenamento recusando exclusões (autorização). */
         public volatile boolean failDeletes;
+        /** Simula indisponibilidade ou tempo esgotado em qualquer operação. */
+        public volatile boolean unavailable;
 
         @Override public void put(String key, Path content, long size, String contentType) {
             try {
@@ -59,7 +61,9 @@ public final class TestSupport {
             objects.put(toKey, objects.get(fromKey));
         }
         @Override public void delete(String key) {
+            if (unavailable) throw new IllegalStateException("Armazenamento indisponível");
             if (failDeletes) throw new IllegalStateException("Exclusão recusada pelo armazenamento");
+            // Como o S3: apagar o que não existe é sucesso.
             objects.remove(key);
         }
     }
@@ -210,6 +214,25 @@ public final class TestSupport {
         @Transactional
         public long activeAdmins() {
             return AppUser.count("role = ?1 and status = ?2", Role.UNION_ADMIN, UserStatus.ACTIVE);
+        }
+
+        /** Registro como o fluxo anterior deixava um arquivo bloqueado, já com a correção do changeset 008 (object_present = true). */
+        @Transactional
+        public UUID rejectedFile(UUID tenantId, UUID uploadedBy, String key, long size) {
+            StoredFile f = new StoredFile();
+            f.id = UUID.randomUUID();
+            f.tenantId = tenantId;
+            f.objectKey = key;
+            f.originalName = "bloqueado.pdf";
+            f.mediaType = "application/pdf";
+            f.sizeBytes = size;
+            f.sha256 = "0".repeat(64);
+            f.scanStatus = ScanStatus.REJECTED;
+            f.uploadedBy = uploadedBy;
+            f.createdAt = Instant.now();
+            f.objectPresent = true;
+            f.persist();
+            return f.id;
         }
 
         @Transactional

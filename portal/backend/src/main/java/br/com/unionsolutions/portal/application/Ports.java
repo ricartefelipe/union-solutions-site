@@ -11,6 +11,10 @@ public final class Ports {
         void put(String key, Path content, long size, String contentType);
         InputStream open(String key);
         void copy(String fromKey, String toKey);
+        /**
+         * Só retorna normalmente quando o armazenamento confirmou que o objeto não existe mais (apagar um objeto ausente é sucesso).
+         * Indisponibilidade, tempo esgotado ou recusa de autorização lançam exceção: o objeto continua tratado como presente.
+         */
         void delete(String key);
     }
 

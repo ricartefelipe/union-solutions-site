@@ -14,9 +14,11 @@ As pastas em `artifacts/` são locais e não versionadas. As capturas não cont�
 
 | Verificação | Ambiente | Resultado |
 | --- | --- | --- |
-| API: integração com PostgreSQL real, incluindo os 11 testes novos de concorrência e recuperação | Maven | 68 de 68 |
-| Sessões: 9 cenários com barreiras determinísticas (toque e renovação após logout, renovações concorrentes, sessão vencida, cookie copiado, novo login, encerramento por conta, falha do banco) | Node + PostgreSQL | 9 de 9 na implementação nova; **0 de 9 na anterior** (adaptada pela interface antiga) |
+| API: integração com PostgreSQL real, incluindo os 13 testes de concorrência e recuperação (11 da primeira rodada e 2 sobre registros bloqueados anteriores à atualização) | Maven | 70 de 70 |
+| Sessões: 14 cenários com barreiras determinísticas (toque e renovação após logout, renovações concorrentes, sessão vencida, cookie copiado, novo login, encerramento por conta, falha do banco, e 5 da transição de sessões legadas) | Node + PostgreSQL | 14 de 14 na implementação atual; **os 5 da transição falham no commit anterior (`b1ee50b`)**; os 9 primeiros falhavam na `develop` |
 | Regressão na `develop` (`eb97ce0`): testes novos que compilam contra o código antigo | Maven | **4 de 6 falham no código antigo**: cota ultrapassada em paralelo (4 cabem onde só 3 deveriam), `500` em desativação concorrente de administradores, objeto não apagado após reversão |
+| Transição de sessões legadas na atualização local (`b1ee50b` → atual, com uma linha sem vínculo inserida como a versão anterior gravaria) | Desenvolvimento | Linha legada encerrada; 4 sessões com vínculo preservadas; `02-seguranca` 19 de 19 em seguida |
+| Changeset 008 na atualização local | Desenvolvimento | Bloqueado existente voltou a contar; limpeza periódica confirmou a exclusão e liberou o espaço |
 | `01-jornada`, a partir de banco vazio | Desenvolvimento e produção | 15 de 15 nos dois |
 | `02-seguranca`, com o teste novo de logout concorrente com renovação em voo | Desenvolvimento e produção | 19 de 19 nos dois |
 | `03-operacao` | Desenvolvimento | 4 de 4 |
@@ -38,7 +40,8 @@ As pastas em `artifacts/` são locais e não versionadas. As capturas não cont�
 | R2/R3 | `remover-mfa` com helper no provedor: falha em cada passo, exatamente uma conta, verificação final, logout no provedor, sessões do portal apagadas por `sub`, auditoria antes e depois, operador e motivo, segredo fora de `argv` | `testa-operacao.sh` (10 cenários), E2E `07` |
 | R4/R5 | `flock` por implantação; área temporária por execução; limpeza instalada antes dos passos falíveis; despausa verificada; `restic init` só com saída 10; áreas abandonadas | `testa-operacao.sh` (20 cenários) |
 | R6 | Advisory lock transacional no conjunto de administradores, com releitura do alvo e de quem pede | `ConcurrencyAndRecoveryTest` (4) |
-| R7 | Lock por organização, reserva em `object_ledger`, compensação após reversão, limpeza com idade mínima, `object_present` | `ConcurrencyAndRecoveryTest` (6) |
+| R7 | Lock por organização, reserva em `object_ledger`, compensação após reversão, limpeza com idade mínima, `object_present` só falso após exclusão confirmada; changeset 008 corrige a presunção do 007 | `ConcurrencyAndRecoveryTest` (8): inclui registros anteriores com objeto presente, ausente, exclusão recusada, armazenamento indisponível, limpeza repetida e envio concorrente perto da cota |
+| R1 (transição) | Sessões sem `sub` encerradas na atualização e recusadas em leitura, toque e renovação; criar sem `sub` é erro | `session.test.mjs` (5 da transição), atualização local |
 | R8 | Avaliação individual das altas com caminho de exploração; resumo versionado; decisão residual explícita | `VULNERABILIDADES.md` |
 | Bootstrap | Comportamento preservado: para após o aceite; espera crescente em falha | `ConcurrencyAndRecoveryTest.bootstrapTentaDeNovoEmFalhaEParaDepoisDoAceite` |
 
