@@ -95,8 +95,10 @@ async function tokenRequest(params: Record<string, string>): Promise<TokenRespon
 
 function buildSession(tokens: TokenResponse, previous?: Session): Session {
   const now = Math.floor(Date.now() / 1000);
+  const subject = tokens.id_token ? (decodeJwt(tokens.id_token).sub ?? '') : '';
   return {
     id: previous?.id ?? newSessionId(),
+    subject: subject || previous?.subject || '',
     accessToken: tokens.access_token,
     refreshToken: tokens.refresh_token,
     idToken: tokens.id_token ?? previous?.idToken ?? '',
@@ -104,6 +106,7 @@ function buildSession(tokens: TokenResponse, previous?: Session): Session {
     csrf: previous?.csrf ?? randomToken(),
     createdAt: previous?.createdAt ?? now,
     lastActive: now,
+    version: previous?.version ?? 0,
   };
 }
 

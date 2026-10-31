@@ -2,6 +2,7 @@
 FROM quay.io/keycloak/keycloak:26.8.1@sha256:3f3c5f8e03c614774b4bd9173b88391fefa4153bfc010d8012d59ad825377332 AS base
 COPY themes/union /opt/keycloak/themes/union
 COPY realm-union-portal.json /opt/keycloak/data/import/realm-union-portal.json
+COPY --chmod=0755 portal-mfa-reset.sh /opt/keycloak/bin/portal-mfa-reset.sh
 
 # Ambiente local: usa start-dev, no compose de deploy/local.
 FROM base AS local

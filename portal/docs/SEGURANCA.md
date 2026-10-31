@@ -7,7 +7,11 @@ Este relatório descreve o que foi implementado e testado. **Não atesta conform
 | Tema | Como funciona | Evidência |
 | --- | --- | --- |
 | Autenticação | OIDC com Authorization Code e PKCE no Keycloak. Não há login próprio nem cadastro público | E2E |
-| Sessão | Cookie HttpOnly, SameSite=Lax, Secure e `__Host-`, só com identificador opaco. No servidor ficam o hash do identificador e os tokens cifrados. Expira por inatividade (1 h) e por prazo absoluto (12 h). Sair apaga o registro | E2E em produção |
+| Sessão | Cookie HttpOnly, SameSite=Lax, Secure e `__Host-`, só com identificador opaco. No servidor ficam o hash do identificador, o `sub` do provedor e os tokens cifrados. Criar e atualizar são operações distintas: renovação e atividade são `UPDATE` condicionais (sessão existente, não vencida, versão lida), então uma sessão encerrada não renasce a partir de uma requisição que começou antes do logout, e duas renovações não sobrescrevem a mais nova. Expira por inatividade (1 h) e por prazo absoluto (12 h) | Testes com PostgreSQL real (`frontend/tests`) e E2E |
+| Transição de sessões | Sessões anteriores a esta versão, sem vínculo com a conta do provedor, são encerradas na atualização; nenhuma sessão sem vínculo é aceita, renovada ou tocada | Testes com PostgreSQL real, atualização local |
+| Administrador remanescente | Alterações no conjunto de `UNION_ADMIN` serializadas no banco, com releitura do alvo e de quem pede; nunca zero ativos | Integração com concorrência real |
+| Cota de arquivos | Reserva por organização sob lock transacional; objeto de transação revertida é apagado ou registrado para limpeza; espaço só é liberado após exclusão confirmada pelo armazenamento | Integração |
+| Recuperação de MFA | Procedimento operacional com auditoria antes e depois, verificação final, encerramento de sessões no provedor e no portal, segredo fora de argumentos | Cenários de operação em ambiente de prova |
 | MFA | TOTP obrigatório para a equipe da Union em produção, com recuperação pela administração | E2E em produção |
 | OIDC | State, nonce e PKCE S256. Retorno fora da lista é recusado, e senha direta no endpoint de token também | E2E em produção |
 | Proxy | Só 80 e 443 publicadas. Console, realm `master`, conta, saúde e métricas fechados. TLS 1.3 verificado, HSTS e limite de 40 MB | E2E em produção e auditoria |
@@ -35,7 +39,7 @@ O inventário, os cookies e os campos a preencher estão em [`PRIVACIDADE.md`](P
 
 ## Vulnerabilidades
 
-Resultados, ferramentas e classificação em [`VULNERABILIDADES.md`](VULNERABILIDADES.md).
+Resultados, avaliação individual das ocorrências altas e decisão pendente em [`VULNERABILIDADES.md`](VULNERABILIDADES.md).
 
 ## Limitações concretas
 
@@ -50,6 +54,7 @@ Resultados, ferramentas e classificação em [`VULNERABILIDADES.md`](VULNERABILI
 - Variáveis de ambiente dos containers não são um cofre: quem administra o Docker consegue lê-las.
 - A auditoria não é inviolável (ver `OPERACAO.md`).
 - Conta desativada só no Keycloak continua com acesso até o token vencer, no máximo 5 minutos. Use a revogação do portal para efeito imediato.
+- A recuperação de MFA registra o operador que executa no servidor. Quem tem root ou acesso ao Docker pode contornar o procedimento; o registro não protege contra esse administrador.
 - Com o Keycloak fora do ar, sair encerra só a sessão do portal, e a do provedor continua ativa até expirar. A tela avisa a pessoa.
 - Provedor de identidade e portal compartilham o mesmo host, em caminhos diferentes. Foi uma escolha para simplificar DNS e certificado, e uma falha de XSS em um alcançaria o outro. A CSP com nonce e a ausência de HTML dinâmico reduzem esse risco.
 - O certificado público, o SMTP real e o destino real de backup não foram exercitados.

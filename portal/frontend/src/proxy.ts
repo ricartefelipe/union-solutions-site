@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
 import { getConfig } from '@/lib/config';
 import { ProviderUnavailable, refreshSession } from '@/lib/oidc';
-import { cookieOptions, deleteSession, readSession, saveSession, sessionCookieName, SessionStoreUnavailable, type Session } from '@/lib/session';
+import { cookieOptions, deleteSession, readSession, replaceTokens, sessionCookieName, SessionStoreUnavailable, touchSession, type Session } from '@/lib/session';
 
 const PUBLIC_PREFIXES = ['/auth/', '/convite', '/sessao-encerrada', '/bff/public/', '/robots.txt', '/healthz'];
 
@@ -51,15 +51,15 @@ export async function proxy(request: NextRequest) {
   const hadCookie = request.cookies.has(sessionCookieName());
 
   // Sem o armazenamento de sessões ou sem provedor para renovar um token vencido, o acesso é recusado e a sessão continua guardada.
+  // Toda atualização é condicional: uma sessão encerrada por outra requisição não volta a existir a partir daqui.
   try {
     session = await readSession(request.cookies);
     if (session) {
       if (session.accessExp - now < 30) {
+        let refreshed: Session | null = null;
         try {
-          session = await refreshSession(session);
-          await saveSession(session);
+          refreshed = await refreshSession(session);
         } catch (cause) {
-          if (cause instanceof SessionStoreUnavailable) throw cause;
           if (!(cause instanceof ProviderUnavailable)) {
             // Conta desativada ou sessão encerrada no provedor: exige novo login.
             await deleteSession(session.id);
@@ -68,9 +68,14 @@ export async function proxy(request: NextRequest) {
             return unavailable(pathname);
           }
         }
+        if (refreshed) {
+          const outcome = await replaceTokens(refreshed);
+          if (outcome === 'updated') session = refreshed;
+          else if (outcome === 'conflict') session = await readSession(request.cookies);
+          else session = null;
+        }
       } else if (now - session.lastActive > 60) {
-        session = { ...session, lastActive: now };
-        await saveSession(session);
+        if (!(await touchSession(session, now))) session = null;
       }
     }
   } catch (cause) {

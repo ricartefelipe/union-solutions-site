@@ -5,6 +5,7 @@ import br.com.unionsolutions.portal.domain.*;
 import br.com.unionsolutions.portal.domain.Types.*;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.util.List;
@@ -17,6 +18,7 @@ public class AccountService {
     @Inject AccessPolicy policy;
     @Inject AuditService audit;
     @Inject Ports.IdentityProvider identity;
+    @Inject EntityManager em;
     @ConfigProperty(name = "portal.demo.enabled") boolean demo;
 
     @Transactional
@@ -141,7 +143,8 @@ public class AccountService {
         AppUser user = requireManageableUser(actor, userId);
         if (user.id.equals(actor.id())) throw ApiException.badRequest("SELF_CHANGE", "Você não pode alterar a situação da sua própria conta.");
         UserStatus target = active ? UserStatus.ACTIVE : UserStatus.DISABLED;
-        if (!active && user.role == Role.UNION_ADMIN && AppUser.count("role = ?1 and status = ?2", Role.UNION_ADMIN, UserStatus.ACTIVE) <= 1) {
+        if (!active && user.role == Role.UNION_ADMIN) user = serializeAdminChange(actor, userId);
+        if (!active && user.role == Role.UNION_ADMIN && user.status == UserStatus.ACTIVE && otherActiveAdmins(user.id) == 0) {
             throw ApiException.conflict("LAST_ADMIN", "É preciso manter ao menos um administrador ativo.");
         }
         boolean identityUpdated = true;
@@ -163,12 +166,34 @@ public class AccountService {
         // O tipo de conta não muda: cliente continua cliente e equipe continua equipe, no mesmo tenant.
         if (role.isUnion() != user.role.isUnion()) throw ApiException.forbidden();
         if (role.isUnion() && !actor.isUnionAdmin()) throw ApiException.forbidden();
+        if (user.role == Role.UNION_ADMIN || role == Role.UNION_ADMIN) user = serializeAdminChange(actor, userId);
+        if (user.role == Role.UNION_ADMIN && role != Role.UNION_ADMIN && user.status == UserStatus.ACTIVE && otherActiveAdmins(user.id) == 0) {
+            throw ApiException.conflict("LAST_ADMIN", "É preciso manter ao menos um administrador ativo.");
+        }
         if (user.role != role) {
             audit.record(actor, "USER_ROLE_CHANGED", "user", user.id, user.tenantId, null, user.role + " para " + role, false);
             user.role = role;
             user.updatedAt = Instant.now();
         }
         return view(user);
+    }
+
+    /**
+     * Alterações no conjunto de administradores da Union passam uma por vez, até o fim da transação (advisory lock transacional).
+     * Depois de obter a vez, o usuário é relido e a autorização, reconferida: o que valia antes da espera pode ter mudado.
+     */
+    private AppUser serializeAdminChange(Actor actor, UUID userId) {
+        em.createNativeQuery("SELECT pg_advisory_xact_lock(hashtext('union-admins'))").getSingleResult();
+        em.clear();
+        // Quem pede também pode ter sido desativado ou rebaixado enquanto esperava a vez.
+        AppUser requester = AppUser.findById(actor.id());
+        if (requester == null || requester.status != UserStatus.ACTIVE) throw ApiException.noAccess();
+        if (requester.role != actor.role()) throw ApiException.forbidden();
+        return requireManageableUser(actor, userId);
+    }
+
+    private long otherActiveAdmins(UUID userId) {
+        return AppUser.count("role = ?1 and status = ?2 and id <> ?3", Role.UNION_ADMIN, UserStatus.ACTIVE, userId);
     }
 
     private AppUser requireManageableUser(Actor actor, UUID userId) {
