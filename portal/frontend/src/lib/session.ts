@@ -42,6 +42,10 @@ const SCHEMA_STEPS = [
   'ALTER TABLE portal_session ADD COLUMN IF NOT EXISTS subject text',
   'ALTER TABLE portal_session ADD COLUMN IF NOT EXISTS version bigint NOT NULL DEFAULT 0',
   'CREATE INDEX IF NOT EXISTS portal_session_subject_idx ON portal_session (subject)',
+  // Sessões de versões anteriores não têm vínculo com a conta do provedor: sem ele, a recuperação de MFA e a revogação não as
+  // alcançariam. Elas são encerradas na transição (quem estava logado entra de novo). Idempotente e seguro com inicializações
+  // concorrentes: só apaga o que não tem vínculo, e readSession recusa qualquer linha assim que ainda apareça.
+  "DELETE FROM portal_session WHERE subject IS NULL OR subject = ''",
 ];
 
 /** O armazenamento de sessões falhou. Quem chama precisa recusar o acesso, sem encerrar a sessão da pessoa. */
@@ -56,6 +60,11 @@ function db(): Pool {
     pool.on('error', () => undefined);
   }
   return pool;
+}
+
+/** Só para testes: executa SQL direto no armazenamento. */
+export async function rawQuery(text: string, values: unknown[] = []) {
+  return query(text, values);
 }
 
 /** Só para testes: fecha as conexões abertas. */
@@ -150,6 +159,11 @@ export async function readSession(cookies: CookieReader): Promise<Session | null
     await query('DELETE FROM portal_session WHERE id_hash = $1 AND expires_at <= $2::bigint', [hashId(id), now()]);
     return null;
   }
+  if (!row.subject) {
+    // Linha sem vínculo com a conta (anterior à transição): inválida, nunca renovada.
+    await query("DELETE FROM portal_session WHERE id_hash = $1 AND (subject IS NULL OR subject = '')", [hashId(id)]);
+    return null;
+  }
   return toSession(id, row);
 }
 
@@ -160,6 +174,7 @@ function sealTokens(session: Session) {
 
 /** Só no login. Um identificador novo nunca colide; se colidir, é erro, não atualização. */
 export async function createSession(session: Session): Promise<void> {
+  if (!session.subject) throw new Error('Sessão sem vínculo com a conta do provedor.');
   const { sessionAbsoluteSeconds, sessionIdleSeconds } = getConfig();
   const tokens = await sealTokens(session);
   await query(
@@ -179,7 +194,7 @@ export async function touchSession(session: Session, at: number): Promise<boolea
     `UPDATE portal_session
        SET last_active = GREATEST(last_active, $2::bigint),
            expires_at = LEAST(created_at + $3::bigint, GREATEST(last_active, $2::bigint) + $4::bigint)
-     WHERE id_hash = $1 AND expires_at > $5::bigint`,
+     WHERE id_hash = $1 AND expires_at > $5::bigint AND subject IS NOT NULL AND subject <> ''`,
     [hashId(session.id), at, sessionAbsoluteSeconds, sessionIdleSeconds, now()],
   );
   return (result.rowCount ?? 0) > 0;
@@ -198,11 +213,11 @@ export async function replaceTokens(session: Session): Promise<UpdateOutcome> {
            last_active = GREATEST(last_active, $5::bigint),
            expires_at = LEAST(created_at + $6::bigint, GREATEST(last_active, $5::bigint) + $7::bigint),
            version = version + 1
-     WHERE id_hash = $1 AND version = $8::bigint AND expires_at > $9::bigint`,
+     WHERE id_hash = $1 AND version = $8::bigint AND expires_at > $9::bigint AND subject IS NOT NULL AND subject <> ''`,
     [hashId(session.id), tokens, session.accessExp, session.subject, session.lastActive, sessionAbsoluteSeconds, sessionIdleSeconds, session.version, now()],
   );
   if ((result.rowCount ?? 0) > 0) return 'updated';
-  const { rows } = await query('SELECT 1 FROM portal_session WHERE id_hash = $1 AND expires_at > $2::bigint', [hashId(session.id), now()]);
+  const { rows } = await query("SELECT 1 FROM portal_session WHERE id_hash = $1 AND expires_at > $2::bigint AND subject IS NOT NULL AND subject <> ''", [hashId(session.id), now()]);
   return rows.length > 0 ? 'conflict' : 'missing';
 }
 

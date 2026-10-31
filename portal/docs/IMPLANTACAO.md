@@ -95,7 +95,7 @@ sh portal-prod.sh status                                          # só o proxy 
 Depois, a partir de um computador externo:
 
 - teste as portas 5432, 8080, 8333, 9000 e 3310 no IP da VPS: precisam estar fechadas;
-- envie um convite real para um destino autorizado e confira entrega, SPF, DKIM e DMARC do remetente;
+- envie um convite real para um destino autorizado e confira entrega, SPF, DKIM e DMARC do remetente; Confira a cadeia do certificado TLS do SMTP contratado (ver item 6 de `VULNERABILIDADES.md`). Qualquer mudança no Caddyfile (`tls internal`, `acme_server`, autenticação) exige reavaliar o item 1 do mesmo documento.
 - percorra login com MFA, upload, download, EICAR bloqueado e logout;
 - rode `sh portal-prod.sh backup`, confira o destino externo e faça uma restauração de ensaio em ambiente separado.
 
@@ -113,9 +113,11 @@ Backup, restauração e atualização não rodam ao mesmo tempo: uma segunda cha
 
 **Atualização para a versão com as correções da revisão** (sessões no servidor com versão e `sub`, cota com reserva, administrador remanescente, recuperação de MFA auditada):
 
-1. `sh portal-prod.sh atualizar`. A API aplica o changeset `007-cota-e-objetos` (coluna `object_present` em `stored_file`, tabela `object_ledger`); arquivos bloqueados existentes passam a `object_present = false`, como a versão anterior os tratava. O web acrescenta `subject` e `version` em `portal_session` na subida, sem apagar sessões.
-2. Sessões abertas antes da atualização continuam valendo, mas sem `sub` até a próxima renovação de token (no máximo 5 min). `remover-mfa` só encerra sessões do portal que já tenham `sub`; repita o comando depois desse intervalo, se precisar.
-3. Confira `sh portal-prod.sh status` e, se houver `object_ledger` com `attempts` alto nos dias seguintes, o armazenamento está recusando exclusões.
+1. `sh portal-prod.sh atualizar`. A API aplica os changesets `007-cota-e-objetos` (coluna `object_present` em `stored_file`, tabela `object_ledger`) e `008-objetos-bloqueados` (arquivos bloqueados existentes voltam a contar na cota até a limpeza periódica confirmar a exclusão do objeto, porque a versão anterior podia falhar ao apagá-lo).
+2. **Sessões abertas antes da atualização são encerradas.** Elas não têm vínculo com a conta do provedor, e sem esse vínculo a recuperação de MFA e a revogação não as alcançariam; o web as apaga ao subir e recusa qualquer linha assim que ainda apareça. Quem estava logado entra de novo; a equipe da Union passa pelo TOTP. Sessões criadas por esta versão em diante são preservadas em atualizações futuras.
+3. Nos dias seguintes, `object_ledger` com `attempts` crescendo ou arquivos bloqueados que continuem com `object_present = true` indicam que o armazenamento está recusando exclusões (`OPERACAO.md`).
+
+**Se a atualização falhar no meio:** as migrations são transacionais por changeset no PostgreSQL; um changeset que falhou não fica meio aplicado, e a API não sobe enquanto ele não aplicar. Restaure o backup feito no início de `atualizar` e volte ao commit anterior do código. A remoção de sessões pelo web é idempotente: reiniciar repete sem efeito.
 
 - As migrations só avançam. **Não há rollback automático.** Se algo falhar, volte à versão anterior do código e restaure o backup feito antes da atualização.
 - A versão do código e o esquema do banco precisam corresponder: imagem anterior não é garantida com esquema novo.

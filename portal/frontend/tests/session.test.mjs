@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 
 const lib = await import(process.env.SESSION_LIB ?? '../.test-build/lib/session.js');
-const { closeSessionStore, createSession, deleteSession, deleteSessionsOfSubject, newSessionId, prepareSessionStore, readSession, replaceTokens, SessionStoreUnavailable, sessionCookieName, touchSession } = lib;
+const { closeSessionStore, createSession, deleteSession, deleteSessionsOfSubject, newSessionId, prepareSessionStore, rawQuery, readSession, replaceTokens, SessionStoreUnavailable, sessionCookieName, touchSession } = lib;
 
 const cookies = (id) => ({ get: (name) => (name === sessionCookieName() ? { value: id } : undefined) });
 const now = () => Math.floor(Date.now() / 1000);
@@ -102,6 +102,78 @@ test('encerrar por conta do provedor apaga todas as sessões dela, inclusive a r
   assert.equal(await replaceTokens({ ...inFlight, accessToken: 'n', lastActive: now() }), 'missing');
   assert.equal(await readSession(cookies(s1.id)), null);
   assert.equal(await readSession(cookies(s2.id)), null);
+});
+
+// ---------- Transição: sessões de versões anteriores, sem vínculo com a conta do provedor ----------
+
+const sha = async (id) => (await import('node:crypto')).createHash('sha256').update(id).digest('hex');
+
+/** Linha como a versão anterior gravava: sem `subject` e sem `version`. */
+async function legacyRow(id, subject = null) {
+  const t = now();
+  await rawQuery(
+    `INSERT INTO portal_session (id_hash, tokens, access_exp, created_at, last_active, expires_at, subject, version)
+     SELECT $1, tokens, $2::bigint, $3::bigint, $3::bigint, $4::bigint, $5, 0 FROM portal_session WHERE subject IS NOT NULL LIMIT 1`,
+    [await sha(id), t + 300, t, t + 3600, subject],
+  );
+}
+
+test('transição: a sessão legada sem vínculo é encerrada, mesmo ainda válida', async () => {
+  const seed = fresh();
+  await createSession(seed); // fornece tokens cifrados válidos para a linha legada
+  const legacy = newSessionId();
+  await legacyRow(legacy);
+  // Antes da transição a linha existe e não venceu.
+  assert.equal((await rawQuery('SELECT count(*) FROM portal_session WHERE id_hash = $1 AND expires_at > $2::bigint', [await sha(legacy), now()])).rows[0].count, '1');
+  await prepareSessionStore();
+  assert.equal((await rawQuery('SELECT count(*) FROM portal_session WHERE id_hash = $1', [await sha(legacy)])).rows[0].count, '0', 'apagada na transição');
+  assert.equal(await readSession(cookies(legacy)), null, 'uso depois da transição exige login');
+  assert.ok(await readSession(cookies(seed.id)), 'sessão com vínculo preservada');
+});
+
+test('transição: recuperação de MFA antes da primeira renovação não deixa sessão legada utilizável', async () => {
+  const seed = fresh();
+  await createSession(seed);
+  const legacy = newSessionId();
+  await legacyRow(legacy);
+  // A recuperação só alcança sessões com vínculo; a legada precisa ter deixado de valer por outro caminho.
+  await deleteSessionsOfSubject(seed.subject);
+  assert.equal(await readSession(cookies(legacy)), null, 'linha sem vínculo é recusada e apagada na leitura');
+  assert.equal((await rawQuery('SELECT count(*) FROM portal_session WHERE id_hash = $1', [await sha(legacy)])).rows[0].count, '0');
+});
+
+test('transição: renovação iniciada antes e concluída depois não reativa a sessão legada', async () => {
+  const seed = fresh();
+  await createSession(seed);
+  const legacy = newSessionId();
+  await legacyRow(legacy);
+  // Objeto de sessão carregado pela versão anterior (sem sub), com a renovação em voo.
+  const inFlight = { ...seed, id: legacy, subject: '', version: 0, accessToken: 'renovado', lastActive: now() };
+  await prepareSessionStore(); // transição acontece no meio
+  assert.equal(await replaceTokens(inFlight), 'missing');
+  assert.equal(await touchSession(inFlight, now()), false);
+  assert.equal(await readSession(cookies(legacy)), null);
+  // Nem mesmo uma renovação que tente gravar o vínculo recria a sessão.
+  assert.equal(await replaceTokens({ ...inFlight, subject: seed.subject }), 'missing');
+});
+
+test('transição: idempotente em reinícios e inicializações concorrentes; sessões com vínculo preservadas', async () => {
+  const a = fresh();
+  const b = fresh();
+  await createSession(a);
+  await createSession(b);
+  const legacy = newSessionId();
+  await legacyRow(legacy);
+  await Promise.all([prepareSessionStore(), prepareSessionStore(), prepareSessionStore()]);
+  await prepareSessionStore();
+  assert.ok(await readSession(cookies(a.id)));
+  assert.ok(await readSession(cookies(b.id)));
+  assert.equal(await readSession(cookies(legacy)), null);
+  assert.equal(await touchSession(a, now() + 10), true, 'sessão preservada continua operando');
+});
+
+test('criar sessão sem vínculo é erro', async () => {
+  await assert.rejects(createSession(fresh({ subject: '' })));
 });
 
 test('falha do banco é SessionStoreUnavailable, não ausência de sessão, e a sessão sobrevive', async () => {

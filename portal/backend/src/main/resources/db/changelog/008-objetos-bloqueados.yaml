@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 008-objetos-bloqueados
+      author: union-solutions
+      comment: Corrige o changeset 007, que presumiu a ausência física do objeto de arquivos bloqueados a partir do status do registro.
+      changes:
+        - sql:
+            splitStatements: true
+            sql: |
+              -- Na versão anterior, a exclusão do objeto bloqueado podia falhar e o arquivo continuava no armazenamento.
+              -- O espaço volta a contar até a limpeza periódica confirmar a exclusão (object_present passa a false só então).
+              UPDATE stored_file SET object_present = true WHERE scan_status = 'REJECTED';
