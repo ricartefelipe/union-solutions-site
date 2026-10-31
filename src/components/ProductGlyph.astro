@@ -1,0 +1,169 @@
+---
+/**
+ * Esquema simples da função de cada produto, no vocabulário gráfico da marca.
+ * É um fluxo conceitual, não uma tela. Os rótulos usam somente termos do texto da página do produto.
+ */
+import type { ProductSlug } from '../data/products';
+
+interface Props {
+  slug: ProductSlug;
+  class?: string;
+}
+
+const { slug, class: className } = Astro.props;
+
+type Label = { x: number; y: number; text: string; anchor?: 'start' | 'middle' | 'end' };
+
+type Figure = {
+  lines: string[];
+  rings?: { cx: number; cy: number; r: number }[];
+  nodes: { x: number; y: number }[];
+  labels: Label[];
+};
+
+const figures: Record<ProductSlug, Figure> = {
+  // A entrega que retorna: tentativas acompanhadas ao longo do caminho.
+  hookguard: {
+    lines: [
+      'M0 128H320',
+      'M40 128A60 60 0 0 1 160 128',
+      'M40 118A60 60 0 0 1 160 118',
+      'M160 128A60 60 0 0 1 280 128',
+      'M160 118A60 60 0 0 1 280 118',
+    ],
+    nodes: [{ x: 40, y: 128 }, { x: 160, y: 128 }, { x: 280, y: 128 }],
+    labels: [
+      { x: 0, y: 160, text: 'recepção' },
+      { x: 160, y: 160, text: 'tentativas', anchor: 'middle' },
+      { x: 320, y: 160, text: 'reprocessamento', anchor: 'end' },
+    ],
+  },
+  // Formatos diferentes que convergem para eventos padronizados.
+  filenorm: {
+    lines: [
+      'M48 16H96C160 16 160 84 214 84',
+      'M48 62H100C160 62 170 84 214 84',
+      'M48 108H100C160 108 170 84 214 84',
+      'M48 154H96C160 154 160 84 214 84',
+      'M214 78H320',
+      'M214 90H320',
+    ],
+    nodes: [{ x: 214, y: 84 }],
+    labels: [
+      { x: 0, y: 21, text: 'OFX' },
+      { x: 0, y: 67, text: 'CNAB' },
+      { x: 0, y: 113, text: 'CSV' },
+      { x: 0, y: 159, text: 'PDF' },
+      { x: 320, y: 68, text: 'eventos', anchor: 'end' },
+    ],
+  },
+  // Ciclos encadeados: assinatura, cobrança e o provedor de pagamento.
+  assinaflow: {
+    lines: [],
+    rings: [
+      { cx: 80, cy: 72, r: 62 }, { cx: 88, cy: 72, r: 62 },
+      { cx: 156, cy: 72, r: 62 }, { cx: 164, cy: 72, r: 62 },
+      { cx: 232, cy: 72, r: 62 }, { cx: 240, cy: 72, r: 62 },
+    ],
+    nodes: [{ x: 122, y: 25 }, { x: 198, y: 119 }],
+    labels: [
+      { x: 18, y: 160, text: 'assinaturas' },
+      { x: 160, y: 160, text: 'cobrança', anchor: 'middle' },
+      { x: 302, y: 160, text: 'provedor', anchor: 'end' },
+    ],
+  },
+  // Sinais dispersos que se organizam ao passar pela análise.
+  archlens: {
+    lines: [
+      'M0 22C44 22 56 56 104 56H216C264 56 276 22 320 22',
+      'M0 76H320',
+      'M0 130C44 130 56 96 104 96H216C264 96 276 130 320 130',
+    ],
+    rings: [{ cx: 160, cy: 76, r: 58 }, { cx: 160, cy: 76, r: 66 }],
+    nodes: [{ x: 94, y: 76 }, { x: 226, y: 76 }],
+    labels: [
+      { x: 0, y: 164, text: 'aplicação' },
+      { x: 160, y: 164, text: 'evidências', anchor: 'middle' },
+      { x: 320, y: 164, text: 'roteiro', anchor: 'end' },
+    ],
+  },
+  // Três aplicações ligadas à mesma suíte.
+  'fluxe-b2b-suite': {
+    lines: [
+      'M0 70H320',
+      'M0 82H320',
+      'M32 16H64A28 28 0 0 1 92 44V70',
+      'M160 16V70',
+      'M288 16H256A28 28 0 0 0 228 44V70',
+      'M32 136H64A28 28 0 0 0 92 108V82',
+      'M160 136V82',
+      'M288 136H256A28 28 0 0 1 228 108V82',
+    ],
+    nodes: [
+      { x: 32, y: 16 }, { x: 160, y: 16 }, { x: 288, y: 16 },
+      { x: 32, y: 136 }, { x: 160, y: 136 }, { x: 288, y: 136 },
+    ],
+    labels: [
+      { x: 0, y: 166, text: 'loja' },
+      { x: 160, y: 166, text: 'operações', anchor: 'middle' },
+      { x: 320, y: 166, text: 'administração', anchor: 'end' },
+    ],
+  },
+  // Caixa e retaguarda, dois lados do mesmo sistema.
+  comercialcloud: {
+    lines: [
+      'M0 40C40 40 40 120 80 120S120 40 160 40S200 120 240 120S280 40 320 40',
+      'M0 120C40 120 40 40 80 40S120 120 160 120S200 40 240 40S280 120 320 120',
+    ],
+    nodes: [{ x: 40, y: 80 }, { x: 120, y: 80 }, { x: 200, y: 80 }, { x: 280, y: 80 }],
+    labels: [
+      { x: 0, y: 22, text: 'frente de caixa' },
+      { x: 0, y: 150, text: 'retaguarda' },
+    ],
+  },
+};
+
+const figure = figures[slug];
+---
+
+<svg
+  class:list={['glyph', className]}
+  viewBox="-2 -2 324 176"
+  width="324"
+  height="176"
+  fill="none"
+  aria-hidden="true"
+  focusable="false"
+>
+  {figure.lines.map((d) => <path d={d} />)}
+  {figure.rings?.map((ring) => <circle class="ring" {...ring} />)}
+  {figure.nodes.map((node) => <circle class="node" cx={node.x} cy={node.y} r="4.5" />)}
+  {figure.labels.map((label) => <text x={label.x} y={label.y} text-anchor={label.anchor ?? 'start'}>{label.text}</text>)}
+</svg>
+
+<style>
+  .glyph {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  path,
+  .ring {
+    stroke: currentColor;
+    stroke-width: 1.25;
+    stroke-opacity: 0.55;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .node {
+    fill: var(--accent);
+    stroke: var(--glyph-node-stroke, none);
+    stroke-width: 1;
+  }
+
+  text {
+    fill: currentColor;
+    font: 500 13px var(--font-body);
+  }
+</style>

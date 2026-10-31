@@ -1,0 +1,210 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Arrow from '../../components/Arrow.astro';
+import PageHero from '../../components/PageHero.astro';
+import ProductGlyph from '../../components/ProductGlyph.astro';
+import { productContactUrl, products, type Product } from '../../data/products';
+
+export function getStaticPaths() {
+  return products.map((product) => ({ params: { slug: product.slug }, props: { product } }));
+}
+
+interface Props {
+  product: Product;
+}
+
+const { product } = Astro.props;
+const contactUrl = productContactUrl(product.slug);
+const others = products.filter((item) => item.slug !== product.slug);
+const title = `${product.name}: ${product.area.charAt(0).toLowerCase()}${product.area.slice(1)}`;
+---
+
+<BaseLayout title={title} description={`${product.purpose} Solicite uma demonstração à Union Solutions.`}>
+  <PageHero
+    title={product.name}
+    intro={product.purpose}
+    eyebrow={product.area}
+    crumbs={[{ label: 'Produtos', href: '/produtos/' }, { label: product.name }]}
+  >
+    <a slot="actions" class="btn" href={contactUrl}>Solicitar demonstração<Arrow /></a>
+    <div slot="art" class="product-art"><ProductGlyph slug={product.slug} /></div>
+  </PageHero>
+
+  <section class="section">
+    <div class="wrap split">
+      <div>
+        <h2>Para quem e em que situação</h2>
+        <p class="lede muted audience">{product.context}</p>
+      </div>
+      <ul class="situations">
+        {product.situations.map((item) => <li>{item}</li>)}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section surface-mist">
+    <div class="wrap split">
+      <div>
+        <h2>Capacidades</h2>
+        <ul class="node-list capabilities">
+          {product.capabilities.map((capability) => <li>{capability}</li>)}
+        </ul>
+        <h3 class="know-title">Bom saber</h3>
+        <p class="muted know-text">{product.goodToKnow}</p>
+      </div>
+      <div>
+        <h2>Como funciona</h2>
+        <ol class="flow">
+          {product.flow.map((step, index) => (
+            <li>
+              <span class="flow__number" aria-hidden="true">{index + 1}</span>
+              <div>
+                <h3>{step.title}</h3>
+                <p class="muted">{step.text}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="section surface-deep">
+    <div class="wrap split">
+      <div>
+        <h2>Solicite uma demonstração</h2>
+        <p class="demo-availability">{product.availability}</p>
+        <p class="muted demo-text">A conversa parte do seu cenário: avaliamos se o produto atende à sua operação e, se não atender, quais outros caminhos fazem sentido.</p>
+        <a class="btn demo-cta" href={contactUrl}>Solicitar demonstração<Arrow /></a>
+      </div>
+      <div>
+        <h3 class="topics-title">O que vale levar para a conversa</h3>
+        <ul class="node-list">
+          {product.conversationTopics.map((topic) => <li>{topic}</li>)}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <nav class="more-products" aria-label="Outros produtos">
+    <div class="wrap">
+      <h2>Outros produtos</h2>
+      <ul>
+        {others.map((item) => <li><a href={`/produtos/${item.slug}/`}>{item.name}</a></li>)}
+        <li><a href="/servicos/">Serviços sob medida</a></li>
+      </ul>
+    </div>
+  </nav>
+</BaseLayout>
+
+<style>
+  .product-art {
+    width: 100%;
+    max-width: 22rem;
+    color: var(--on-dark);
+  }
+
+  @media (min-width: 62rem) {
+    .product-art {
+      margin-left: auto;
+    }
+  }
+
+  .audience {
+    margin-top: var(--space-3);
+  }
+
+  .situations li {
+    padding-block: var(--space-4);
+    border-top: 1px solid var(--line);
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+
+  .situations li:first-child {
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .capabilities {
+    margin-top: var(--space-4);
+  }
+
+  .know-title {
+    margin-top: var(--space-5);
+    font-size: 1.125rem;
+  }
+
+  .know-text {
+    max-width: 52ch;
+    margin-top: var(--space-1);
+  }
+
+  .flow {
+    display: grid;
+    gap: var(--space-4);
+    margin-top: var(--space-4);
+  }
+
+  .flow li {
+    display: grid;
+    grid-template-columns: 2.25rem minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+
+  .flow__number {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid var(--brand);
+    border-radius: 50%;
+    color: var(--brand);
+    font-family: var(--font-display);
+  }
+
+  .flow h3 {
+    font-size: 1.125rem;
+  }
+
+  .demo-availability {
+    max-width: 48ch;
+    margin-top: var(--space-3);
+    font-weight: 500;
+  }
+
+  .demo-text {
+    max-width: 48ch;
+    margin-block: var(--space-2) var(--space-5);
+  }
+
+  .topics-title {
+    margin-bottom: var(--space-4);
+    font-size: 1.25rem;
+  }
+
+  .more-products {
+    padding-block: var(--space-6);
+  }
+
+  .more-products h2 {
+    margin-bottom: var(--space-2);
+    font-size: var(--text-lg);
+  }
+
+  .more-products ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--space-5);
+  }
+
+  .more-products a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    color: var(--brand);
+    font-weight: 600;
+  }
+</style>

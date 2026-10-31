@@ -1,0 +1,94 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ContactForm from '../components/ContactForm.astro';
+import DirectContact from '../components/DirectContact.astro';
+import PageHero from '../components/PageHero.astro';
+import PendingContact from '../components/PendingContact.astro';
+import { contact, contactMode } from '../config/site';
+
+const hasAlternative = contactMode === 'form' && (contact.email || contact.phone || contact.whatsappUrl);
+---
+
+<BaseLayout
+  title="Contato"
+  description="Conte à Union Solutions o que sua empresa precisa construir, integrar ou melhorar: produtos, consultoria, arquitetura, desenvolvimento sob medida ou parceria."
+>
+  <PageHero title="Vamos conversar sobre seu projeto." intro="Conte o que sua empresa precisa construir, integrar ou melhorar." />
+
+  <section class="section contact">
+    <div class="wrap contact__grid">
+      <div>
+        {contactMode === 'form' && (
+          <>
+            <h2 class="sr-only">Formulário de contato</h2>
+            <ContactForm />
+          </>
+        )}
+        {contactMode === 'direct' && <DirectContact />}
+        {contactMode === 'pending' && <PendingContact />}
+      </div>
+
+      {contactMode !== 'pending' && (
+        <aside class="contact__aside">
+          <div>
+            <h2>O que acontece depois</h2>
+            <p class="muted">Vamos entender sua necessidade e avaliar a solução adequada. Depois, alinhamos escopo, formato de trabalho e próximos passos.</p>
+          </div>
+
+          {hasAlternative && (
+            <div>
+              <h2>Contato direto</h2>
+              <ul>
+                {contact.email && <li><a href={`mailto:${contact.email}`}>{contact.email}</a></li>}
+                {contact.phone && <li><a href={contact.phoneHref ?? undefined}>{contact.phone}</a></li>}
+                {contact.whatsappUrl && <li><a href={contact.whatsappUrl} rel="noopener noreferrer">WhatsApp</a></li>}
+              </ul>
+            </div>
+          )}
+        </aside>
+      )}
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .contact__grid {
+    display: grid;
+    gap: var(--space-6) clamp(2rem, 6vw, 6rem);
+  }
+
+  .contact__aside {
+    display: grid;
+    align-content: start;
+    gap: var(--space-5);
+    font-size: var(--text-sm);
+  }
+
+  .contact__aside > div {
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--brand);
+  }
+
+  .contact__aside h2 {
+    margin-bottom: var(--space-2);
+    font-size: 1.125rem;
+    letter-spacing: -0.01em;
+  }
+
+  .contact__aside li {
+    padding-block: var(--space-1);
+  }
+
+  .contact__aside a {
+    display: inline-block;
+    padding-block: var(--space-2);
+    color: var(--brand);
+    font-weight: 600;
+  }
+
+  @media (min-width: 62rem) {
+    .contact__grid {
+      grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+    }
+  }
+</style>

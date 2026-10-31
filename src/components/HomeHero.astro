@@ -1,0 +1,187 @@
+---
+import Arrow from './Arrow.astro';
+
+// Cada cruzamento da linha é uma frente de atuação. Posições em % do viewBox (720 × 520).
+const fronts = [
+  { label: 'Produtos próprios', href: '/produtos/', x: 22.4, y: 75, place: 'below' },
+  { label: 'Consultoria em tecnologia', href: '/servicos/consultoria/', x: 47.4, y: 25, place: 'above' },
+  { label: 'Arquitetura de software', href: '/servicos/arquitetura/', x: 72.4, y: 75, place: 'below' },
+  { label: 'Desenvolvimento sob medida', href: '/servicos/desenvolvimento/', x: 97.4, y: 25, place: 'above' },
+];
+
+const wave = 'M60 -1200V300A90 90 0 0 0 240 300V220A90 90 0 0 1 420 220V300A90 90 0 0 0 600 300V220A90 90 0 0 1 780 220V1800';
+---
+
+<section class="hero surface-dark">
+  <div class="wrap hero__inner">
+    <div class="hero__copy">
+      <h1>Software para operar, integrar e evoluir seu negócio.</h1>
+      <p class="lede hero__lede">
+        Produtos próprios, consultoria em tecnologia, arquitetura e desenvolvimento sob medida para empresas que precisam construir, integrar ou modernizar seus sistemas.
+      </p>
+      <div class="btn-row">
+        <a class="btn" href="/contato/">Conversar sobre meu projeto<Arrow /></a>
+        <a class="btn btn--ghost" href="/produtos/">Conhecer os produtos</a>
+      </div>
+    </div>
+
+    <div class="hero__map">
+      <svg viewBox="0 0 720 520" fill="none" aria-hidden="true" focusable="false">
+        <path d={wave} pathLength="1" />
+        <path d={wave} pathLength="1" transform="translate(22 0)" />
+      </svg>
+      <ul>
+        {fronts.map((front, index) => (
+          <li
+            class:list={['hero__stop', `hero__stop--${front.place}`]}
+            style={`--x:${front.x}%;--y:${front.y}%;--i:${index}`}
+          >
+            <a href={front.href}>{front.label}</a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    overflow: hidden;
+    padding-block: clamp(2.5rem, 1.5rem + 4vw, 4.5rem);
+  }
+
+  .hero__inner {
+    display: grid;
+    gap: var(--space-7);
+    align-items: center;
+  }
+
+  h1 {
+    font-size: var(--text-h1-home);
+    line-height: 1.04;
+    letter-spacing: -0.03em;
+  }
+
+  .hero__lede {
+    margin-block: var(--space-5) var(--space-6);
+    color: var(--on-dark-soft);
+  }
+
+  .hero__map {
+    position: relative;
+    aspect-ratio: 720 / 520;
+  }
+
+  .hero__map svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    /* Em coluna única, a linha não atravessa o texto; nas laterais, sangra até a borda. */
+    clip-path: inset(0 -100vw);
+  }
+
+  path {
+    stroke: var(--on-dark);
+    stroke-width: 1.8;
+    stroke-opacity: 0.6;
+  }
+
+  .hero__stop {
+    position: absolute;
+    top: var(--y);
+    left: var(--x);
+    width: 0;
+    height: 0;
+  }
+
+  /* Nó de conexão no cruzamento das linhas. */
+  .hero__stop::before {
+    content: '';
+    position: absolute;
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 5px var(--brand);
+    transform: translate(-50%, -50%);
+  }
+
+  .hero__stop a {
+    position: absolute;
+    left: 0;
+    display: block;
+    width: max-content;
+    max-width: 7.5rem;
+    padding: var(--space-1);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.25;
+    text-align: center;
+    text-decoration: none;
+    transform: translateX(-50%);
+  }
+
+  .hero__stop a:hover {
+    color: var(--accent);
+    text-decoration: underline;
+  }
+
+  .hero__stop--below a {
+    top: 0.75rem;
+  }
+
+  .hero__stop--above a {
+    bottom: 0.75rem;
+  }
+
+  /* O último ponto fica junto à borda: o texto termina nele. */
+  .hero__stop:last-child a {
+    text-align: right;
+    transform: translateX(calc(-100% + 0.75rem));
+  }
+
+  @media (min-width: 62rem) {
+    .hero__inner {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      gap: clamp(2rem, 4vw, 4rem);
+    }
+
+    .hero__map svg {
+      clip-path: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    path {
+      stroke-dasharray: 1;
+      animation: draw 1.8s var(--ease) both;
+    }
+
+    path + path {
+      animation-delay: 0.14s;
+    }
+
+    @keyframes draw {
+      from {
+        stroke-dashoffset: 1;
+      }
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    .hero__stop {
+      animation: stop-in 0.5s ease both;
+      animation-delay: calc(0.5s + var(--i) * 0.22s);
+    }
+
+    @keyframes stop-in {
+      from {
+        opacity: 0;
+      }
+    }
+  }
+</style>

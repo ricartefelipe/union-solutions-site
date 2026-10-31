@@ -1,0 +1,66 @@
+---
+import { editorial, founder } from '../config/site';
+---
+
+<div class="founder">
+  <div aria-hidden="true">
+    <p class="founder__years">{founder.years}</p>
+    <p class="founder__caption muted">anos de experiência do fundador</p>
+  </div>
+  <div class="founder__text">
+    <span class="eyebrow">Fundador</span>
+    <h2>{founder.name}</h2>
+    <p class="founder__role">{founder.role} da Union Solutions.</p>
+    <p class="lede muted">{founder.bio}</p>
+    <p class="muted founder__body">
+      Conecta arquitetura, implementação e operação: quem desenha a solução também considera como ela será construída e mantida em funcionamento.
+    </p>
+    <p class="muted founder__link">
+      Conteúdo técnico de Felipe: <a href={editorial.url} rel="noopener">{editorial.name}</a>.
+    </p>
+  </div>
+</div>
+
+<style>
+  .founder {
+    display: grid;
+    gap: var(--space-5) clamp(2rem, 6vw, 6rem);
+    align-items: start;
+  }
+
+  .founder__years {
+    color: var(--brand);
+    font-family: var(--font-display);
+    font-size: clamp(6rem, 4rem + 8vw, 12rem);
+    font-weight: 500;
+    line-height: 0.85;
+    letter-spacing: -0.06em;
+  }
+
+  .founder__caption {
+    margin-top: var(--space-3);
+    font-size: var(--text-sm);
+    font-weight: 500;
+  }
+
+  .founder__role {
+    margin-block: var(--space-3) var(--space-4);
+    font-weight: 600;
+  }
+
+  .founder__body {
+    max-width: var(--measure);
+    margin-top: var(--space-3);
+  }
+
+  .founder__link {
+    margin-top: var(--space-4);
+    font-size: var(--text-sm);
+  }
+
+  @media (min-width: 62rem) {
+    .founder {
+      grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+    }
+  }
+</style>
