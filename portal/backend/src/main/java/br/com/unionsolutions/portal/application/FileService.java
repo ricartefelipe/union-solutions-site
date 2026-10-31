@@ -10,6 +10,9 @@ import br.com.unionsolutions.portal.domain.Types.ScanStatus;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
+import jakarta.transaction.Status;
+import jakarta.transaction.Synchronization;
+import jakarta.transaction.TransactionSynchronizationRegistry;
 import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,6 +38,8 @@ public class FileService {
     @Inject RateLimiter limiter;
     @Inject AuditService audit;
     @Inject AccessPolicy policy;
+    @Inject ObjectLedgerService ledger;
+    @Inject TransactionSynchronizationRegistry transactions;
     @ConfigProperty(name = "portal.files.max-bytes") long maxBytes;
     @ConfigProperty(name = "portal.files.tenant-quota-bytes") long tenantQuota;
     @ConfigProperty(name = "portal.scan.batch-size") int batchSize;
@@ -53,9 +58,10 @@ public class FileService {
             String name = FileRules.safeName(upload.fileName());
             String mediaType = FileRules.detect(name, upload.path());
 
-            Number used = (Number) em.createNativeQuery("SELECT COALESCE(SUM(size_bytes), 0) FROM stored_file WHERE tenant_id = :tenant AND scan_status <> 'REJECTED'")
-                    .setParameter("tenant", tenantId).getSingleResult();
-            if (used.longValue() + size > tenantQuota) {
+            // Envios da mesma organização passam aqui um por vez, até o fim da transação. Outras organizações não esperam.
+            em.createNativeQuery("SELECT pg_advisory_xact_lock(hashtext('quota'), hashtext(:tenant))")
+                    .setParameter("tenant", tenantId.toString()).getSingleResult();
+            if (usedBytes(tenantId) + size > tenantQuota) {
                 throw new ApiException(413, "TENANT_QUOTA_EXCEEDED", "O limite de armazenamento desta organização foi atingido.");
             }
 
@@ -70,12 +76,35 @@ public class FileService {
             file.scanStatus = ScanStatus.PENDING;
             file.uploadedBy = actor.id();
             file.createdAt = Instant.now();
+            file.objectPresent = true;
+            // A reserva é gravada numa transação própria: já conta para quem vier depois e sobrevive a uma reversão desta.
+            ledger.reserve(file.objectKey, file.id, tenantId, size);
             storage.put(file.objectKey, upload.path(), size, "application/octet-stream");
+            registerCompensation(file.objectKey);
             file.persist();
             return file;
         } catch (IOException e) {
             throw new ApiException(500, "FILE_READ_ERROR", "Não foi possível processar o arquivo.");
         }
+    }
+
+    /** Espaço ocupado: objetos presentes de arquivos registrados e reservas de envios ainda sem registro. */
+    public long usedBytes(UUID tenantId) {
+        Number used = (Number) em.createNativeQuery("SELECT COALESCE(SUM(size_bytes), 0) FROM stored_file WHERE tenant_id = :tenant AND object_present")
+                .setParameter("tenant", tenantId).getSingleResult();
+        return used.longValue() + ledger.reservedBytes(tenantId);
+    }
+
+    /** Depois do desfecho da transação: commit libera a reserva; reversão apaga o objeto que ficou sem registro. */
+    private void registerCompensation(String key) {
+        transactions.registerInterposedSynchronization(new Synchronization() {
+            @Override public void beforeCompletion() {}
+
+            @Override public void afterCompletion(int status) {
+                if (status == Status.STATUS_COMMITTED) ledger.release(key);
+                else ledger.compensate(key);
+            }
+        });
     }
 
     private static String quarantineKey(UUID tenantId, UUID fileId) {
@@ -159,16 +188,22 @@ public class FileService {
                 try {
                     storage.delete(file.objectKey);
                 } catch (RuntimeException e) {
+                    // A cópia fica registrada como sobra até a limpeza conseguir apagá-la.
                     LOG.warnf("Cópia em quarentena não removida para o arquivo %s: %s", fileId, e.getClass().getSimpleName());
+                    ledger.leftover(file.objectKey, file.id, file.tenantId, file.sizeBytes, e.getClass().getSimpleName() + ": " + e.getMessage());
                 }
             }
         } else {
+            boolean gone;
             try {
                 storage.delete(file.objectKey);
+                gone = true;
             } catch (RuntimeException e) {
+                // O espaço continua contado na cota enquanto o objeto existir; a limpeza periódica tenta de novo.
                 LOG.warnf("Falha ao apagar o arquivo bloqueado %s: %s", fileId, e.getClass().getSimpleName());
+                gone = false;
             }
-            markRejected(fileId, verdict.signature());
+            markRejected(fileId, verdict.signature(), gone);
         }
     }
 
@@ -200,9 +235,10 @@ public class FileService {
     }
 
     @Transactional
-    void markRejected(UUID id, String signature) {
+    void markRejected(UUID id, String signature, boolean objectGone) {
         StoredFile file = StoredFile.findById(id);
         file.scanStatus = ScanStatus.REJECTED;
+        file.objectPresent = !objectGone;
         file.scanDetail = signature == null ? null : signature.substring(0, Math.min(signature.length(), 200));
         file.scannedAt = Instant.now();
         file.scanClaimedUntil = null;

@@ -24,4 +24,6 @@ public class StoredFile extends PanacheEntityBase {
     @Column(name = "scanned_at") public Instant scannedAt;
     @Column(name = "uploaded_by") public UUID uploadedBy;
     @Column(name = "created_at") public Instant createdAt;
+    /** Falso quando o objeto foi apagado do armazenamento. Só então o espaço deixa de contar na cota. */
+    @Column(name = "object_present") public boolean objectPresent = true;
 }

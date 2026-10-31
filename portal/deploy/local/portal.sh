@@ -53,7 +53,7 @@ case "${1:-help}" in
   up)
     init_env
     # session-db-init termina depois de preparar o banco: `--wait` trataria a saída como falha, então ele roda antes.
-    $COMPOSE up -d --build --no-deps postgres
+    $COMPOSE up -d --build --wait --wait-timeout 300 --no-deps postgres
     $COMPOSE up --build --no-deps --exit-code-from session-db-init session-db-init >/dev/null
     $COMPOSE up -d --build --wait --wait-timeout 900 postgres mailpit seaweedfs clamav keycloak backend frontend
     update_realm

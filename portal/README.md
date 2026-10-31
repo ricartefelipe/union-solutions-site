@@ -53,8 +53,8 @@ No ambiente local, o segundo fator fica desligado. Em produção, ele é obrigat
 # API: testes de integração com PostgreSQL real. Exige Java 21, Maven e Docker.
 cd portal/backend && mvn test
 
-# Web: tipos e identidade visual igual à do site
-cd portal/frontend && npm ci && npm run typecheck && npm run check:brand
+# Web: tipos, identidade visual igual à do site e armazenamento de sessões contra PostgreSQL real (exige Docker)
+cd portal/frontend && npm ci && npm run typecheck && npm run check:brand && npm run test:session
 
 # Navegador real, contra o ambiente local em execução. Exige Google Chrome.
 cd portal/e2e && npm ci && npm test
