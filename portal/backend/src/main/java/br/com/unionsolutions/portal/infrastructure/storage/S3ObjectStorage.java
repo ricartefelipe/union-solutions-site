@@ -78,6 +78,7 @@ public class S3ObjectStorage implements Ports.ObjectStorage {
         client().copyObject(b -> b.sourceBucket(bucket).sourceKey(fromKey).destinationBucket(bucket).destinationKey(toKey));
     }
 
+    /** No S3, apagar chave inexistente responde 204: sucesso significa ausência confirmada. 403, tempo esgotado e indisponibilidade lançam exceção. */
     @Override
     public void delete(String key) {
         client().deleteObject(b -> b.bucket(bucket).key(key));

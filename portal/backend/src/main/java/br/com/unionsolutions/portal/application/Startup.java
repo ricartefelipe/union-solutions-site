@@ -28,9 +28,31 @@ public class Startup {
     @Inject Ports.IdentityProvider identity;
     @Inject AuditService audit;
     @Inject FileService files;
+    @Inject ObjectLedgerService ledger;
     @ConfigProperty(name = "portal.bootstrap.admin-email") Optional<String> bootstrapAdmin;
     @ConfigProperty(name = "portal.demo.enabled") boolean demoEnabled;
     private volatile String pendingBootstrap;
+    private volatile Instant nextBootstrapAttempt = Instant.EPOCH;
+    private int bootstrapFailures;
+
+    /** Para o teste de regressão: arma o reenvio como se a API tivesse acabado de subir. */
+    public void armBootstrapForTests(String email) {
+        pendingBootstrap = email;
+        nextBootstrapAttempt = Instant.EPOCH;
+        bootstrapFailures = 0;
+    }
+
+    public boolean bootstrapPending() {
+        return pendingBootstrap != null;
+    }
+
+    public Instant nextBootstrapAttempt() {
+        return nextBootstrapAttempt;
+    }
+
+    public void skipBootstrapWaitForTests() {
+        nextBootstrapAttempt = Instant.EPOCH;
+    }
     @ConfigProperty(name = "portal.public-url") String publicUrl;
 
     void onStart(@Observes StartupEvent event) {
@@ -70,17 +92,25 @@ public class Startup {
         return admin != null && admin.role == Role.UNION_ADMIN && admin.keycloakSub == null;
     }
 
-    /** O provedor pode ainda estar iniciando ou o SMTP pode falhar por instantes. */
+    /**
+     * O provedor pode ainda estar iniciando ou o SMTP pode falhar por instantes. Em falha, espera cada vez mais (30 s até 10 min).
+     * Depois que o provedor aceita o envio, não há nova tentativa: aceite do provedor não é entrega do e-mail.
+     */
     @Scheduled(every = "30s", delayed = "30s", identity = "bootstrap-retry", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
-    void retryBootstrap() {
+    public void retryBootstrap() {
         String email = pendingBootstrap;
-        if (email == null) return;
+        if (email == null || Instant.now().isBefore(nextBootstrapAttempt)) return;
         try {
             identity.ensureUserAndSendSetup(email, publicUrl.replaceAll("/+$", "") + "/", true);
             pendingBootstrap = null;
-            LOG.info("Primeiro administrador: o provedor de identidade enviou o e-mail de definição de senha.");
+            bootstrapFailures = 0;
+            LOG.info("Primeiro administrador: o provedor de identidade aceitou o envio do e-mail de definição de senha.");
         } catch (RuntimeException e) {
-            LOG.warnf("E-mail do primeiro administrador ainda não enviado, nova tentativa em 30 s: %s", e.getMessage());
+            bootstrapFailures = Math.min(bootstrapFailures + 1, 5);
+            long waitSeconds = 30L << (bootstrapFailures - 1);
+            nextBootstrapAttempt = Instant.now().plusSeconds(waitSeconds);
+            LOG.warnf("E-mail do primeiro administrador ainda não enviado (%s), nova tentativa em %d s. Para antecipar, reinicie a API.",
+                    e.getClass().getSimpleName(), waitSeconds);
         }
     }
 
@@ -181,6 +211,11 @@ public class Startup {
         milestone.createdAt = now;
         milestone.updatedAt = now;
         milestone.persist();
+    }
+
+    @Scheduled(every = "{portal.ledger.interval}", delayed = "2m", identity = "ledger-reconcile", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
+    void reconcileObjects() {
+        ledger.reconcile();
     }
 
     @Scheduled(every = "{portal.scan.interval}", concurrentExecution = Scheduled.ConcurrentExecution.SKIP, identity = "scan-files")

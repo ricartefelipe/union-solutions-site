@@ -15,7 +15,11 @@ Os comandos `portal-prod.sh` valem para a produção, e `portal.sh`, para o ambi
 
 ## Primeiro administrador
 
-Defina `PORTAL_BOOTSTRAP_ADMIN_EMAIL` antes da primeira subida. Enquanto não existir nenhum administrador, a API cadastra esse e-mail e pede ao Keycloak o e-mail de definição de senha. Até o primeiro login, ela tenta de novo a cada 30 segundos enquanto o envio falhar, e registra o motivo no log. Depois disso, a variável deixa de ter efeito.
+Defina `PORTAL_BOOTSTRAP_ADMIN_EMAIL` antes da primeira subida. Enquanto não existir nenhum administrador, a API cadastra esse e-mail e pede ao Keycloak o e-mail de definição de senha.
+
+- Se o provedor ou o SMTP falhar, a API tenta de novo com espera crescente: 30 s, 1 min, 2 min, 4 min, 8 min e, daí em diante, a cada 8 min, registrando só o tipo da falha no log.
+- Quando o provedor **aceita** o envio, as tentativas param. Aceite do Keycloak não é entrega: se o e-mail não chegar, confira o SMTP e a caixa de spam e use "Esqueci a senha" na tela de login, que faz o provedor enviar de novo.
+- Reiniciar a API recomeça as tentativas na hora, enquanto o primeiro login não acontecer. Depois do primeiro login, a variável deixa de ter efeito.
 
 O vínculo com a conta ocorre no primeiro login, com e-mail verificado. Em produção, esse login também exige configurar o segundo fator.
 
@@ -28,13 +32,22 @@ O vínculo com a conta ocorre no primeiro login, com e-mail verificado. Em produ
 
 O papel `portal-mfa` é atribuído à conta pela API, ao enviar o e-mail de definição de senha. O realm usa o fluxo `portal-browser-mfa`, fixado no compose de produção. No ambiente local, o segundo fator fica desligado.
 
-**Recuperação:** quem perdeu o dispositivo pede à administração. Confirme a identidade da pessoa por outro canal antes de rodar:
+**Recuperação:** quem perdeu o dispositivo pede à administração. Confirme a identidade da pessoa por outro canal e registre o atendimento antes de rodar:
 
 ```bash
-sh portal-prod.sh remover-mfa <e-mail>
+sh portal-prod.sh remover-mfa <e-mail> "<motivo ou identificador do atendimento>"
 ```
 
-No login seguinte, o provedor exige configurar um novo TOTP. Códigos de recuperação não estão habilitados. A conta de console do Keycloak (`KC_BOOTSTRAP_ADMIN_*`) não passa por esse fluxo e não é exposta pelo proxy, o que evita autobloqueio. Quem acessa o servidor consegue usá-la, então proteja o acesso SSH.
+O que o comando faz, nesta ordem:
+
+1. Grava a tentativa na auditoria (`MFA_RESET_REQUESTED`), com operador, motivo e identificador de correlação. Se a auditoria estiver indisponível, **nada é alterado**.
+2. No provedor, com o cliente administrativo permanente `portal-admin` (o segredo sai do ambiente do container pelo mecanismo suportado do `kcadm`, nunca por argumento de processo): exige exatamente uma conta com o e-mail, remove cada credencial TOTP conferindo o resultado, relê as credenciais e só prossegue se não restar nenhuma, e encerra as sessões da conta no Keycloak.
+3. Apaga as sessões da conta no portal (`portal_sessao`, pelo `sub` do provedor). Uma renovação de token em voo não as recria. Toda sessão do portal tem esse vínculo: as de versões anteriores, que não tinham, foram encerradas na atualização, e o portal recusa qualquer sessão sem ele.
+4. Grava o desfecho na auditoria (`MFA_RESET_RESULT`) e no `syslog` do servidor (`logger -t portal-prod`), sem senhas, tokens, sementes ou códigos.
+
+No login seguinte, o provedor exige configurar um novo TOTP: o papel `portal-mfa` não é tocado. Saídas: `2` autenticação administrativa, `3` conta ausente ou ambígua (ou auditoria indisponível), `4` remoção falhou, `5` verificação final acusou credencial restante, `6` **recuperação parcial**: o segundo fator foi removido, mas sessões do provedor ou do portal não foram encerradas; o comando diz o que faltou e deve ser repetido.
+
+Limites de confiança: o operador registrado é quem executa no servidor (com `sudo`, o usuário original). Quem tem root ou acesso ao Docker consegue fazer o mesmo por outros caminhos, então o registro vale para quem segue o procedimento, não contra um administrador hostil. Códigos de recuperação não estão habilitados. A conta de console do Keycloak (`KC_BOOTSTRAP_ADMIN_*`) continua existindo para o realm `master`, não é exposta pelo proxy e não é usada por este comando; a credencial permanente é o segredo do cliente `portal-admin` (`PORTAL_KEYCLOAK_ADMIN_SECRET`), com escopo de gestão de usuários do realm `union-portal`. Para rotacioná-la, gere um segredo novo no provedor, atualize `.env` e reinicie API e provedor.
 
 As páginas de conta do provedor (`/realms/*/account`) ficam fechadas no proxy, para ninguém remover o próprio TOTP.
 
@@ -43,6 +56,8 @@ As páginas de conta do provedor (`/realms/*/account`) ficam fechadas no proxy, 
 **Novo cliente.** Em Clientes, crie a organização e convide a administração do cliente. Depois crie o projeto em Projetos e, em Participantes, associe as pessoas e marque quem pode aprovar.
 
 **Convites.** Valem 7 dias (`PORTAL_INVITATION_TTL`) e uma única utilização. Um novo convite para o mesmo e-mail e organização substitui o anterior.
+
+**Último administrador.** Desativar ou rebaixar um `UNION_ADMIN` passa por uma fila única no banco (advisory lock transacional): duas alterações ao mesmo tempo são aplicadas uma depois da outra, com a autorização de quem pede reconferida na vez dele. Nunca fica zero administradores ativos; quem perde a vez recebe `409 LAST_ADMIN` ou, se já tiver sido desativado, `403`.
 
 **Revogar acesso.** São mecanismos diferentes, e os dois foram testados:
 
@@ -72,6 +87,8 @@ Com o ClamAV fora do ar, os arquivos ficam pendentes e são verificados quando e
 
 Limites: `PORTAL_FILE_MAX_BYTES` (25 MiB) por arquivo e `PORTAL_FILE_TENANT_QUOTA_BYTES` (5 GiB) por organização.
 
+**Como a cota é contada.** Envios da mesma organização passam um por vez (advisory lock por organização, sem travar as outras). Contam: objetos presentes de arquivos registrados, em qualquer situação de verificação, e reservas de envios em andamento. Um arquivo bloqueado pelo antivírus só deixa de contar depois que o armazenamento **confirmar** a exclusão (`object_present = false`): apagar com sucesso, inclusive de chave já inexistente, é a confirmação; indisponibilidade, tempo esgotado ou recusa de autorização mantêm o objeto contado e a limpeza periódica tenta de novo. Registros bloqueados anteriores à atualização entram nessa mesma regra (changeset 008). Reconciliação e compensação são repetíveis sem efeito colateral. Se a transação de um envio for revertida depois de o objeto já estar gravado, a API apaga o objeto; se não conseguir, ele fica em `object_ledger` e a limpeza periódica (`PORTAL_LEDGER_INTERVAL`, 5 min) tenta de novo depois da idade mínima (`PORTAL_LEDGER_MIN_AGE`, 10 min), sem tocar objetos de arquivos registrados, pendentes ou em verificação. `object_ledger` com `attempts` crescendo indica que o armazenamento está recusando exclusões.
+
 ## Backup e restauração
 
 **O banco da aplicação sozinho não recupera o portal.** Os itens abaixo precisam estar disponíveis juntos:
@@ -85,6 +102,8 @@ Limites: `PORTAL_FILE_MAX_BYTES` (25 MiB) por arquivo e `PORTAL_FILE_TENANT_QUOT
 
 As sessões (`portal_sessao`) não entram no backup. Depois de restaurar, todos entram de novo.
 
+**Exclusão mútua.** Backup, restauração e atualização passam um por vez por implantação, com `flock` em `.env.<projeto>.lock`. Uma chamada manual durante o timer espera até `PORTAL_LOCK_WAIT` segundos (600) e desiste com a saída `75`, sem pausar nem despausar nada e sem tocar na área da outra execução. `atualizar` chama `backup` com a trava já em mãos.
+
 ### Produção
 
 ```bash
@@ -96,11 +115,16 @@ sh portal-prod.sh restaurar       # pede confirmação; aceita o ID de um snapsh
 
 O `backup`:
 
-1. Pausa a API, para banco e objetos corresponderem ao mesmo momento. O portal fica indisponível só durante esta etapa.
-2. Recusa continuar sem espaço (`PORTAL_BACKUP_MIN_FREE_MB`) e falha se a reconciliação acusar objeto faltando.
-3. Copia bancos e objetos para a área temporária e devolve a API ao normal, mesmo em caso de falha ou interrupção.
-4. Envia ao destino, com prazo limitado (`PORTAL_BACKUP_TIMEOUT_SECONDS`), aplica a retenção (`PORTAL_BACKUP_KEEP_*`) e roda `restic check`.
-5. Apaga a cópia temporária, que não é cifrada, mesmo se o envio falhar.
+1. Recusa começar se a API já estiver pausada por outra atividade (saída `70`), e remove áreas temporárias abandonadas por execuções anteriores que tenham morrido sem limpar (só com a trava em mãos e com mais de uma hora).
+2. Pausa a API, para banco e objetos corresponderem ao mesmo momento. O portal fica indisponível só durante a cópia local.
+3. Em área temporária própria desta execução (`/staging/<data>-<pid>`): recusa continuar sem espaço (`PORTAL_BACKUP_MIN_FREE_MB`, saída `3`), falha se a reconciliação acusar objeto faltando (saída `4`), copia os dois bancos e os objetos e grava as somas. A limpeza da área é instalada antes de qualquer passo falível.
+4. Despausa a API e **confere** que ela voltou (`running`, não pausada), com até cinco tentativas. Se não voltar, o comando falha com aviso explícito e o comando manual para corrigir.
+5. Envia ao destino com prazo (`PORTAL_BACKUP_TIMEOUT_SECONDS`). Só inicializa o repositório quando o restic diz que ele não existe (saída 10); senha errada (12), destino inacessível, corrupção ou falta de permissão interrompem sem criar repositório novo. Aplica a retenção (`PORTAL_BACKUP_KEEP_*`) e roda `restic check`.
+6. Apaga a área temporária, que não é cifrada, em sucesso, falha ou interrupção (`SIGTERM`). `SIGKILL` e queda de energia não passam por aí: a área fica e é removida no passo 1 da próxima execução.
+
+**Consistência entre banco e objetos.** Pausar a API congela os processos dela, não "drena" o que estava em voo. Um envio interrompido no meio da gravação do objeto não tem registro no banco e o objeto incompleto não é confirmado pelo armazenamento: não entra na cópia. Uma liberação de arquivo interrompida entre copiar para `clean/` e registrar deixa o objeto antigo em `quarantine/` e o novo em `clean/`: a cópia traz os dois, e o registro aponta para o que ainda vale. A reconciliação (`reconciliar`) acusa objeto registrado sem arquivo; objeto sem registro só é relatado.
+
+**Testes dos cenários de falha:** `bash deploy/production/teste/testa-operacao.sh` no ambiente de prova cobre backups sobrepostos, backup contra restauração e atualização, erro em cada fase, cancelamento, área abandonada, API pausada por outra atividade, falha de despausa, senha de backup errada e os modos de falha da recuperação de MFA.
 
 **Agendamento:** instale `deploy/production/systemd/portal-backup.service` e `.timer`, ajustando `WorkingDirectory`. Uma falha aparece em `systemctl --failed` e em `journalctl -u portal-backup`. Encaminhar esse aviso para alguém, por e-mail ou monitor, depende da infraestrutura escolhida.
 
