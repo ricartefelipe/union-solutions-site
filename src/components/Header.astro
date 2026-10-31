@@ -1,0 +1,250 @@
+---
+import Logo from './Logo.astro';
+import { nav, primaryCta, site } from '../config/site';
+
+const path = Astro.url.pathname;
+const isCurrent = (href: string) => path === href || path.startsWith(href);
+---
+
+<header class="site-header surface-dark">
+  <div class="wrap site-header__bar">
+    <a class="site-header__logo" href="/" aria-label={`${site.name}: página inicial`}>
+      <Logo />
+    </a>
+
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="menu-principal" data-menu-toggle>
+      <span class="menu-toggle__icon" aria-hidden="true"></span>
+      <span data-menu-label>Abrir menu</span>
+    </button>
+
+    <nav class="site-nav" id="menu-principal" aria-label="Principal" data-menu>
+      <ul class="site-nav__list">
+        {nav.map((item) => (
+          <li>
+            <a href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>{item.label}</a>
+          </li>
+        ))}
+      </ul>
+      <a class="btn site-nav__cta" href={primaryCta.href}>{primaryCta.label}</a>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const toggle = document.querySelector<HTMLButtonElement>('[data-menu-toggle]');
+  const menu = document.querySelector<HTMLElement>('[data-menu]');
+  const label = document.querySelector<HTMLElement>('[data-menu-label]');
+
+  if (toggle && menu && label) {
+    const setOpen = (open: boolean) => {
+      toggle.setAttribute('aria-expanded', String(open));
+      label.textContent = open ? 'Fechar menu' : 'Abrir menu';
+      menu.classList.toggle('is-open', open);
+    };
+    const isOpen = () => toggle.getAttribute('aria-expanded') === 'true';
+
+    toggle.addEventListener('click', () => setOpen(!isOpen()));
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && isOpen()) {
+        setOpen(false);
+        toggle.focus();
+      }
+    });
+
+    menu.addEventListener('click', (event) => {
+      if ((event.target as Element).closest('a')) setOpen(false);
+    });
+
+    // Fecha ao sair do menu com Tab ou ao clicar fora.
+    menu.addEventListener('focusout', (event) => {
+      const next = event.relatedTarget as Node | null;
+      if (isOpen() && next && !menu.contains(next) && !toggle.contains(next)) setOpen(false);
+    });
+    document.addEventListener('click', (event) => {
+      const target = event.target as Node;
+      if (isOpen() && !menu.contains(target) && !toggle.contains(target)) setOpen(false);
+    });
+
+    window.matchMedia('(min-width: 62rem)').addEventListener('change', () => setOpen(false));
+  }
+</script>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    border-bottom: 1px solid var(--line-on-dark);
+  }
+
+  .site-header__bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0 1.5rem;
+    min-height: var(--header-height);
+    padding-block: 0.625rem;
+  }
+
+  .site-header__logo {
+    display: block;
+    flex: none;
+  }
+
+  .menu-toggle {
+    display: none;
+    align-items: center;
+    gap: 0.625rem;
+    min-height: 2.75rem;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid rgb(255 255 255 / 0.45);
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--on-dark);
+    font: 600 var(--text-sm) / 1 var(--font-body);
+    cursor: pointer;
+  }
+
+  :global(.js) .menu-toggle {
+    display: inline-flex;
+  }
+
+  .menu-toggle__icon,
+  .menu-toggle__icon::before {
+    display: block;
+    width: 1.125rem;
+    height: 1.5px;
+    background: currentColor;
+    transition: transform 0.2s ease;
+  }
+
+  .menu-toggle__icon {
+    transform: translateY(-3px);
+  }
+
+  .menu-toggle__icon::before {
+    content: '';
+    transform: translateY(6px);
+  }
+
+  [aria-expanded='true'] .menu-toggle__icon {
+    transform: rotate(45deg);
+  }
+
+  [aria-expanded='true'] .menu-toggle__icon::before {
+    transform: rotate(-90deg);
+  }
+
+  /* Em telas muito estreitas, só o ícone cabe ao lado da logo; o rótulo segue acessível. */
+  @media (max-width: 23.75rem) {
+    .menu-toggle {
+      min-width: 2.75rem;
+      justify-content: center;
+    }
+
+    [data-menu-label] {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+  }
+
+  /* Móvel: painel aberto pelo botão. Sem JavaScript, fica sempre visível. */
+  .site-nav {
+    flex-basis: 100%;
+    padding-block: 0.5rem 1rem;
+  }
+
+  :global(.js) .site-nav:not(.is-open) {
+    display: none;
+  }
+
+  .site-nav__list a {
+    display: block;
+    padding-block: 0.875rem;
+    border-bottom: 1px solid var(--line-on-dark);
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    text-decoration: none;
+  }
+
+  .site-nav__list a[aria-current='page'] {
+    color: var(--accent);
+  }
+
+  .site-nav__cta {
+    width: 100%;
+    margin-top: 1.25rem;
+  }
+
+  @media (min-width: 62rem) {
+    .site-header__bar {
+      flex-wrap: nowrap;
+    }
+
+    :global(.js) .menu-toggle {
+      display: none;
+    }
+
+    .site-nav,
+    :global(.js) .site-nav:not(.is-open) {
+      display: flex;
+      flex-basis: auto;
+      align-items: center;
+      gap: 2.25rem;
+      padding-block: 0;
+    }
+
+    .site-nav__list {
+      display: flex;
+      gap: 2.25rem;
+    }
+
+    .site-nav__list a {
+      position: relative;
+      display: flex;
+      align-items: center;
+      min-height: 2.75rem;
+      padding-block: 0;
+      border: 0;
+      font-family: var(--font-body);
+      font-size: 1rem;
+      font-weight: 500;
+    }
+
+    .site-nav__list a::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      bottom: 0.25rem;
+      left: 0;
+      height: 2px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.25s var(--ease);
+    }
+
+    .site-nav__list a:hover::after,
+    .site-nav__list a[aria-current='page']::after {
+      transform: scaleX(1);
+    }
+
+    .site-nav__list a[aria-current='page'] {
+      color: inherit;
+    }
+
+    .site-nav__cta {
+      width: auto;
+      min-height: 2.75rem;
+      margin-top: 0;
+      padding-block: var(--space-2);
+      font-size: var(--text-sm);
+    }
+  }
+</style>

@@ -1,0 +1,71 @@
+---
+import Arrow from './Arrow.astro';
+import { products } from '../data/products';
+import { interests } from '../lib/contact-options';
+
+const productNames = Object.fromEntries(products.map((product) => [product.slug, product.name]));
+const interestValues = interests.map((item) => item.value);
+---
+
+<div
+  class="pending"
+  role="note"
+  data-config-pending
+  data-products={JSON.stringify(productNames)}
+  data-interests={JSON.stringify(interestValues)}
+>
+  <h2>Contato ainda não disponível</h2>
+  <p class="pending__context" data-context hidden></p>
+  <p>Os canais de atendimento desta prévia ainda não foram ativados, e nenhuma mensagem pode ser enviada por aqui.</p>
+</div>
+
+<div class="btn-row pending__links">
+  <a class="text-link" href="/produtos/">Conhecer os produtos<Arrow /></a>
+  <a class="text-link" href="/servicos/">Conhecer os serviços<Arrow /></a>
+</div>
+
+<script>
+  import { readContactContext } from '../lib/contact-links';
+
+  const panel = document.querySelector<HTMLElement>('[data-config-pending]');
+
+  if (panel) {
+    const productNames = JSON.parse(panel.dataset.products ?? '{}') as Record<string, string>;
+    const interestValues = JSON.parse(panel.dataset.interests ?? '[]') as string[];
+    const message = readContactContext(window.location.search, interestValues, productNames);
+    const context = panel.querySelector<HTMLElement>('[data-context]');
+    if (message && context) {
+      context.textContent = `Assunto: ${message.subject}.`;
+      context.hidden = false;
+    }
+  }
+</script>
+
+<style>
+  .pending {
+    padding: var(--space-4) var(--space-5);
+    border-left: 4px solid var(--notice-line);
+    background: var(--notice-bg);
+    color: var(--notice-ink);
+  }
+
+  h2 {
+    margin-bottom: var(--space-2);
+    font-size: 1.25rem;
+    letter-spacing: -0.01em;
+  }
+
+  .pending__context {
+    margin-bottom: var(--space-2);
+    font-weight: 600;
+  }
+
+  .pending__context[hidden] {
+    display: none;
+  }
+
+  .pending__links {
+    gap: 0 var(--space-6);
+    margin-top: var(--space-4);
+  }
+</style>
