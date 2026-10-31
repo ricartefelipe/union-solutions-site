@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-auditoria
+      author: union-solutions
+      changes:
+        - sql:
+            splitStatements: true
+            sql: |
+              CREATE TABLE audit_event (
+                id uuid PRIMARY KEY,
+                tenant_id uuid REFERENCES organization (id),
+                project_id uuid,
+                actor_id uuid REFERENCES app_user (id),
+                action varchar(60) NOT NULL,
+                resource_type varchar(40) NOT NULL,
+                resource_id uuid,
+                summary varchar(240),
+                visible_to_client boolean NOT NULL DEFAULT false,
+                correlation_id varchar(64),
+                created_at timestamptz NOT NULL
+              );
+              CREATE INDEX audit_event_tenant_idx ON audit_event (tenant_id, created_at DESC);
+              CREATE INDEX audit_event_activity_idx ON audit_event (tenant_id, visible_to_client, created_at DESC);
+              CREATE INDEX audit_event_created_idx ON audit_event (created_at DESC);
+
+              -- A aplicação só insere. Quem administra o banco ainda pode alterar: não é inviolável.
+              CREATE FUNCTION audit_event_append_only() RETURNS trigger AS '
+              BEGIN
+                RAISE EXCEPTION ''audit_event is append-only'';
+              END' LANGUAGE plpgsql;
+              CREATE TRIGGER audit_event_append_only_trg BEFORE UPDATE OR DELETE ON audit_event
+                FOR EACH ROW EXECUTE FUNCTION audit_event_append_only();

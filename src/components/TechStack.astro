@@ -1,0 +1,72 @@
+---
+import { techGroups, techIntro } from '../data/services';
+---
+
+<section class="section tech" aria-labelledby="competencias">
+  <div class="wrap">
+    <div class="tech__head">
+      <h2 id="competencias">Competências tecnológicas</h2>
+      <p class="muted">{techIntro}</p>
+    </div>
+    <div class="tech__groups">
+      {techGroups.map((group) => (
+        <div>
+          <h3>{group.title}</h3>
+          <p class="muted">{group.items.join(', ')}.</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .tech__head {
+    display: grid;
+    gap: var(--space-3) clamp(2rem, 5vw, 5rem);
+    margin-bottom: var(--space-6);
+  }
+
+  .tech__head h2 {
+    font-size: var(--text-xl);
+  }
+
+  .tech__head p {
+    max-width: var(--measure);
+  }
+
+  .tech__groups {
+    display: grid;
+    gap: var(--space-5) var(--space-6);
+  }
+
+  .tech__groups > div {
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--line);
+  }
+
+  h3 {
+    margin-bottom: var(--space-1);
+    font-size: 1rem;
+    letter-spacing: 0;
+  }
+
+  .tech__groups p {
+    font-size: var(--text-sm);
+  }
+
+  @media (min-width: 40rem) {
+    .tech__groups {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 62rem) {
+    .tech__head {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    }
+
+    .tech__groups {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+</style>

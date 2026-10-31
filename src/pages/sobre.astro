@@ -1,0 +1,103 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Arrow from '../components/Arrow.astro';
+import CtaBand from '../components/CtaBand.astro';
+import FounderBlock from '../components/FounderBlock.astro';
+import PageHero from '../components/PageHero.astro';
+
+const fronts = [
+  { label: 'Produtos próprios', href: '/produtos/' },
+  { label: 'Consultoria em tecnologia', href: '/servicos/consultoria/' },
+  { label: 'Arquitetura de software', href: '/servicos/arquitetura/' },
+  { label: 'Desenvolvimento sob medida', href: '/servicos/desenvolvimento/' },
+];
+
+const principles = [
+  {
+    title: 'A decisão técnica responde a uma necessidade do negócio',
+    text: 'A tecnologia é escolhida em função do problema, da operação e dos objetivos da empresa.',
+  },
+  {
+    title: 'O caminho adequado pode não ser o maior',
+    text: 'Um produto existente, uma consultoria ou uma solução sob medida atendem a situações diferentes. A avaliação começa por essa pergunta.',
+  },
+  {
+    title: 'O escopo é combinado de forma explícita',
+    text: 'O que será feito, o que será entregue e o que fica de fora são definidos na proposta.',
+  },
+  {
+    title: 'O sistema precisa continuar funcionando depois da entrega',
+    text: 'Segurança, desempenho e operação são considerados desde o desenho da solução.',
+  },
+];
+---
+
+<BaseLayout
+  title="Sobre"
+  description="A Union Solutions é uma empresa de tecnologia com produtos próprios, consultoria, arquitetura de software e desenvolvimento sob medida, fundada por Felipe Ricarte Magalhães."
+>
+  <PageHero
+    title="Uma empresa de tecnologia que conecta decisão e construção."
+    intro="Quatro frentes igualmente importantes, para necessidades diferentes: produtos próprios, consultoria em tecnologia, arquitetura de software e desenvolvimento sob medida."
+  />
+
+  <section class="section">
+    <div class="wrap split">
+      <h2>O que fazemos</h2>
+      <div>
+        <p class="statement">Ajudamos empresas a operar, integrar e evoluir por meio de software, com um produto existente, com orientação técnica ou com um sistema construído para a sua realidade.</p>
+        <ul class="front-links">
+          {fronts.map((front) => <li><a class="text-link" href={front.href}>{front.label}<Arrow /></a></li>)}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section surface-deep">
+    <div class="wrap split">
+      <div class="split__sticky">
+        <h2>Como pensamos o trabalho</h2>
+      </div>
+      <ul class="rows principles">
+        {principles.map((item) => (
+          <li>
+            <h3>{item.title}</h3>
+            <p class="muted">{item.text}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section surface-mist">
+    <div class="wrap">
+      <FounderBlock />
+    </div>
+  </section>
+
+  <CtaBand
+    title="O que sua empresa precisa construir ou melhorar?"
+    text="Conte seu cenário. Vamos avaliar se um produto existente, uma consultoria ou uma solução sob medida é o caminho adequado."
+    label="Falar com a Union Solutions"
+    href="/contato/"
+  />
+</BaseLayout>
+
+<style>
+  .statement {
+    max-width: 40ch;
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    line-height: 1.3;
+    letter-spacing: -0.008em;
+  }
+
+  .front-links {
+    display: grid;
+    margin-top: var(--space-4);
+  }
+
+  .principles > li {
+    grid-template-columns: 1fr;
+  }
+</style>

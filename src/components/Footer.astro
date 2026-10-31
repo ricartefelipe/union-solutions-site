@@ -1,0 +1,136 @@
+---
+import Logo from './Logo.astro';
+import { contact, editorial, hasDirectContact, nav, primaryCta, site } from '../config/site';
+import { services } from '../data/services';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer surface-dark">
+  <div class="wrap site-footer__grid">
+    <div class="site-footer__about">
+      <a class="site-footer__logo" href="/" aria-label={`${site.name}: página inicial`}>
+        <Logo />
+      </a>
+      <p class="muted">{site.summary}</p>
+    </div>
+
+    <nav aria-label="Rodapé">
+      <h2 class="site-footer__title">Navegação</h2>
+      <ul class="site-footer__links">
+        <li><a href="/">Início</a></li>
+        {nav.map((item) => <li><a href={item.href}>{item.label}</a></li>)}
+        <li><a href={primaryCta.href}>Contato</a></li>
+      </ul>
+    </nav>
+
+    <nav aria-label="Serviços">
+      <h2 class="site-footer__title">Serviços</h2>
+      <ul class="site-footer__links">
+        {services.map((service) => <li><a href={`/servicos/${service.slug}/`}>{service.name}</a></li>)}
+      </ul>
+    </nav>
+
+    {hasDirectContact && (
+      <div>
+        <h2 class="site-footer__title">Contato</h2>
+        <ul class="site-footer__links">
+          {contact.email && <li><a href={`mailto:${contact.email}`}>{contact.email}</a></li>}
+          {contact.phone && <li><a href={contact.phoneHref ?? undefined}>{contact.phone}</a></li>}
+          {contact.whatsappUrl && <li><a href={contact.whatsappUrl} rel="noopener noreferrer">WhatsApp</a></li>}
+        </ul>
+      </div>
+    )}
+  </div>
+
+  <div class="wrap">
+    <div class="site-footer__base">
+      <p class="muted">
+        © {year} {site.name}
+        {contact.cnpj && <span> · CNPJ {contact.cnpj}</span>}
+        {contact.address && <span> · {contact.address}</span>}
+      </p>
+      <p class="muted">
+        Conteúdo editorial do fundador em <a href={editorial.url} rel="noopener">{editorial.name}</a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    padding-top: clamp(2.5rem, 2rem + 2vw, 4rem);
+    border-top: 1px solid var(--line-on-dark);
+    font-size: var(--text-sm);
+  }
+
+  .site-footer__grid {
+    display: grid;
+    gap: var(--space-6) var(--space-7);
+    padding-bottom: var(--space-6);
+  }
+
+  .site-footer__logo {
+    display: inline-block;
+    margin-bottom: var(--space-4);
+  }
+
+  .site-footer__about p {
+    max-width: 26rem;
+  }
+
+  .site-footer__title {
+    margin-bottom: 1rem;
+    color: var(--on-dark-soft);
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    letter-spacing: 0;
+    line-height: 1.4;
+  }
+
+  .site-footer__links {
+    display: grid;
+  }
+
+  .site-footer__links a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    text-decoration: none;
+  }
+
+  .site-footer__links a:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+  }
+
+  .site-footer__base {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem 2rem;
+    padding-block: 1.5rem;
+    border-top: 1px solid var(--line-on-dark);
+  }
+
+  .site-footer__base a {
+    text-underline-offset: 0.2em;
+  }
+
+  @media (min-width: 48rem) {
+    .site-footer__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 62rem) {
+    .site-footer__links a {
+      min-height: 2.25rem;
+    }
+
+    .site-footer__grid {
+      grid-template-columns: minmax(0, 2fr) repeat(auto-fit, minmax(10rem, 1fr));
+    }
+  }
+</style>

@@ -1,0 +1,28 @@
+---
+import { site } from '../config/site';
+
+// Proporção do recorte: 870 × 256. O fundo do arquivo é o próprio --brand.
+---
+
+<img
+  class="logo"
+  src="/brand/union-solutions-392.webp"
+  srcset="/brand/union-solutions-168.webp 168w, /brand/union-solutions-196.webp 196w, /brand/union-solutions-336.webp 336w, /brand/union-solutions-392.webp 392w, /brand/union-solutions-688.webp 688w"
+  sizes="(min-width: 62rem) 196px, 168px"
+  width="196"
+  height="58"
+  alt={site.name}
+  decoding="async"
+/>
+
+<style>
+  .logo {
+    width: 168px;
+  }
+
+  @media (min-width: 62rem) {
+    .logo {
+      width: 196px;
+    }
+  }
+</style>

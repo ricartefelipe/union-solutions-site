@@ -1,0 +1,79 @@
+---
+/**
+ * Grafismo decorativo inspirado no movimento do símbolo: uma linha dupla que sobe e
+ * desce, cruzando-se nos ápices. Não é a marca: a marca usa sempre os arquivos originais.
+ */
+interface Props {
+  /** Quantidade de meias-voltas. */
+  turns?: number;
+  radius?: number;
+  /** Distância entre o ápice superior e o inferior. */
+  height?: number;
+  gap?: number;
+  /** Marca os cruzamentos com o nó de destaque. */
+  nodes?: boolean;
+  class?: string;
+}
+
+const { turns = 4, radius = 90, height = 280, gap = 22, nodes = true, class: className } = Astro.props;
+
+const pad = 40;
+const startX = pad;
+const topY = pad;
+const bottomY = topY + height;
+const midTop = topY + radius;
+const midBottom = bottomY - radius;
+
+// As pernas das pontas saem da área da figura: quem usa com overflow visível faz a linha sangrar.
+const LEG = 1200;
+let d = `M${startX} ${-LEG} V${midBottom}`;
+let x = startX;
+const apexes: { x: number; y: number }[] = [];
+for (let i = 0; i < turns; i += 1) {
+  const goesDown = i % 2 === 0;
+  // Começa num U (desce e volta), como o movimento do símbolo.
+  const sweep = goesDown ? 0 : 1;
+  const fromY = goesDown ? midBottom : midTop;
+  const toY = goesDown ? midTop : midBottom;
+  d += ` A${radius} ${radius} 0 0 ${sweep} ${x + radius * 2} ${fromY}`;
+  apexes.push({ x: x + radius + gap / 2, y: goesDown ? bottomY : topY });
+  x += radius * 2;
+  if (i < turns - 1) d += ` V${toY}`;
+}
+d += ` V${turns % 2 === 0 ? bottomY + LEG : -LEG}`;
+
+const width = x + gap + pad;
+const viewHeight = bottomY + pad + 40;
+---
+
+<svg
+  class:list={['meander', className]}
+  viewBox={`0 0 ${width} ${viewHeight}`}
+  width={width}
+  height={viewHeight}
+  fill="none"
+  aria-hidden="true"
+  focusable="false"
+>
+  <path d={d} pathLength="1" />
+  <path d={d} pathLength="1" transform={`translate(${gap} 0)`} />
+  {nodes && apexes.map((apex) => <circle cx={apex.x} cy={apex.y} r="5" />)}
+</svg>
+
+<style>
+  .meander {
+    height: auto;
+    color: currentColor;
+  }
+
+  path {
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-opacity: 0.55;
+    vector-effect: non-scaling-stroke;
+  }
+
+  circle {
+    fill: var(--accent);
+  }
+</style>
