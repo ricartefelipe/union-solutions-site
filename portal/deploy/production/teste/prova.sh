@@ -99,34 +99,8 @@ coletar() {
   echo "Evidências em $OUT"
 }
 
-# Backup com falha: precisa acusar erro e devolver a API ao normal.
-falhas_backup() {
-  echo "== Espaço insuficiente"
-  set +e
-  PORTAL_BACKUP_MIN_FREE_MB=999999999 prod backup 2>&1 | grep -E 'Espaço insuficiente'
-  echo "saída: ${PIPESTATUS[0]}; API: $(docker inspect --format '{{.State.Status}}, pausada={{.State.Paused}}' "$PORTAL_PROD_PROJECT-backend-1")"
-  echo "== Destino indisponível"
-  $COMPOSE stop restic-alvo >/dev/null 2>&1
-  inicio=$(date +%s)
-  PORTAL_BACKUP_TIMEOUT_SECONDS=30 sh "$PROD/portal-prod.sh" backup >/dev/null 2>&1
-  echo "saída: $?, em $(( $(date +%s) - inicio )) s; API: $(docker inspect --format '{{.State.Status}}, pausada={{.State.Paused}}' "$PORTAL_PROD_PROJECT-backend-1")"
-  echo "cópia temporária restante: $($COMPOSE run --rm --no-deps -T --entrypoint sh ops -c 'ls /staging | wc -l' 2>/dev/null)"
-  $COMPOSE start restic-alvo >/dev/null 2>&1
-  echo "== Interrupção durante o backup"
-  ( $COMPOSE stop restic-alvo >/dev/null 2>&1
-    PORTAL_BACKUP_TIMEOUT_SECONDS=120 sh "$PROD/portal-prod.sh" backup >/dev/null 2>&1 &
-    pid=$!
-    sleep 4
-    pkill -TERM -P "$pid" 2>/dev/null
-    kill -TERM "$pid" 2>/dev/null
-    wait "$pid" 2>/dev/null
-  )
-  sleep 3
-  docker ps -q --filter "label=com.docker.compose.project=$PORTAL_PROD_PROJECT" --filter 'label=com.docker.compose.oneoff=True' --filter 'label=com.docker.compose.service=ops' | xargs -r docker stop -t 2 >/dev/null
-  echo "API depois de interromper: $(docker inspect --format '{{.State.Status}}, pausada={{.State.Paused}}' "$PORTAL_PROD_PROJECT-backend-1")"
-  $COMPOSE start restic-alvo >/dev/null 2>&1
-  set -e
-}
+# Cenários de falha e concorrência dos comandos de operação (ver testa-operacao.sh).
+falhas_operacao() { bash "$DIR/testa-operacao.sh"; }
 
 # Ambiente separado para a restauração: outro projeto, outros volumes, mesma configuração e mesmo repositório de backup.
 preparar_restauracao() {
@@ -145,6 +119,39 @@ reconciliacao_negativa() {
   set -e
 }
 
+# Análise das imagens finais. Falha de uma análise é registrada como falha, não como zero achados.
+vulnerabilidades() {
+  V=$OUT/vulnerabilidades
+  mkdir -p "$V"
+  find "${V:?}" -type f -delete
+  T="docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v union-trivy-cache:/root/.cache/trivy aquasec/trivy:0.70.0"
+  { $T --version; docker image inspect aquasec/trivy:0.70.0 --format '{{index .RepoDigests 0}}'; date -u +%FT%TZ; } > "$V/ferramenta.txt" 2>&1
+  : > "$V/imagens.txt"; : > "$V/execucao.txt"
+  for img in "$PORTAL_PROD_PROJECT"-backend "$PORTAL_PROD_PROJECT"-frontend "$PORTAL_PROD_PROJECT"-keycloak "$PORTAL_PROD_PROJECT"-proxy "$PORTAL_PROD_PROJECT"-ops "$PORTAL_PROD_PROJECT"-postgres chrislusf/seaweedfs:4.51 clamav/clamav:1.5; do
+    n=$(echo "$img" | tr '/:' '__')
+    docker image inspect "$img" --format "$img {{.Id}}" >> "$V/imagens.txt"
+    $T image --quiet --format json --scanners vuln --timeout 15m "$img" > "$V/$n.json" 2> "$V/$n.err"
+    echo "$img exit=$?" >> "$V/execucao.txt"
+  done
+  python3 - "$V" <<'PY' | tee "$V/resumo.txt"
+import json, glob, sys, os, collections
+V = sys.argv[1]
+for line in open(V + '/execucao.txt'):
+    if not line.strip().endswith('exit=0'): print('FALHA DA ANÁLISE:', line.strip())
+for f in sorted(glob.glob(V + '/*.json')):
+    try: d = json.load(open(f))
+    except Exception as e: print(os.path.basename(f), 'JSON inválido', e); continue
+    c = collections.Counter(); items = []
+    for r in d.get('Results', []) or []:
+        for v in r.get('Vulnerabilities', []) or []:
+            c[v['Severity']] += 1
+            if v['Severity'] in ('CRITICAL', 'HIGH'):
+                items.append((v['Severity'], v['VulnerabilityID'], v['PkgName'], v.get('InstalledVersion'), v.get('FixedVersion') or 'sem correção', v.get('Status', '')))
+    print('==', os.path.basename(f)[:60], {k: c[k] for k in ('CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'UNKNOWN') if c[k]})
+    for it in sorted(set(items)): print('  ', *it)
+PY
+}
+
 destruir() {
   $COMPOSE --profile prova --profile ops down -v --remove-orphans
 }
@@ -157,7 +164,8 @@ case "$comando" in
   auditar) auditar ;;
   medir) medir "$@" ;;
   backup) prod backup; prod backup-status ;;
-  falhas-backup) falhas_backup ;;
+  testa-operacao) falhas_operacao ;;
+  vulnerabilidades) vulnerabilidades ;;
   preparar-restauracao) preparar_restauracao ;;
   reconciliacao-negativa) reconciliacao_negativa ;;
   reiniciar-banco) prod reiniciar-banco ;;

@@ -109,6 +109,14 @@ Só depois de o portal estar operacional e validado. A publicação do site não
 sh portal-prod.sh atualizar   # faz backup, constrói as imagens, prepara bancos e sobe a nova versão
 ```
 
+Backup, restauração e atualização não rodam ao mesmo tempo: uma segunda chamada espera até `PORTAL_LOCK_WAIT` segundos e desiste com a saída `75`.
+
+**Atualização para a versão com as correções da revisão** (sessões no servidor com versão e `sub`, cota com reserva, administrador remanescente, recuperação de MFA auditada):
+
+1. `sh portal-prod.sh atualizar`. A API aplica o changeset `007-cota-e-objetos` (coluna `object_present` em `stored_file`, tabela `object_ledger`); arquivos bloqueados existentes passam a `object_present = false`, como a versão anterior os tratava. O web acrescenta `subject` e `version` em `portal_session` na subida, sem apagar sessões.
+2. Sessões abertas antes da atualização continuam valendo, mas sem `sub` até a próxima renovação de token (no máximo 5 min). `remover-mfa` só encerra sessões do portal que já tenham `sub`; repita o comando depois desse intervalo, se precisar.
+3. Confira `sh portal-prod.sh status` e, se houver `object_ledger` com `attempts` alto nos dias seguintes, o armazenamento está recusando exclusões.
+
 - As migrations só avançam. **Não há rollback automático.** Se algo falhar, volte à versão anterior do código e restaure o backup feito antes da atualização.
 - A versão do código e o esquema do banco precisam corresponder: imagem anterior não é garantida com esquema novo.
 - Bases de imagem estão fixadas por digest, `package-lock.json` e `go.sum` fixam dependências, e `pom.xml` fixa versões. Para atualizar uma base, troque o digest, rode a prova e a análise de vulnerabilidades.

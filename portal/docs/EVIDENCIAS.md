@@ -1,11 +1,12 @@
 # Evidências de teste
 
-Execuções em 31/10/2026, em dois ambientes locais com serviços reais em containers. Nenhum e-mail real foi enviado, nada foi publicado e nenhum servidor externo foi usado.
+Execuções em 31/10/2026, em dois ambientes locais com serviços reais em containers. Nenhum e-mail real foi enviado, nada foi publicado e nenhum servidor externo foi usado. Esta versão inclui as correções da revisão de código (R1 a R8).
 
 | Ambiente | O que é | Evidências |
 | --- | --- | --- |
-| Desenvolvimento (`deploy/local`) | Keycloak em `start-dev`, sem MFA, HTTP | `artifacts/portal-qa/*.png`, `execucao-final.log`, `mutacoes.log`, `atualizacao-local.txt` |
-| Prova de produção (`deploy/production/teste`) | **Compose, imagens e validações de produção**, com TLS de autoridade de teste, MFA, Mailpit como SMTP e destino de backup isolado | `artifacts/portal-qa/producao/`: `execucao-final.log`, `execucao-recuperacao.log`, `auditoria.txt`, `keycloak-pool.txt`, `medicoes.txt`, `capturas/`, `vulnerabilidades/` |
+| Desenvolvimento (`deploy/local`) | Keycloak em `start-dev`, sem MFA, HTTP | `artifacts/portal-qa/*.png`, `execucao-local-correcoes.txt`, `atualizacao-local-correcoes.txt` |
+| Prova de produção (`deploy/production/teste`) | **Compose, imagens e validações de produção**, com TLS de autoridade de teste, MFA, Mailpit como SMTP e destino de backup isolado | `artifacts/portal-qa/producao/`: `execucao-correcoes.log`, `operacao.txt`, `auditoria.txt`, `capturas/`, `vulnerabilidades/` |
+| Testes de unidade e integração | API com PostgreSQL real (Testcontainers); armazenamento de sessões com PostgreSQL real descartável | `artifacts/portal-qa/api-correcoes.log`, `api-regressao-na-develop.log`, `sessoes-nova.log`, `sessoes-anterior.log` |
 
 As pastas em `artifacts/` são locais e não versionadas. As capturas não contêm segredos; o estado dos testes (senhas e segredos TOTP sintéticos) fica fora da coleta.
 
@@ -13,100 +14,45 @@ As pastas em `artifacts/` são locais e não versionadas. As capturas não cont�
 
 | Verificação | Ambiente | Resultado |
 | --- | --- | --- |
-| API: integração com PostgreSQL real (Testcontainers) | Maven | 57 de 57 |
-| Mutações: 8 controles de segurança desligados um a um | Maven | 8 de 8 detectadas |
-| `01-jornada`: 10 etapas da jornada cliente/Union, a partir de banco vazio | Desenvolvimento e produção | 15 de 15 nos dois |
-| `02-seguranca`: sessão, CSRF, convites, antivírus real, revogação, teclado, axe, 320 e 390 px | Desenvolvimento e produção | 18 de 18 nos dois |
-| `03-operacao`: backup e restauração local, recusas de produção, demonstração | Desenvolvimento | 4 de 4 |
-| `04-producao`: TLS, cookies `__Host-`, proxy fechado, redes, OIDC, MFA, recuperação, dependências indisponíveis, arquivos, auditoria | Produção | 15 de 15 |
-| `05-essencial`: entrar, consultar, baixar, abrir solicitação e sair | Produção, Chromium, Firefox e WebKit | 1 de 1 em cada |
-| `06-restauracao`: restauração do backup cifrado em projeto separado | Produção | 3 de 3 |
-| `07-mfa-removido`: recuperação do segundo fator pelo comando de operação | Produção | 1 de 1 |
-| Migrations em banco vazio | Os dois | 6 changesets, 0 erros no log da API |
-| Atualização com dados persistidos | Os dois | Versão anterior → nova: dados preservados, sessões recriadas, `02-seguranca` 18 de 18 depois |
+| API: integração com PostgreSQL real, incluindo os 11 testes novos de concorrência e recuperação | Maven | 68 de 68 |
+| Sessões: 9 cenários com barreiras determinísticas (toque e renovação após logout, renovações concorrentes, sessão vencida, cookie copiado, novo login, encerramento por conta, falha do banco) | Node + PostgreSQL | 9 de 9 na implementação nova; **0 de 9 na anterior** (adaptada pela interface antiga) |
+| Regressão na `develop` (`eb97ce0`): testes novos que compilam contra o código antigo | Maven | **4 de 6 falham no código antigo**: cota ultrapassada em paralelo (4 cabem onde só 3 deveriam), `500` em desativação concorrente de administradores, objeto não apagado após reversão |
+| `01-jornada`, a partir de banco vazio | Desenvolvimento e produção | 15 de 15 nos dois |
+| `02-seguranca`, com o teste novo de logout concorrente com renovação em voo | Desenvolvimento e produção | 19 de 19 nos dois |
+| `03-operacao` | Desenvolvimento | 4 de 4 |
+| `04-producao` | Produção | 15 de 15 |
+| `05-essencial` em Chromium, Firefox e WebKit | Produção | 1 de 1 em cada |
+| `07-mfa-removido`: sessão aberta antes da recuperação fica inválida no portal e no provedor; login seguinte exige novo TOTP | Produção | 2 de 2 |
+| `06-restauracao`: backup cifrado restaurado em projeto separado, com login, TOTP, histórico e arquivo byte a byte | Produção | 3 de 3 |
+| Cenários de operação (`testa-operacao.sh`): backups sobrepostos, backup contra restauração e atualização, atualização com backup interno, erro em cada fase, cancelamento, área abandonada, API pausada por outra atividade, falha de despausa, modos de falha da recuperação de MFA, segredos fora de `argv` | Produção | 33 de 33 |
+| Migrations em banco vazio | Os dois | 7 changesets, 0 erros no log da API |
+| Atualização sobre dados persistidos (6 → 7 changesets; `portal_session` ganha `subject` e `version`) | Desenvolvimento | Dados preservados; arquivos bloqueados existentes marcados sem objeto |
+| Imagens finais com Trivy 0.70.0 (base de 31/10/2026) | Produção | 0 críticas; 6 altas avaliadas uma a uma em `VULNERABILIDADES.md` |
 | Web: `tsc`, `check:brand`, `npm audit --omit=dev` | Scratch | Passaram, 0 vulnerabilidades |
-| Site: `verify`, `check:contact`, `check:publish`, pacote em Apache 2.4 | Local | Ver `docs/FECHAMENTO.md` na raiz |
-| Imagens finais com Trivy 0.70.0 | Produção | Ver `VULNERABILIDADES.md` |
 
-Chrome do sistema conduziu as suítes de desenvolvimento. Na prova de produção, Chromium, Firefox e WebKit rodam dentro de um container na rede do proxy, confiando só na autoridade de teste: nenhum erro de TLS é ignorado.
+## Correções da revisão, com o teste que as cobre
 
-## Jornada completa
-
-| Etapa | Captura |
-| --- | --- |
-| Primeiro administrador define a senha pelo provedor e entra | `01-admin-painel.png` |
-| 1. Cria organização e projeto | `02-admin-projeto.png` |
-| 2 e 3. Convite capturado; cliente aceita, define a senha e entra | `03-cliente-convite.png`, `04-cliente-projetos.png` |
-| 4. Documento e entrega publicados depois do antivírus | `05-admin-entrega-aguardando.png` |
-| 5. Cliente baixa o documento e solicita ajuste | `06-cliente-painel-aprovacao.png`, `07-cliente-ajuste-solicitado.png` |
-| 6 e 7. Nova versão sem decisão herdada; cliente aprova a versão exata | `08-cliente-aprovacao.png` |
-| 8. Suporte com resposta, sem a nota interna para o cliente | `09-equipe-suporte-com-nota.png`, `10-cliente-suporte.png` |
-| 9. Cliente acessa o produto contratado | `11-cliente-produtos.png` |
-| 10. Outro cliente não alcança nada do primeiro | `12-outro-cliente-sem-acesso.png` |
-| Produção: login com erro, auditoria, projeto, restauração | `producao/capturas/p01-*`, `p02-*`, `p03-*`, `r01-*`, `r02-*` |
-| Produção: Chromium, Firefox e WebKit, desktop e 390 px | `producao/capturas/{chromium,firefox,webkit}-*.png` |
-
-## Critérios de aceite
-
-| Critério | Teste |
-| --- | --- |
-| Sem autenticação, não há acesso | `semAutenticacaoNenhumDadoPrivadoESeAcessa`, E2E "usuário sem autenticação" |
-| Cliente A não lê nem altera o cliente B, mesmo por ID | `clienteANaoLeRecursosDoClienteBPorIdConhecido`, `clienteANaoAlteraRecursosDoClienteB`, E2E etapa 10 |
-| Membro e equipe sem associação bloqueados | `membroSemAssociacaoNaoAcessaProjetoDaPropriaOrganizacao`, `equipeUnionSemAssociacaoNaoAcessaProjetosRestritos` |
-| Cliente não concede papel interno nem muda tenant | `clienteNaoConcedePapelInternoNemAlteraTenant`, `convitesNaoAceitamOrganizacaoOuPapelVindosDoNavegador`, `tenantDoUsuarioEImutavelNoBanco` |
-| Convite expirado, reutilizado, de outro destinatário ou concorrente | `conviteExpiradoERejeitado`, `conviteReutilizadoERejeitado`, `conviteDeOutroDestinatarioERejeitado`, `aceitesSimultaneosConsomemOConviteUmaUnicaVez`, E2E |
-| Usuário desativado perde o acesso | `usuarioDesativadoPerdeAcessoNaRequisicaoSeguinte`, E2E com sessão aberta. Desativação só no Keycloak: E2E `04` mostra que o token vigente dura até 5 min |
-| Documento privado sem link público; bucket privado | `documentoPrivadoNaoTemCaminhoPublico`, E2E do bucket e das redes |
-| Arquivo pendente, rejeitado, sem verificação ou com falha não é liberado; reprocessamento | `arquivoPendenteRejeitadoOuSemVerificacaoNaoEDisponibilizado`, `falhaDoScannerNaoLiberaOArquivo`, `reprocessarArquivoJaLiberadoNaoDeixaOArquivoPreso`, E2E com EICAR, ClamAV parado e botão "Verificar novamente" |
-| Nota interna não chega ao cliente | `notaInternaNaoApareceParaOCliente`, `anexoInternoNaoEAcessivelPeloCliente`, E2E etapa 8 |
-| Aprovação exige permissão e versão correta; concorrência | `aprovacaoExigePermissao`, `ajusteExigeComentarioEDecisaoFicaNaVersaoExata`, `novaVersaoNaoHerdaAprovacaoAnterior`, `aprovacoesConcorrentesGeramUmaUnicaDecisao` |
-| Sessão: identificador opaco, renovação, expiração, logout invalida cópia do cookie | E2E `02`: "cookie só traz um identificador opaco", "token vencido é renovado", "depois de sair, uma cópia do cookie não abre" |
-| OIDC: state, nonce, PKCE, retorno restrito, sem senha direta | E2E `04` |
-| MFA para a equipe, código errado, recuperação sem autobloqueio | E2E `04` e `07` |
-| Banco de sessões ou provedor indisponível falha com segurança | E2E `04`: 503 sem dados, sessão preservada, novo login recusado |
-| Serviços internos sem porta no host e inalcançáveis da rede pública | E2E `04` e `auditoria.txt` |
-| Limites de arquivo no proxy (40 MB) e na API (25 MiB), HTML/SVG recusados, nome com travessia saneado | E2E `04` |
-| Produção sem demonstração nem contas conhecidas | E2E `04`, recusas de início em `auditoria.txt` |
-| Restauração comprovada: login, TOTP, histórico e arquivo idêntico | E2E `06`, em projeto separado a partir do repositório restic |
-| Formulários e erros com teclado; axe | E2E `02` e `04` |
+| ID | Correção | Teste |
+| --- | --- | --- |
+| R1 | Criação e atualização de sessão separadas; `UPDATE` condicional por existência, prazo e versão; `sub` na sessão | `frontend/tests/session.test.mjs` (9), E2E `02` "logout concorrente", `04` |
+| R2/R3 | `remover-mfa` com helper no provedor: falha em cada passo, exatamente uma conta, verificação final, logout no provedor, sessões do portal apagadas por `sub`, auditoria antes e depois, operador e motivo, segredo fora de `argv` | `testa-operacao.sh` (10 cenários), E2E `07` |
+| R4/R5 | `flock` por implantação; área temporária por execução; limpeza instalada antes dos passos falíveis; despausa verificada; `restic init` só com saída 10; áreas abandonadas | `testa-operacao.sh` (20 cenários) |
+| R6 | Advisory lock transacional no conjunto de administradores, com releitura do alvo e de quem pede | `ConcurrencyAndRecoveryTest` (4) |
+| R7 | Lock por organização, reserva em `object_ledger`, compensação após reversão, limpeza com idade mínima, `object_present` | `ConcurrencyAndRecoveryTest` (6) |
+| R8 | Avaliação individual das altas com caminho de exploração; resumo versionado; decisão residual explícita | `VULNERABILIDADES.md` |
+| Bootstrap | Comportamento preservado: para após o aceite; espera crescente em falha | `ConcurrencyAndRecoveryTest.bootstrapTentaDeNovoEmFalhaEParaDepoisDoAceite` |
 
 ## Dependências indisponíveis e reinício do banco
 
 | Cenário | Resultado |
 | --- | --- |
 | Reinício planejado (`portal-prod.sh reiniciar-banco`) | Provedor e API reiniciados junto; login em seguida OK |
-| Reinício do banco sem reiniciar o provedor (sonda com 16 requisições simultâneas, `keycloak-pool.txt`) | Token: 11 falhas em 1,4 s, depois OK. Leituras: 479 OK e 1 erro 500 logo no início. Em seguida, 160 de 160. Sem a propriedade Quarkus não suportada da versão anterior |
-| Logout e novo login logo após o reinício do banco | Logout confirmado pelo provedor; primeiro login OK em 1 s |
 | Banco de sessões parado | 503 em páginas e BFF, sessão preservada, volta sozinha |
 | Provedor parado | Token vigente segue; token vencido 503 sem apagar a sessão; novo login 502 com aviso; logout encerra a sessão do portal e avisa |
 | ClamAV parado | Arquivo pendente, não liberado; verificado ao voltar |
-| Backup sem espaço, sem destino ou interrompido | Falha acusada (saídas 3 e 1), API despausada nos três casos, cópia temporária removida |
-| Reconciliação com objeto apagado | Acusa 1 faltando e sai com erro |
-
-## Medições
-
-Observações em `medicoes.txt`, com Docker Desktop (12 CPUs, 7,4 GiB para containers), sem teste de capacidade. **Não indicam quantos clientes o ambiente suporta.**
-
-| Momento | Memória total dos serviços | CPU máxima observada |
-| --- | --- | --- |
-| Repouso (60 s após subir) | ~3,0 GiB, dos quais ClamAV 1,9 GiB ao carregar assinaturas, Keycloak 0,6 GiB, API 0,3 GiB | ClamAV a 100% de um núcleo ao carregar |
-| Jornada completa | ~2,3 GiB sem o runner | API 95%, Keycloak 88%, web 66% de um núcleo |
-| Segurança, com verificação de arquivo EICAR | ~2,3 GiB sem o runner | API 145% |
-
-Depois do carregamento, o ClamAV estabiliza perto de 1 GiB. Disco: imagens de 90 MB (proxy) a 757 MB (Keycloak); volume de assinaturas do ClamAV 176 MB. A construção das imagens na VPS exige Maven e Next.js: reserve ao menos 4 GiB livres no momento do build. Subida completa em banco vazio: 1 min 23 s com imagens já construídas.
-
-## Falhas encontradas e corrigidas nesta rodada
-
-| Falha | Correção |
-| --- | --- |
-| Pool do Keycloak com conexões antigas após reinício do banco, corrigido antes com propriedade Quarkus não suportada | Propriedade removida. Pool pequeno com opções oficiais (`KC_DB_POOL_*`), reinício encadeado pelo Compose e repetição de chamadas no BFF. Medido em `keycloak-pool.txt` |
-| Sessão era um JWE no cookie: cópia válida até expirar mesmo após logout | Sessão no servidor (`portal_sessao`), cookie com identificador opaco, logout apaga o registro |
-| Primeiro administrador: e-mail enviado uma única vez na subida, antes de o provedor estar pronto | Nova tentativa a cada 30 s até o primeiro login |
-| Arquivo com falha de verificação ficava preso ao ser reprocessado depois de já liberado | Liberação copia, registra e só então apaga a origem |
-| Tela de TOTP do Keycloak sem rótulo no campo da conta (axe) | Rótulo acessível pelo tema |
-| WebKit: pré-carregamento de links falhava na CSP e gerava erros de console | `prefetch` desligado nas telas privadas |
-| Caddy, `gosu` e `npm` com CVEs nas imagens base | Ver `VULNERABILIDADES.md` |
-| Backup pausava a API durante o envio ao destino | Pausa só durante a cópia local; envio depois, com prazo |
+| Backup sem espaço, sem destino, com senha errada, sem retenção, cancelado | Falha acusada com saída própria (3, 124, 12, 1, 143); API despausada e conferida; área temporária removida |
+| API já pausada por outra atividade | Backup recusa (70) sem despausar |
+| Container da API removido durante a cópia | Falha de despausa anunciada, saída não zero |
 
 ## O que não foi testado
 

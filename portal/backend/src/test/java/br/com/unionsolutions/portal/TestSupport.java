@@ -1,10 +1,13 @@
 package br.com.unionsolutions.portal;
 
+import br.com.unionsolutions.portal.application.Actor;
+import br.com.unionsolutions.portal.application.FileService;
 import br.com.unionsolutions.portal.application.Ports;
 import br.com.unionsolutions.portal.domain.*;
 import br.com.unionsolutions.portal.domain.Types.*;
 import io.smallrye.jwt.build.Jwt;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.transaction.Transactional;
 import java.io.ByteArrayInputStream;
@@ -38,6 +41,8 @@ public final class TestSupport {
     @Singleton
     public static class MemoryStorage implements Ports.ObjectStorage {
         public final Map<String, byte[]> objects = new ConcurrentHashMap<>();
+        /** Simula o armazenamento recusando exclusões. */
+        public volatile boolean failDeletes;
 
         @Override public void put(String key, Path content, long size, String contentType) {
             try {
@@ -53,7 +58,10 @@ public final class TestSupport {
             if (!objects.containsKey(fromKey)) throw new IllegalArgumentException("Objeto inexistente");
             objects.put(toKey, objects.get(fromKey));
         }
-        @Override public void delete(String key) { objects.remove(key); }
+        @Override public void delete(String key) {
+            if (failDeletes) throw new IllegalStateException("Exclusão recusada pelo armazenamento");
+            objects.remove(key);
+        }
     }
 
     /** Sinaliza como malware o conteúdo com a marca, e simula indisponibilidade quando pedido. */
@@ -77,14 +85,29 @@ public final class TestSupport {
         public final List<String> setupEmails = new CopyOnWriteArrayList<>();
         public final List<String> mfaEmails = new CopyOnWriteArrayList<>();
         public final List<String> disabled = new CopyOnWriteArrayList<>();
+        /** Número de chamadas de configuração que ainda devem falhar. */
+        public final java.util.concurrent.atomic.AtomicInteger failSetups = new java.util.concurrent.atomic.AtomicInteger();
 
         @Override public void ensureUserAndSendSetup(String email, String redirectUri, boolean requireMfa) {
+            if (failSetups.getAndUpdate(n -> Math.max(0, n - 1)) > 0) throw new IllegalStateException("Provedor de identidade indisponível");
             setupEmails.add(email);
             if (requireMfa) mfaEmails.add(email);
         }
         @Override public boolean disable(String subject) { disabled.add(subject); return true; }
         @Override public boolean enable(String subject) { return true; }
         @Override public String createDemoUser(String email, String name, String password) { return UUID.randomUUID().toString(); }
+    }
+
+    /** Transação real que grava o objeto e depois falha: reproduz uma reversão depois do envio ao armazenamento. */
+    @ApplicationScoped
+    public static class RollbackProbe {
+        @Inject FileService files;
+
+        @Transactional
+        public void storeThenFail(Actor actor, UUID tenantId, FileService.Upload upload, java.util.function.Consumer<StoredFile> captured) {
+            captured.accept(files.store(actor, tenantId, upload));
+            throw new IllegalStateException("falha simulada depois do envio");
+        }
     }
 
     @ApplicationScoped
@@ -167,6 +190,41 @@ public final class TestSupport {
         @Transactional
         public long decisions(UUID versionId) {
             return ApprovalDecision.count("deliveryVersionId", versionId);
+        }
+
+        @Inject FileService fileService;
+
+        @Transactional
+        public long usedBytes(UUID tenantId) {
+            return fileService.usedBytes(tenantId);
+        }
+
+        /** Deixa ativos só os administradores informados: a invariável passa a valer sobre o banco inteiro durante o teste. */
+        @Transactional
+        public void keepOnlyAdmins(java.util.Set<UUID> keep) {
+            for (AppUser u : AppUser.<AppUser>list("role = ?1 and status = ?2", Role.UNION_ADMIN, UserStatus.ACTIVE)) {
+                if (!keep.contains(u.id)) u.status = UserStatus.DISABLED;
+            }
+        }
+
+        @Transactional
+        public long activeAdmins() {
+            return AppUser.count("role = ?1 and status = ?2", Role.UNION_ADMIN, UserStatus.ACTIVE);
+        }
+
+        @Transactional
+        public boolean objectPresent(UUID fileId) {
+            return StoredFile.<StoredFile>findById(fileId).objectPresent;
+        }
+
+        @Transactional
+        public long ledgerEntries(UUID tenantId) {
+            return br.com.unionsolutions.portal.domain.ObjectLedger.count("tenantId", tenantId);
+        }
+
+        @Transactional
+        public void backdateLedger(UUID tenantId) {
+            br.com.unionsolutions.portal.domain.ObjectLedger.update("createdAt = ?1 where tenantId = ?2", Instant.now().minusSeconds(3600), tenantId);
         }
 
         @Transactional

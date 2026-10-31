@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import { NextResponse, type NextRequest } from 'next/server';
 import { getConfig } from '@/lib/config';
 import { completeLogin, type PendingLogin } from '@/lib/oidc';
-import { cookieName, cookieOptions, deleteSession, purgeExpiredSessions, readSession, safeReturnTo, saveSession, sessionCookieName, unseal } from '@/lib/session';
+import { cookieName, cookieOptions, createSession, deleteSession, purgeExpiredSessions, readSession, safeReturnTo, sessionCookieName, unseal } from '@/lib/session';
 
 export async function GET(request: NextRequest) {
   const { publicUrl } = getConfig();
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     // Cada login recebe um identificador novo: nenhum identificador anterior continua valendo.
     const previous = await readSession(store);
     if (previous) await deleteSession(previous.id);
-    await saveSession(session);
+    await createSession(session);
     await purgeExpiredSessions();
     const response = NextResponse.redirect(new URL(safeReturnTo(pending.returnTo), publicUrl), 303);
     response.cookies.set(cookieName('portal_login'), '', cookieOptions(0));

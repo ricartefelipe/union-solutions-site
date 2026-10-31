@@ -141,6 +141,34 @@ test.describe.serial('Segurança e acessibilidade', () => {
     await context.close();
   });
 
+  test('logout concorrente com renovação em voo: a sessão não renasce', async ({ browser }) => {
+    const { context, page } = await signedIn(browser, state.clientA);
+    const cookie = (await context.cookies()).find((c) => c.name.includes('portal_session'));
+    const hash = cookieHash(cookie.value);
+    const csrf = await page.locator('meta[name=csrf-token]').getAttribute('content');
+    for (let round = 0; round < 5; round += 1) {
+      // Força a renovação na próxima requisição e dispara renovação e logout ao mesmo tempo.
+      sessionSql(`UPDATE portal_session SET access_exp = 1 WHERE id_hash = '${hash}'`);
+      const results = await Promise.all([
+        page.request.get('/bff/v1/me'),
+        page.request.post('/auth/logout', { form: { csrf }, maxRedirects: 0 }),
+      ]);
+      if (results[1].status() === 303 && new URL(results[1].headers().location).pathname === '/sessao-encerrada') {
+        expect(sessionSql(`SELECT count(*) FROM portal_session WHERE id_hash = '${hash}'`), `rodada ${round}: sessão não renasce`).toBe('0');
+        const copy = await browser.newContext();
+        await copy.addCookies([cookie]);
+        const stolen = await copy.newPage();
+        expect((await stolen.request.get('/bff/v1/me')).status()).toBe(401);
+        await copy.close();
+        break;
+      }
+      // A renovação chegou antes do logout: a sessão continua válida nesta rodada; repete.
+      expect(results[1].status()).toBe(303);
+    }
+    expect(sessionSql(`SELECT count(*) FROM portal_session WHERE id_hash = '${hash}'`)).toBe('0');
+    await context.close();
+  });
+
   test('convite de outro destinatário é recusado no navegador', async ({ browser }) => {
     const admin = await signedIn(browser, state.adminEmail, state.adminPassword);
     const other = `outro-${RUN}@portal.invalid`;
