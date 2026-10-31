@@ -1,0 +1,85 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-projetos
+      author: union-solutions
+      changes:
+        - sql:
+            splitStatements: true
+            sql: |
+              CREATE TABLE project (
+                id uuid PRIMARY KEY,
+                tenant_id uuid NOT NULL REFERENCES organization (id),
+                name varchar(200) NOT NULL,
+                description text,
+                agreed_scope text,
+                service_line varchar(30) NOT NULL DEFAULT 'DEVELOPMENT'
+                  CHECK (service_line IN ('PRODUCT', 'CONSULTING', 'ARCHITECTURE', 'DEVELOPMENT')),
+                status varchar(20) NOT NULL DEFAULT 'PLANNED'
+                  CHECK (status IN ('PLANNED', 'ACTIVE', 'ON_HOLD', 'COMPLETED', 'ARCHIVED')),
+                start_date date,
+                due_date date,
+                created_by uuid NOT NULL REFERENCES app_user (id),
+                created_at timestamptz NOT NULL,
+                updated_at timestamptz NOT NULL,
+                version bigint NOT NULL DEFAULT 0,
+                CONSTRAINT project_tenant_uq UNIQUE (tenant_id, id),
+                CONSTRAINT project_dates CHECK (start_date IS NULL OR due_date IS NULL OR start_date <= due_date)
+              );
+              CREATE INDEX project_tenant_status_idx ON project (tenant_id, status);
+
+              CREATE TABLE project_member (
+                tenant_id uuid NOT NULL,
+                project_id uuid NOT NULL,
+                user_id uuid NOT NULL REFERENCES app_user (id),
+                can_approve boolean NOT NULL DEFAULT false,
+                responsibility varchar(120),
+                created_at timestamptz NOT NULL,
+                PRIMARY KEY (project_id, user_id),
+                CONSTRAINT project_member_project_fk FOREIGN KEY (tenant_id, project_id) REFERENCES project (tenant_id, id)
+              );
+              CREATE INDEX project_member_user_idx ON project_member (user_id, tenant_id);
+
+              -- Um usuário de cliente só participa de projetos da própria organização, e só cliente aprova.
+              CREATE FUNCTION project_member_same_tenant() RETURNS trigger AS '
+              DECLARE
+                member_tenant uuid;
+              BEGIN
+                SELECT tenant_id INTO member_tenant FROM app_user WHERE id = NEW.user_id;
+                IF member_tenant IS NOT NULL AND member_tenant <> NEW.tenant_id THEN
+                  RAISE EXCEPTION ''project member belongs to another tenant'';
+                END IF;
+                IF member_tenant IS NULL AND NEW.can_approve THEN
+                  RAISE EXCEPTION ''only client users can approve deliveries'';
+                END IF;
+                RETURN NEW;
+              END' LANGUAGE plpgsql;
+              CREATE TRIGGER project_member_same_tenant_trg BEFORE INSERT OR UPDATE ON project_member
+                FOR EACH ROW EXECUTE FUNCTION project_member_same_tenant();
+
+              CREATE TABLE milestone (
+                id uuid PRIMARY KEY,
+                tenant_id uuid NOT NULL,
+                project_id uuid NOT NULL,
+                title varchar(200) NOT NULL,
+                description text,
+                status varchar(20) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'IN_PROGRESS', 'DONE')),
+                due_date date,
+                position integer NOT NULL DEFAULT 0,
+                completed_at timestamptz,
+                created_at timestamptz NOT NULL,
+                updated_at timestamptz NOT NULL,
+                version bigint NOT NULL DEFAULT 0,
+                CONSTRAINT milestone_project_fk FOREIGN KEY (tenant_id, project_id) REFERENCES project (tenant_id, id)
+              );
+              CREATE INDEX milestone_project_idx ON milestone (project_id, position);
+
+              CREATE TABLE project_update (
+                id uuid PRIMARY KEY,
+                tenant_id uuid NOT NULL,
+                project_id uuid NOT NULL,
+                author_id uuid NOT NULL REFERENCES app_user (id),
+                body text NOT NULL,
+                created_at timestamptz NOT NULL,
+                CONSTRAINT project_update_project_fk FOREIGN KEY (tenant_id, project_id) REFERENCES project (tenant_id, id)
+              );
+              CREATE INDEX project_update_project_idx ON project_update (project_id, created_at DESC);

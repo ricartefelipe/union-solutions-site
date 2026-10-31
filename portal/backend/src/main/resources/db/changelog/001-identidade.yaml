@@ -1,0 +1,90 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-organizacoes-usuarios
+      author: union-solutions
+      changes:
+        - sql:
+            splitStatements: true
+            sql: |
+              CREATE TABLE organization (
+                id uuid PRIMARY KEY,
+                name varchar(160) NOT NULL,
+                legal_name varchar(200),
+                status varchar(20) NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'ARCHIVED')),
+                is_demo boolean NOT NULL DEFAULT false,
+                created_at timestamptz NOT NULL,
+                updated_at timestamptz NOT NULL,
+                version bigint NOT NULL DEFAULT 0
+              );
+              CREATE UNIQUE INDEX organization_name_uq ON organization (lower(name));
+
+              CREATE TABLE app_user (
+                id uuid PRIMARY KEY,
+                keycloak_sub varchar(64) UNIQUE,
+                email varchar(254) NOT NULL,
+                display_name varchar(160),
+                role varchar(20) NOT NULL CHECK (role IN ('UNION_ADMIN', 'UNION_STAFF', 'CLIENT_ADMIN', 'CLIENT_MEMBER')),
+                tenant_id uuid REFERENCES organization (id),
+                status varchar(20) NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'DISABLED')),
+                created_at timestamptz NOT NULL,
+                updated_at timestamptz NOT NULL,
+                disabled_at timestamptz,
+                version bigint NOT NULL DEFAULT 0,
+                CONSTRAINT app_user_email_lowercase CHECK (email = lower(email)),
+                CONSTRAINT app_user_role_tenant CHECK (
+                  (role IN ('UNION_ADMIN', 'UNION_STAFF') AND tenant_id IS NULL)
+                  OR (role IN ('CLIENT_ADMIN', 'CLIENT_MEMBER') AND tenant_id IS NOT NULL)
+                )
+              );
+              CREATE UNIQUE INDEX app_user_email_uq ON app_user (email);
+              CREATE INDEX app_user_tenant_idx ON app_user (tenant_id);
+
+              -- O tenant de um usuário nunca muda depois de definido.
+              CREATE FUNCTION app_user_keep_tenant() RETURNS trigger AS '
+              BEGIN
+                IF NEW.tenant_id IS DISTINCT FROM OLD.tenant_id THEN
+                  RAISE EXCEPTION ''app_user.tenant_id is immutable'';
+                END IF;
+                RETURN NEW;
+              END' LANGUAGE plpgsql;
+              CREATE TRIGGER app_user_keep_tenant_trg BEFORE UPDATE ON app_user
+                FOR EACH ROW EXECUTE FUNCTION app_user_keep_tenant();
+
+              CREATE TABLE staff_assignment (
+                tenant_id uuid NOT NULL REFERENCES organization (id),
+                user_id uuid NOT NULL REFERENCES app_user (id),
+                assigned_by uuid NOT NULL REFERENCES app_user (id),
+                created_at timestamptz NOT NULL,
+                PRIMARY KEY (tenant_id, user_id)
+              );
+
+              CREATE TABLE invitation (
+                id uuid PRIMARY KEY,
+                tenant_id uuid REFERENCES organization (id),
+                email varchar(254) NOT NULL,
+                role varchar(20) NOT NULL CHECK (role IN ('UNION_ADMIN', 'UNION_STAFF', 'CLIENT_ADMIN', 'CLIENT_MEMBER')),
+                token_hash varchar(64) NOT NULL UNIQUE,
+                expires_at timestamptz NOT NULL,
+                accepted_at timestamptz,
+                revoked_at timestamptz,
+                invited_by uuid NOT NULL REFERENCES app_user (id),
+                accepted_user_id uuid REFERENCES app_user (id),
+                created_at timestamptz NOT NULL,
+                CONSTRAINT invitation_email_lowercase CHECK (email = lower(email)),
+                CONSTRAINT invitation_role_tenant CHECK (
+                  (role IN ('UNION_ADMIN', 'UNION_STAFF') AND tenant_id IS NULL)
+                  OR (role IN ('CLIENT_ADMIN', 'CLIENT_MEMBER') AND tenant_id IS NOT NULL)
+                )
+              );
+              CREATE UNIQUE INDEX invitation_one_pending_uq
+                ON invitation (email, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000'::uuid))
+                WHERE accepted_at IS NULL AND revoked_at IS NULL;
+              CREATE INDEX invitation_tenant_idx ON invitation (tenant_id, created_at DESC);
+
+              -- Limite de taxa compartilhado entre instâncias da API.
+              CREATE TABLE rate_limit_bucket (
+                bucket_key varchar(200) NOT NULL,
+                window_start timestamptz NOT NULL,
+                hits integer NOT NULL,
+                PRIMARY KEY (bucket_key, window_start)
+              );

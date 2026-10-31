@@ -78,6 +78,11 @@ if (email && !untouched('PUBLIC_CONTACT_EMAIL')) {
     blockers.push('PUBLIC_CONTACT_EMAIL não é um e-mail real válido.');
   }
 }
+const portalUrl = read('PUBLIC_PORTAL_URL');
+if (portalUrl && !untouched('PUBLIC_PORTAL_URL')) {
+  const problem = urlProblem(portalUrl);
+  if (problem) blockers.push(`PUBLIC_PORTAL_URL ${problem}.`);
+}
 if (whatsapp && !untouched('PUBLIC_CONTACT_WHATSAPP')) {
   const problem = whatsappProblem(whatsapp);
   if (problem) blockers.push(`PUBLIC_CONTACT_WHATSAPP ${problem}.`);
@@ -125,6 +130,10 @@ if (!existsSync(join(DIST, 'contato/index.html'))) {
   if (!endpoint && whatsapp && !contactPage.includes(`data-whatsapp="https://wa.me/${whatsapp.replace(/\D/g, '')}"`)) {
     blockers.push(`${distName}/: o WhatsApp não corresponde a PUBLIC_CONTACT_WHATSAPP. ${rebuild}`);
   }
+
+  const homePage = readFileSync(join(DIST, 'index.html'), 'utf8');
+  const builtPortal = homePage.match(/href="([^"]*)" data-client-portal/)?.[1] ?? '';
+  if (builtPortal !== portalUrl) blockers.push(`${distName}/: o botão "Área do cliente" não corresponde a PUBLIC_PORTAL_URL. ${rebuild}`);
 
   if (siteUrl && !urlProblem(siteUrl)) {
     const origin = new URL(siteUrl).origin;

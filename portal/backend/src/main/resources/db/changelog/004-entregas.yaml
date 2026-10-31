@@ -1,0 +1,65 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-entregas
+      author: union-solutions
+      changes:
+        - sql:
+            splitStatements: true
+            sql: |
+              CREATE TABLE delivery (
+                id uuid PRIMARY KEY,
+                tenant_id uuid NOT NULL,
+                project_id uuid NOT NULL,
+                title varchar(200) NOT NULL,
+                due_date date,
+                current_version integer NOT NULL DEFAULT 1,
+                status varchar(20) NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'ARCHIVED')),
+                created_by uuid NOT NULL REFERENCES app_user (id),
+                created_at timestamptz NOT NULL,
+                updated_at timestamptz NOT NULL,
+                version bigint NOT NULL DEFAULT 0,
+                CONSTRAINT delivery_tenant_uq UNIQUE (tenant_id, id),
+                CONSTRAINT delivery_project_fk FOREIGN KEY (tenant_id, project_id) REFERENCES project (tenant_id, id)
+              );
+              CREATE INDEX delivery_project_idx ON delivery (project_id, created_at DESC);
+
+              CREATE TABLE delivery_version (
+                id uuid PRIMARY KEY,
+                tenant_id uuid NOT NULL,
+                delivery_id uuid NOT NULL,
+                version_no integer NOT NULL CHECK (version_no > 0),
+                description text NOT NULL,
+                status varchar(30) NOT NULL DEFAULT 'PUBLISHED'
+                  CHECK (status IN ('PUBLISHED', 'AWAITING_APPROVAL', 'APPROVED', 'CHANGES_REQUESTED', 'SUPERSEDED')),
+                published_by uuid NOT NULL REFERENCES app_user (id),
+                published_at timestamptz NOT NULL,
+                approval_requested_at timestamptz,
+                approval_requested_by uuid REFERENCES app_user (id),
+                version bigint NOT NULL DEFAULT 0,
+                CONSTRAINT delivery_version_tenant_uq UNIQUE (tenant_id, id),
+                CONSTRAINT delivery_version_no_uq UNIQUE (delivery_id, version_no),
+                CONSTRAINT delivery_version_delivery_fk FOREIGN KEY (tenant_id, delivery_id) REFERENCES delivery (tenant_id, id)
+              );
+              CREATE INDEX delivery_version_pending_idx ON delivery_version (tenant_id) WHERE status = 'AWAITING_APPROVAL';
+
+              CREATE TABLE delivery_version_document (
+                tenant_id uuid NOT NULL,
+                delivery_version_id uuid NOT NULL,
+                document_version_id uuid NOT NULL,
+                PRIMARY KEY (delivery_version_id, document_version_id),
+                CONSTRAINT dvd_version_fk FOREIGN KEY (tenant_id, delivery_version_id) REFERENCES delivery_version (tenant_id, id),
+                CONSTRAINT dvd_document_fk FOREIGN KEY (tenant_id, document_version_id) REFERENCES document_version (tenant_id, id)
+              );
+
+              -- Cada versão recebe no máximo uma decisão: a restrição resolve decisões concorrentes.
+              CREATE TABLE approval_decision (
+                id uuid PRIMARY KEY,
+                tenant_id uuid NOT NULL,
+                delivery_version_id uuid NOT NULL UNIQUE,
+                decision varchar(30) NOT NULL CHECK (decision IN ('APPROVED', 'CHANGES_REQUESTED')),
+                comment text,
+                decided_by uuid NOT NULL REFERENCES app_user (id),
+                decided_at timestamptz NOT NULL,
+                CONSTRAINT approval_decision_version_fk FOREIGN KEY (tenant_id, delivery_version_id) REFERENCES delivery_version (tenant_id, id),
+                CONSTRAINT approval_changes_need_comment CHECK (decision <> 'CHANGES_REQUESTED' OR length(trim(comment)) > 0)
+              );

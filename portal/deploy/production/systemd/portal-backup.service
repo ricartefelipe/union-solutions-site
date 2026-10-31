@@ -1,0 +1,13 @@
+# Instale em /etc/systemd/system e ajuste WorkingDirectory ao caminho real do repositório na VPS.
+# A falha aparece em `systemctl --failed` e em `journalctl -u portal-backup`.
+[Unit]
+Description=Backup do portal do cliente
+Wants=network-online.target
+After=network-online.target docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/union-solutions/portal/deploy/production
+ExecStart=/bin/sh portal-prod.sh backup
+ExecStartPost=/bin/sh portal-prod.sh backup-status

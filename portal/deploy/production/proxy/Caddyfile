@@ -1,0 +1,61 @@
+{
+	admin off
+	email {$PORTAL_ACME_EMAIL}
+}
+
+# Saúde do proxy: só dentro do container.
+http://127.0.0.1:8081 {
+	respond "ok" 200
+}
+
+{$PORTAL_HOST} {
+	# O ambiente de prova coloca aqui um certificado de teste. Em produção a pasta fica vazia, e o Caddy obtém o certificado por ACME.
+	import /etc/caddy/conf.d/*.caddy
+
+	request_body {
+		max_size 40MB
+	}
+
+	header {
+		>Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+
+	# Parâmetros de URL podem trazer códigos de login e links de ação: não entram no registro de acesso.
+	log {
+		output stdout
+		format filter {
+			wrap json
+			fields {
+				request>uri regexp \?.* ?[removido]
+				request>headers>Referer delete
+				resp_headers>Location delete
+			}
+		}
+	}
+
+	# Provedor de identidade: só o que o navegador precisa. Console, realm administrativo, conta do usuário, saúde e métricas ficam fora.
+	@identidade_fechada path /identidade/realms/master /identidade/realms/master/* /identidade/realms/*/account /identidade/realms/*/account/* /identidade/admin /identidade/admin/*
+	handle @identidade_fechada {
+		respond 404
+	}
+
+	@identidade path /identidade/realms/union-portal/* /identidade/resources/*
+	handle @identidade {
+		reverse_proxy keycloak:8080
+	}
+
+	handle /identidade* {
+		respond 404
+	}
+
+	handle {
+		reverse_proxy frontend:3000
+	}
+
+	handle_errors 502 503 504 {
+		header Content-Type "text/plain; charset=utf-8"
+		respond "O portal está temporariamente indisponível. Tente novamente em instantes." {err.status_code}
+	}
+}
