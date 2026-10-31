@@ -1,0 +1,379 @@
+---
+import { contactForm } from '../config/site';
+import { interests, productOptions } from '../lib/contact-options';
+---
+
+<form class="contact-form" data-contact-form data-endpoint={contactForm.endpoint ?? undefined}>
+  <noscript>
+    <p class="contact-form__noscript">Este formulário precisa de JavaScript para funcionar. Ative o JavaScript no navegador para enviar sua mensagem.</p>
+  </noscript>
+
+  <p class="muted contact-form__legend">Campos sem indicação são obrigatórios.</p>
+
+  <div class="field-grid">
+    <div class="field">
+      <label for="nome">Nome</label>
+      <input id="nome" name="nome" type="text" autocomplete="name" required maxlength="120" aria-describedby="nome-erro" />
+      <p class="field__error" id="nome-erro" hidden></p>
+    </div>
+
+    <div class="field">
+      <label for="empresa">Empresa <span class="field__optional">(opcional)</span></label>
+      <input id="empresa" name="empresa" type="text" autocomplete="organization" maxlength="160" />
+    </div>
+
+    <div class="field">
+      <label for="email">E-mail</label>
+      <input id="email" name="email" type="email" autocomplete="email" required maxlength="160" aria-describedby="email-erro" />
+      <p class="field__error" id="email-erro" hidden></p>
+    </div>
+
+    <div class="field">
+      <label for="telefone">Telefone <span class="field__optional">(opcional)</span></label>
+      <input id="telefone" name="telefone" type="tel" autocomplete="tel" maxlength="40" />
+    </div>
+
+    <div class="field">
+      <label for="interesse">Interesse</label>
+      <select id="interesse" name="interesse" required aria-describedby="interesse-erro">
+        <option value="">Selecione</option>
+        {interests.map((item) => <option value={item.value}>{item.label}</option>)}
+      </select>
+      <p class="field__error" id="interesse-erro" hidden></p>
+    </div>
+
+    <div class="field" data-product-field>
+      <label for="produto">Produto</label>
+      <select id="produto" name="produto" aria-describedby="produto-erro">
+        <option value="">Selecione</option>
+        {productOptions.map((item) => <option value={item.value}>{item.label}</option>)}
+      </select>
+      <p class="field__error" id="produto-erro" hidden></p>
+    </div>
+
+    <div class="field field--full">
+      <label for="mensagem">Descreva sua necessidade</label>
+      <textarea id="mensagem" name="mensagem" rows="5" required minlength="10" maxlength="4000" aria-describedby="mensagem-ajuda mensagem-erro"></textarea>
+      <p class="field__help" id="mensagem-ajuda">Não envie senhas, credenciais ou dados confidenciais por este formulário.</p>
+      <p class="field__error" id="mensagem-erro" hidden></p>
+    </div>
+  </div>
+
+  <div class="contact-form__trap" aria-hidden="true">
+    <label for="site-web">Não preencha este campo</label>
+    <input id="site-web" name="site_web" type="text" tabindex="-1" autocomplete="off" />
+  </div>
+
+  <div class="contact-form__status" data-status role="status" tabindex="-1" hidden></div>
+
+  <button class="btn contact-form__submit" type="submit" data-submit>Enviar mensagem</button>
+
+  <p class="muted contact-form__privacy">
+    Usaremos as informações fornecidas para analisar sua solicitação e responder ao contato.
+    Este site não usa analytics, pixels nem publicidade.
+  </p>
+</form>
+
+<script>
+  import { createContactAdapter, type ContactFailure, type ContactSubmission } from '../lib/contact-adapter';
+  import { readPreselection } from '../lib/contact-preselection';
+
+  type Field = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+
+  const form = document.querySelector<HTMLFormElement>('[data-contact-form]');
+
+  if (form?.dataset.endpoint) initContactForm(form, form.dataset.endpoint);
+
+  function initContactForm(form: HTMLFormElement, endpoint: string) {
+    const adapter = createContactAdapter(endpoint);
+    const interest = form.elements.namedItem('interesse') as HTMLSelectElement;
+    const product = form.elements.namedItem('produto') as HTMLSelectElement;
+    const productField = form.querySelector<HTMLElement>('[data-product-field]')!;
+    const status = form.querySelector<HTMLElement>('[data-status]')!;
+    const submit = form.querySelector<HTMLButtonElement>('[data-submit]')!;
+    const idleLabel = submit.textContent ?? '';
+    let sending = false;
+
+    const failureMessages: Record<ContactFailure, string> = {
+      timeout:
+        'Não recebemos a confirmação do envio a tempo, e a mensagem pode ter sido processada. Seus dados continuam no formulário: envie novamente apenas se precisar.',
+      network: 'Não foi possível conectar ao serviço de envio. Seus dados continuam no formulário: verifique a conexão e tente novamente.',
+      rejected: 'O serviço de envio não aceitou a mensagem. Seus dados continuam no formulário: tente novamente em alguns instantes.',
+    };
+
+    // Com JavaScript ativo, as mensagens de validação são as da própria página.
+    form.noValidate = true;
+
+    const syncProductField = () => {
+      const applies = interest.value === 'produto';
+      productField.hidden = !applies;
+      product.required = applies;
+      if (!applies) {
+        product.value = '';
+        setFieldError(product, '');
+      }
+    };
+
+    // As opções do formulário são a lista de valores conhecidos.
+    const knownValues = (select: HTMLSelectElement) => Array.from(select.options, (option) => option.value).filter(Boolean);
+    const preselection = readPreselection(window.location.search, knownValues(interest), knownValues(product));
+    interest.value = preselection.interest;
+    product.value = preselection.product;
+    syncProductField();
+    interest.addEventListener('change', syncProductField);
+
+    function errorFor(field: Field): string {
+      const validity = field.validity;
+      if (validity.valid) return '';
+      const isEmpty = validity.valueMissing;
+      switch (field.name) {
+        case 'nome':
+          return 'Informe seu nome.';
+        case 'email':
+          return isEmpty ? 'Informe seu e-mail.' : 'Informe um e-mail válido, como nome@empresa.com.br.';
+        case 'interesse':
+          return 'Selecione o assunto do contato.';
+        case 'produto':
+          return 'Selecione um produto ou a opção “Ainda não sei qual produto”.';
+        case 'mensagem':
+          return isEmpty ? 'Descreva sua necessidade.' : 'Descreva sua necessidade com um pouco mais de detalhe.';
+        default:
+          return 'Verifique este campo.';
+      }
+    }
+
+    function setFieldError(field: Field, message: string) {
+      const error = form.querySelector<HTMLElement>(`#${field.id}-erro`);
+      if (!error) return;
+      error.textContent = message;
+      error.hidden = !message;
+      if (message) field.setAttribute('aria-invalid', 'true');
+      else field.removeAttribute('aria-invalid');
+    }
+
+    const validatedFields = ['nome', 'email', 'interesse', 'produto', 'mensagem'].map(
+      (name) => form.elements.namedItem(name) as Field,
+    );
+
+    for (const field of validatedFields) {
+      const revalidate = () => {
+        if (field.hasAttribute('aria-invalid')) setFieldError(field, errorFor(field));
+      };
+      field.addEventListener('input', revalidate);
+      field.addEventListener('change', revalidate);
+    }
+
+    function validate(): boolean {
+      let firstInvalid: HTMLElement | null = null;
+      for (const field of validatedFields) {
+        const message = errorFor(field);
+        setFieldError(field, message);
+        if (message && !firstInvalid) firstInvalid = field;
+      }
+      firstInvalid?.focus();
+      return !firstInvalid;
+    }
+
+    function showStatus(kind: 'ok' | 'error', message: string, moveFocus: boolean) {
+      status.textContent = message;
+      status.dataset.kind = kind;
+      status.hidden = false;
+      if (moveFocus) status.focus();
+    }
+
+    function clearStatus() {
+      status.textContent = '';
+      status.hidden = true;
+    }
+
+    const value = (name: string) => (form.elements.namedItem(name) as HTMLInputElement).value.trim();
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (sending) return;
+      clearStatus();
+
+      // Cada campo já tem a própria mensagem; o foco vai para o primeiro inválido.
+      if (!validate()) {
+        showStatus('error', 'Revise os campos indicados.', false);
+        return;
+      }
+
+      // Campo-armadilha para robôs: preenchido, a mensagem não segue.
+      if (value('site_web')) {
+        showStatus('error', failureMessages.rejected, true);
+        return;
+      }
+
+      const submission: ContactSubmission = {
+        nome: value('nome'),
+        empresa: value('empresa'),
+        email: value('email'),
+        telefone: value('telefone'),
+        interesse: value('interesse'),
+        produto: value('produto'),
+        mensagem: value('mensagem'),
+      };
+
+      sending = true;
+      submit.disabled = true;
+      submit.textContent = 'Enviando…';
+      form.setAttribute('aria-busy', 'true');
+
+      const result = await adapter.send(submission);
+
+      sending = false;
+      submit.disabled = false;
+      submit.textContent = idleLabel;
+      form.removeAttribute('aria-busy');
+
+      if (result.ok) {
+        // Os campos só são limpos depois da confirmação do endpoint.
+        form.reset();
+        syncProductField();
+        showStatus('ok', 'Solicitação recebida pelo nosso serviço de contato. Vamos analisá-la e responder pelos dados informados.', true);
+      } else {
+        showStatus('error', failureMessages[result.reason], true);
+      }
+    });
+  }
+</script>
+
+<style>
+  .contact-form__legend {
+    margin-bottom: var(--space-4);
+    font-size: var(--text-sm);
+  }
+
+  .contact-form__noscript {
+    margin-bottom: var(--space-4);
+    padding: var(--space-3) var(--space-4);
+    border-left: 4px solid var(--notice-line);
+    background: var(--notice-bg);
+    color: var(--notice-ink);
+  }
+
+  .field-grid {
+    display: grid;
+    gap: var(--space-4) var(--space-5);
+  }
+
+  @media (min-width: 40rem) {
+    .field-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .field--full {
+      grid-column: 1 / -1;
+    }
+  }
+
+  .field[hidden] {
+    display: none;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 0.375rem;
+    font-weight: 600;
+  }
+
+  .field__optional {
+    color: var(--ink-soft);
+    font-weight: 400;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    min-height: var(--control-height);
+    padding: 0.625rem 0.875rem;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    background: var(--paper);
+    color: var(--ink);
+    font: inherit;
+  }
+
+  textarea {
+    display: block;
+    resize: vertical;
+  }
+
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline-offset: 0;
+    border-color: var(--brand);
+  }
+
+  [aria-invalid='true'] {
+    border-color: var(--danger);
+    box-shadow: inset 0 0 0 1px var(--danger);
+  }
+
+  .field__help {
+    margin-top: var(--space-2);
+    color: var(--ink-soft);
+    font-size: var(--text-sm);
+    font-weight: 500;
+  }
+
+  .field__error {
+    margin-top: 0.375rem;
+    color: var(--danger);
+    font-size: var(--text-sm);
+    font-weight: 600;
+  }
+
+  .contact-form__trap {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  .contact-form__status {
+    margin-top: var(--space-4);
+    padding: var(--space-3) var(--space-4);
+    border-left: 4px solid var(--notice-line);
+    font-weight: 500;
+  }
+
+  .contact-form__status[hidden] {
+    display: none;
+  }
+
+  .contact-form__status:focus {
+    outline: none;
+  }
+
+  .contact-form__status[data-kind='ok'] {
+    border-color: var(--success);
+    background: var(--success-bg);
+    color: var(--success);
+  }
+
+  .contact-form__status[data-kind='error'] {
+    border-color: var(--danger);
+    background: var(--danger-bg);
+    color: var(--danger);
+  }
+
+  .contact-form__submit {
+    margin-top: var(--space-5);
+  }
+
+  .contact-form__submit:disabled {
+    opacity: 0.65;
+    cursor: progress;
+  }
+
+  .contact-form__privacy {
+    max-width: var(--measure);
+    margin-top: var(--space-4);
+    font-size: var(--text-sm);
+  }
+</style>

@@ -1,0 +1,109 @@
+---
+import Arrow from './Arrow.astro';
+import { contact } from '../config/site';
+import { products } from '../data/products';
+import { defaultMessage, mailtoUrl, whatsappUrl } from '../lib/contact-links';
+import { interests } from '../lib/contact-options';
+
+const productNames = Object.fromEntries(products.map((product) => [product.slug, product.name]));
+const interestValues = interests.map((item) => item.value);
+---
+
+<div
+  class="direct"
+  data-direct-contact
+  data-email={contact.email ?? undefined}
+  data-whatsapp={contact.whatsappUrl ?? undefined}
+  data-products={JSON.stringify(productNames)}
+  data-interests={JSON.stringify(interestValues)}
+>
+  <h2>Fale diretamente com a Union Solutions</h2>
+  <p class="direct__context" data-context hidden></p>
+  <p class="muted direct__intro">Escolha o canal de sua preferência e conte o que sua empresa precisa.</p>
+
+  <ul class="direct__channels">
+    {contact.whatsappUrl && (
+      <li>
+        <a class="btn" data-channel="whatsapp" href={whatsappUrl(contact.whatsappUrl, defaultMessage)} rel="noopener noreferrer">Conversar pelo WhatsApp<Arrow /></a>
+      </li>
+    )}
+    {contact.email && (
+      <li>
+        <a class:list={['btn', { 'btn--ghost': contact.whatsappUrl }]} data-channel="email" href={mailtoUrl(contact.email, defaultMessage)}>Escrever para {contact.email}</a>
+      </li>
+    )}
+    {contact.phone && (
+      <li><a class="text-link" href={contact.phoneHref ?? undefined}>Telefone: {contact.phone}</a></li>
+    )}
+  </ul>
+
+  <p class="muted direct__note">
+    O link abre o aplicativo correspondente com uma mensagem inicial, que só é enviada quando você confirmar.
+    A conversa segue as regras desse aplicativo, e este site não recebe nem guarda a mensagem.
+    Não envie senhas, credenciais ou dados confidenciais.
+  </p>
+</div>
+
+<script>
+  import { mailtoUrl, readContactContext, whatsappUrl } from '../lib/contact-links';
+
+  const panel = document.querySelector<HTMLElement>('[data-direct-contact]');
+
+  if (panel) {
+    const productNames = JSON.parse(panel.dataset.products ?? '{}') as Record<string, string>;
+    const interestValues = JSON.parse(panel.dataset.interests ?? '[]') as string[];
+    const message = readContactContext(window.location.search, interestValues, productNames);
+
+    if (message) {
+      const { email, whatsapp } = panel.dataset;
+      const whatsappLink = panel.querySelector<HTMLAnchorElement>('[data-channel="whatsapp"]');
+      const emailLink = panel.querySelector<HTMLAnchorElement>('[data-channel="email"]');
+      if (whatsapp && whatsappLink) whatsappLink.href = whatsappUrl(whatsapp, message);
+      if (email && emailLink) emailLink.href = mailtoUrl(email, message);
+
+      const context = panel.querySelector<HTMLElement>('[data-context]');
+      if (context) {
+        context.textContent = `Assunto: ${message.subject}.`;
+        context.hidden = false;
+      }
+    }
+  }
+</script>
+
+<style>
+  h2 {
+    font-size: var(--text-h2);
+  }
+
+  .direct__context {
+    margin-top: var(--space-3);
+    font-weight: 600;
+  }
+
+  .direct__context[hidden] {
+    display: none;
+  }
+
+  .direct__intro {
+    max-width: var(--measure);
+    margin-top: var(--space-3);
+  }
+
+  .direct__channels {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3) var(--space-4);
+    margin-top: var(--space-5);
+  }
+
+  .direct__channels .btn {
+    overflow-wrap: anywhere;
+  }
+
+  .direct__note {
+    max-width: var(--measure);
+    margin-top: var(--space-5);
+    font-size: var(--text-sm);
+  }
+</style>

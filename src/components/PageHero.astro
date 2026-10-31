@@ -1,0 +1,37 @@
+---
+export interface Crumb {
+  label: string;
+  href?: string;
+}
+
+interface Props {
+  title: string;
+  intro: string;
+  eyebrow?: string;
+  crumbs?: Crumb[];
+}
+
+const { title, intro, eyebrow, crumbs } = Astro.props;
+const hasArt = Astro.slots.has('art');
+---
+
+<section class="page-hero surface-dark">
+  <div class:list={['wrap', 'page-hero__inner', { 'page-hero__inner--art': hasArt }]}>
+    <div>
+      {crumbs && (
+        <nav class="crumbs" aria-label="Você está em">
+          <ol>
+            {crumbs.map((crumb) => (
+              <li>{crumb.href ? <a href={crumb.href}>{crumb.label}</a> : <span aria-current="page">{crumb.label}</span>}</li>
+            ))}
+          </ol>
+        </nav>
+      )}
+      {eyebrow && <span class="eyebrow">{eyebrow}</span>}
+      <h1>{title}</h1>
+      <p class="lede muted">{intro}</p>
+      {Astro.slots.has('actions') && <div class="btn-row"><slot name="actions" /></div>}
+    </div>
+    {hasArt && <div><slot name="art" /></div>}
+  </div>
+</section>
