@@ -78,6 +78,12 @@ export const contact = {
   cnpj: optional(import.meta.env.PUBLIC_COMPANY_CNPJ),
 } as const;
 
+/** URL pública do portal do cliente. Ausente, o site não exibe o botão "Área do cliente". */
+export const clientPortal = {
+  label: 'Área do cliente',
+  url: optionalUrl('PUBLIC_PORTAL_URL', import.meta.env.PUBLIC_PORTAL_URL),
+} as const;
+
 export const contactForm = {
   endpoint: optionalUrl('PUBLIC_CONTACT_FORM_ENDPOINT', import.meta.env.PUBLIC_CONTACT_FORM_ENDPOINT),
 } as const;

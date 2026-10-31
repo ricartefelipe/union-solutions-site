@@ -1,6 +1,6 @@
 ---
 import Logo from './Logo.astro';
-import { nav, primaryCta, site } from '../config/site';
+import { clientPortal, nav, primaryCta, site } from '../config/site';
 
 const path = Astro.url.pathname;
 const isCurrent = (href: string) => path === href || path.startsWith(href);
@@ -24,6 +24,11 @@ const isCurrent = (href: string) => path === href || path.startsWith(href);
             <a href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>{item.label}</a>
           </li>
         ))}
+        {clientPortal.url && (
+          <li>
+            <a href={clientPortal.url} data-client-portal>{clientPortal.label}</a>
+          </li>
+        )}
       </ul>
       <a class="btn site-nav__cta" href={primaryCta.href}>{primaryCta.label}</a>
     </nav>

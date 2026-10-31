@@ -1,0 +1,37 @@
+/* Aproxima as telas de login da identidade do portal, sem alterar o fluxo do provedor. */
+:root {
+  --pf-v5-global--primary-color--100: #1a1360;
+  --pf-v5-global--primary-color--200: #2b2380;
+  --pf-v5-global--link--Color: #1a1360;
+  --pf-v5-global--link--Color--hover: #2b2380;
+}
+
+body,
+.pf-v5-c-login,
+.pf-v5-c-page {
+  background: #1a1360 !important;
+}
+
+#kc-header-wrapper,
+.pf-v5-c-login__main-header-title,
+#kc-page-title {
+  color: #15142b;
+}
+
+#kc-header,
+#kc-header-wrapper {
+  color: #ffffff;
+}
+
+.pf-v5-c-button.pf-m-primary {
+  background-color: #1a1360;
+}
+
+.pf-v5-c-button.pf-m-primary:hover {
+  background-color: #2b2380;
+}
+
+:focus-visible {
+  outline: 3px solid #f2b45c;
+  outline-offset: 2px;
+}

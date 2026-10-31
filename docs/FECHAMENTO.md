@@ -1,10 +1,10 @@
 # Relatório de fechamento
 
-**Estado: não publicar ainda.** O site está concluído no que independe de dados externos, mas a publicação segue bloqueada por domínio e canal de contato (seção 6).
+**Estado: pacote pronto para publicar, com domínio e e-mail reais.** Falta confirmar o tipo de site no hPanel (seção 6). O procedimento está em [`PUBLICACAO.md`](PUBLICACAO.md). Nada foi publicado.
 
-Data de referência: 31/10/2026. Branch: `feature/create-site`.
+Data de referência: 31/10/2026. Branch: `feature/portal-cliente-union-solutions`. O portal é uma aplicação separada, em `portal/`, e não bloqueia o site.
 
-## 1. O que foi alterado nesta rodada
+## 1. O que foi alterado na rodada do site
 
 - **Produtos:** textos reescritos a partir das evidências da seção 2, com campos próprios para limite (`goodToKnow`) e disponibilidade (`availability`), exibidos uma vez em cada página.
 - **Esquemas gráficos:** rótulos alinhados ao texto. FileNorm passou a mostrar os quatro formatos, AssinaFlow usa "provedor" no singular e a Fluxe mostra loja, operações e administração.
@@ -60,67 +60,43 @@ Não foi adicionado banner de cookies, pois o site não usa cookies. **Não há 
 
 ## 4. Comandos e resultados
 
-Saída registrada em `artifacts/qa-final/verificacoes.txt`.
+Resultados com a configuração real (`PUBLIC_SITE_URL=https://unionsolutions.tech` e `PUBLIC_CONTACT_EMAIL=contato@unionsolutions.tech`), em `artifacts/qa-final/pacote-apache.txt`:
 
 | Verificação | Resultado |
 | --- | --- |
-| `npm run verify` | 0 erros, 0 avisos, 0 dicas; build concluído; 15 páginas e 602 referências internas corretas |
-| `npm run check:contact` | 10 cenários aprovados e `dist/` sem valores de teste |
-| `npm run check:publish` | **Bloqueado, como esperado** (saída 1): falta domínio, falta canal e a página de contato ainda indica ausência de canal |
-| Procedimento do README em cópia limpa | `npm ci` e `verify` passaram; `.env.example` sem preencher bloqueou (6 itens); com `.env` fictício, só nessa cópia, aprovou; zip inclui `.htaccess`; 16 rotas com 200 e `/nao-existe/` com 404 |
-| Chrome: contato | 138 checagens: seleção por link nas seis páginas de produto e nos três serviços, parâmetros desconhecidos, três estados, respostas 200, 204, 422, 500, `ok:false`, redirecionamento, rede, envio duplo e timeout sem reenvio. **Rede simulada: nenhum envio real** |
-| Chrome: varredura | 15 rotas em 320, 390, 768, 1024 e 1440px: sem rolagem horizontal, erros de console, salto de títulos, títulos ou descrições repetidos, ou alvos abaixo de 44px nos controles principais |
-| Chrome: acessibilidade | axe sem violações nos três estados, em desktop e celular (inclui contraste) |
-| Primeira dobra | Botões dentro da tela em 1280×720, 1366×768, 1440×900, 768×1024 e 390×844 |
-| Blocos do catálogo | Entre 363 e 364px em desktop |
-| Revisão visual | Capturas finais abertas e avaliadas |
+| `npm run verify` | 15 páginas e 600 referências internas corretas |
+| `npm run check:contact` | Cenários aprovados e `dist/` sem valores de teste |
+| `npm run check:publish` | **Aprovado.** Modo de contato direto. Avisa que não há política de privacidade publicada |
+| `sh scripts/empacotar-site.sh` | 44 arquivos. Conteúdo extraído idêntico a `dist/`, sem `.env`, fontes, dependências, mapas ou endereços locais |
+| Apache 2.4 com o `.htaccess` do pacote | HTTP redireciona para HTTPS, 14 rotas com 200, `/nao-existe/` com 404 e página do site, `/produtos` redireciona para `/produtos/`, listagem de pasta recusada, cabeçalhos de segurança presentes |
+| Chrome sobre o pacote extraído | 14 rotas em 320, 390, 768 e 1280 px: sem rolagem horizontal, erros de console ou requisições externas. Canonical e `og:image` corretos, nenhum botão do portal, axe sem violações em 390 e 1280 |
+| Contato | `mailto:` real, assunto por produto, parâmetro hostil ignorado, sem formulário |
+
+Rodadas anteriores do site cobriram, com a mesma versão do código: formulário e WhatsApp com configuração sintética (138 checagens), Firefox 157 em 9 rotas e primeira dobra.
 
 ## 5. Navegadores e limitações
 
 - **Chrome:** cobertura completa acima.
-- **Firefox 157 (snap):** 9 rotas em 320, 390, 768 e 1440px, menu móvel, seleção no formulário e validação, sem erros de console. Sem os cenários de rede simulada nem axe.
-- **WebKit/Safari: não testado.** O ambiente não está disponível, e nada aqui vale como validação de Safari.
-- **Hostinger e `.htaccess`: não testados.** Sem servidor Apache ou LiteSpeed aqui. O `astro preview` responde 404 a `/produtos` sem barra; a hospedagem normalmente redireciona, e o README manda conferir.
-- **`check:publish` valida formato:** um valor fictício bem formado passaria.
-- **Testes em navegador** não fazem parte do repositório, para não adicionar dependências. Uma cópia está em `artifacts/qa-final/scripts-navegador/`.
+- **Firefox 157:** 9 rotas em 320, 390, 768 e 1440 px, menu móvel e validação, em rodada anterior. O pacote final não foi repetido no Firefox: o `.htaccess` exige HTTPS, e esse navegador não permite simular o proxy.
+- **WebKit/Safari:** não testado no site.
+- **Hostinger:** não testada. O `.htaccess` passou em Apache 2.4, mas a Hostinger pode usar LiteSpeed. Confira depois de publicar.
+- **`check:publish` valida formato:** os valores atuais foram confirmados por Felipe, e a validação não comprova entrega de e-mail.
 
-## 6. Dependências externas que impedem a publicação
+## 6. O que falta para publicar
 
-| Configuração | Dado necessário |
+| Item | Efeito |
 | --- | --- |
-| `PUBLIC_SITE_URL` | Domínio definitivo com HTTPS |
-| `PUBLIC_CONTACT_EMAIL`, `PUBLIC_CONTACT_WHATSAPP` ou `PUBLIC_CONTACT_FORM_ENDPOINT` | Pelo menos um canal real |
+| Confirmar no hPanel se o site atual foi criado no AI Builder ou é um site de arquivos | Define como enviar o pacote. Veja `PUBLICACAO.md` |
+| Política de privacidade e identificação jurídica | Decisão da empresa. Não impede o pacote: o site não usa cookies nem formulário |
+| Confirmações da seção 2 | Licenças e demonstrações, decisão da empresa |
 
-Opcionais, sem bloquear: `PUBLIC_CONTACT_PHONE`, `PUBLIC_COMPANY_ADDRESS` e `PUBLIC_COMPANY_CNPJ`.
+Domínio e caixa postal não são pendências.
 
-## 7. Como preencher e validar
+## 7. Evidências
 
-```bash
-cp .env.example .env
-# Edite .env: domínio real, ao menos um canal real, e apague as linhas que não usar.
-npm run verify
-npm run check:publish
-```
+Pasta local `artifacts/qa-final/`, não versionada: capturas das rodadas do site, `pacote-apache.txt` e `pacote-*.png`. Pacote em `artifacts/pacotes/`.
 
-Com `check:publish` aprovado, siga "Hostinger" e "Conferência depois de publicar" no README. Depois de qualquer mudança em `.env`, gere o build e implante de novo.
-
-## 8. Evidências
-
-Pasta local `artifacts/qa-final/`, não versionada (`.gitignore`):
-
-- `home-*`, `catalogo-*`, `produto-*`, `servico-*`, `servicos-desktop`, `sobre-desktop`, `404-desktop`, `menu-movel-foco`.
-- `contato-c-sem-canal-*`: configuração real atual, sem canal.
-- `contato-a-SINTETICO-*` e `contato-b-SINTETICO-*`: **configuração sintética**, com endereços `.invalid` que não existem.
-- `firefox-*`: renderização no Firefox.
-- `verificacoes.txt` e `scripts-navegador/`.
-
-## 9. Git
-
-- Branch atual: `feature/create-site`, usada no lugar de criar outra feature equivalente.
-- `main`, `develop` e `origin/develop` seguem em `49dd60f`: não há commits diretos a reportar.
-- Nada foi commitado, enviado ou publicado. O trabalho está na árvore de trabalho: `README.md` modificado e os demais arquivos novos, sem nenhuma exclusão de arquivo rastreado.
-
-## 10. Referências sobre a Hostinger
+## 8. Referências sobre a Hostinger
 
 - [Páginas de erro](https://docs.hostinger.com/websites/error-pages)
 - [Localizar e criar o .htaccess no hPanel](https://www.hostinger.com/au/tutorials/create-default-wordpress-htaccess-file)
