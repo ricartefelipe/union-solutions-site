@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import Link from '@/components/link';
 import { redirect } from 'next/navigation';
-import { currentSession, getMe } from '@/lib/api';
+import { apiGetOptional, currentSession, getMe } from '@/lib/api';
+import type { UnreadCount } from '@/lib/types';
 import { label } from '@/lib/labels';
 import { NavLinks } from '@/components/nav';
 
@@ -9,6 +10,7 @@ export default async function PortalLayout({ children }: { children: ReactNode }
   const session = await currentSession();
   if (!session) redirect('/auth/login');
   const me = await getMe();
+  const { unread } = await apiGetOptional<UnreadCount>('/v1/notifications/unread-count', { unread: 0 });
 
   const links = [
     { href: '/', label: 'Painel' },
@@ -22,6 +24,8 @@ export default async function PortalLayout({ children }: { children: ReactNode }
   if (me.role === 'UNION_ADMIN') {
     links.push({ href: '/admin/usuarios', label: 'Equipe' });
     links.push({ href: '/admin/auditoria', label: 'Auditoria' });
+    links.push({ href: '/admin/emails', label: 'E-mails' });
+    links.push({ href: '/admin/retencao', label: 'Retenção' });
   }
 
   return (
@@ -37,6 +41,9 @@ export default async function PortalLayout({ children }: { children: ReactNode }
             <span className="topbar__who">
               {me.name ?? me.email} · {me.organization?.name ?? label('role', me.role)}
             </span>
+            <Link className="topbar__bell" href="/notificacoes">
+              Notificações{unread > 0 && <> <span className="topbar__count">{unread > 99 ? '99+' : unread}</span><span className="sr-only"> não lida{unread > 1 ? 's' : ''}</span></>}
+            </Link>
             <form method="post" action="/auth/logout">
               <input type="hidden" name="csrf" value={session.csrf} />
               <button className="linklike" type="submit">Sair</button>

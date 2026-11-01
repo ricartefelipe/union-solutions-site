@@ -2,6 +2,7 @@ package br.com.unionsolutions.portal.application;
 
 import br.com.unionsolutions.portal.application.Dtos.FileView;
 import br.com.unionsolutions.portal.domain.Document;
+import br.com.unionsolutions.portal.domain.Project;
 import br.com.unionsolutions.portal.domain.DocumentVersion;
 import br.com.unionsolutions.portal.domain.StoredFile;
 import br.com.unionsolutions.portal.domain.Types.DocVisibility;
@@ -39,6 +40,7 @@ public class FileService {
     @Inject AuditService audit;
     @Inject AccessPolicy policy;
     @Inject ObjectLedgerService ledger;
+    @Inject NotificationService notifications;
     @Inject TransactionSynchronizationRegistry transactions;
     @ConfigProperty(name = "portal.files.max-bytes") long maxBytes;
     @ConfigProperty(name = "portal.files.tenant-quota-bytes") long tenantQuota;
@@ -232,6 +234,13 @@ public class FileService {
         boolean visible = doc.visibility == DocVisibility.PARTICIPANTS && doc.status == RecordStatus.ACTIVE;
         audit.record((UUID) null, version.versionNo > 1 ? "DOCUMENT_VERSION_PUBLISHED" : "DOCUMENT_PUBLISHED", "document", doc.id, doc.tenantId, doc.projectId,
                 version.versionNo > 1 ? doc.title + " v" + version.versionNo : doc.title, visible);
+        if (doc.status == RecordStatus.ACTIVE && doc.visibility != DocVisibility.INTERNAL) {
+            Project project = doc.projectId == null ? null : Project.findById(doc.projectId);
+            java.util.Set<UUID> recipients = doc.visibility == DocVisibility.CLIENT_ADMINS || project == null
+                    ? notifications.clientAdmins(doc.tenantId) : notifications.clientSide(project);
+            notifications.notify(file.uploadedBy, recipients, "DOCUMENT_PUBLISHED", "Documento disponível: " + doc.title + (version.versionNo > 1 ? " v" + version.versionNo : ""),
+                    "/documentos", doc.tenantId, doc.projectId, "document", doc.id);
+        }
     }
 
     @Transactional

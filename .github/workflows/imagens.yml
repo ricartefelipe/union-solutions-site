@@ -1,0 +1,39 @@
+# Análise das imagens de produção. Falha com vulnerabilidade alta ou crítica corrigível: é o gate de publicação,
+# e a decisão sobre achados sem correção disponível é registrada em portal/docs/VULNERABILIDADES.md, nunca aqui.
+name: Imagens de produção
+
+on:
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  analise:
+    name: Trivy nas imagens finais
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Construir as imagens com as mesmas instruções da produção
+        run: |
+          docker build -t portal-backend:ci portal/backend
+          docker build -t portal-frontend:ci portal/frontend
+          docker build -t portal-proxy:ci portal/deploy/production/proxy
+          docker build -t portal-keycloak:ci portal/deploy/keycloak
+          docker build -t portal-ops:ci portal/deploy/production/ops
+      - name: Vulnerabilidades altas e críticas com correção disponível
+        run: |
+          for image in portal-backend portal-frontend portal-proxy portal-keycloak portal-ops; do
+            echo "== $image"
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$HOME/.cache/trivy:/root/.cache/trivy" aquasec/trivy:0.70.0 \
+              image --scanners vuln --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 "$image:ci"
+          done
+      - name: Relatório completo, inclusive sem correção disponível (não bloqueia; vai para o resumo)
+        if: always()
+        run: |
+          for image in portal-backend portal-frontend portal-proxy portal-keycloak portal-ops; do
+            echo "### $image" >> "$GITHUB_STEP_SUMMARY"
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$HOME/.cache/trivy:/root/.cache/trivy" aquasec/trivy:0.70.0 \
+              image --scanners vuln --severity CRITICAL,HIGH --format table "$image:ci" >> "$GITHUB_STEP_SUMMARY" 2>&1 || true
+          done

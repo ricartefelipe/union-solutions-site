@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { apiGet, apiGetOptional } from '@/lib/api';
-import { formatDateTime, label, options } from '@/lib/labels';
+import { activityLabels, formatDateTime, label, options } from '@/lib/labels';
 import type { Page, TicketDetail, UserView } from '@/lib/types';
 import { ApiForm, RefreshWhilePending } from '@/components/forms';
 import { Badge, Disclosure, Empty, FileLink, PageTitle, Section, When } from '@/components/ui';
@@ -56,6 +56,23 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
         </Section>
       </div>
 
+      <Section title="Histórico">
+        {detail.history.length === 0 ? <Empty>Sem registros.</Empty> : (
+          <ol className="history">
+            {detail.history.map((item, index) => {
+              const status = item.action === 'TICKET_STATUS_CHANGED' ? item.summary?.split(': ').pop() : null;
+              return (
+                <li key={`${item.createdAt}-${index}`}>
+                  <strong>{item.action === 'TICKET_STATUS_CHANGED' && status ? `Situação: ${label('ticket', status)}` : activityLabels[item.action] ?? item.action}</strong>
+                  {item.actorName && <span className="muted">por {item.actorName}</span>}
+                  <When value={item.createdAt} />
+                </li>
+              );
+            })}
+          </ol>
+        )}
+      </Section>
+
       <Section title="Comentários">
         {detail.comments.length === 0 ? <Empty>Nenhum comentário ainda.</Empty> : (
           <ul className="stack">
@@ -88,6 +105,7 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
             { name: 'status', label: 'Situação', type: 'select', required: true, defaultValue: ticket.status, options: options('ticket') },
             { name: 'priority', label: 'Prioridade', type: 'select', required: true, defaultValue: ticket.priority, options: options('priority') },
             { name: 'assigneeId', label: 'Responsável', type: 'select', placeholder: 'Sem alteração', defaultValue: detail.assigneeId ?? '', options: (team?.items ?? []).filter((u) => u.status === 'ACTIVE').map((u) => ({ value: u.id, label: u.name ?? u.email })) },
+            ...(detail.assigneeId ? [{ name: 'clearAssignee', label: 'Remover o responsável atual', type: 'checkbox' as const }] : []),
             { name: 'slaDueAt', label: 'Prazo registrado em contrato', type: 'datetime-local', hint: 'Preencha somente se houver prazo acordado para este contrato. O portal não calcula SLA.' },
           ]} />
         </Section>

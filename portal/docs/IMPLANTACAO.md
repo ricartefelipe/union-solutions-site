@@ -39,6 +39,7 @@ Serviços externos equivalentes, como banco gerenciado ou S3 contratado, podem s
 | Backup externo | `RESTIC_REPOSITORY`, `PORTAL_BACKUP_S3_ACCESS_KEY` e `PORTAL_BACKUP_S3_SECRET_KEY` (se o destino for S3) |
 | Retenção de backup | `PORTAL_BACKUP_KEEP_DAILY`, `PORTAL_BACKUP_KEEP_WEEKLY`, `PORTAL_BACKUP_KEEP_MONTHLY` |
 | Privacidade | Campos de `PRIVACIDADE.md`. Pendência para abrir o portal a clientes |
+| Retenção | Nasce desligada. Só ligue com `PORTAL_RETENTION_ENABLED=true` e `PORTAL_RETENTION_POLICY` depois de a empresa aprovar os prazos (ver `OPERACAO.md`) |
 
 ## Procedimento
 
@@ -63,7 +64,7 @@ Valores públicos e segredos:
 
 | Tipo | Variáveis | Quando vale |
 | --- | --- | --- |
-| Público | `PORTAL_HOST`, `PORTAL_PUBLIC_URL`, `PORTAL_MAIL_FROM`, `PORTAL_ACME_EMAIL` | Execução |
+| Público | `PORTAL_HOST`, `PORTAL_PUBLIC_URL`, `PORTAL_MAIL_FROM`, `PORTAL_ACME_EMAIL`, `PORTAL_OUTBOX_INTERVAL`, `PORTAL_RETENTION_*` | Execução |
 | Segredo | Senhas de banco e SMTP, `KC_BOOTSTRAP_ADMIN_PASSWORD`, `PORTAL_WEB_CLIENT_SECRET`, `PORTAL_KEYCLOAK_ADMIN_SECRET`, `PORTAL_SESSION_SECRET`, `PORTAL_S3_*`, `RESTIC_PASSWORD` | Execução. Nenhum entra em imagem |
 | Fixado na imagem | Caminho `/identidade`, banco e saúde do Keycloak (`kc.sh build`), Caddyfile | Build |
 
@@ -115,7 +116,8 @@ Backup, restauração e atualização não rodam ao mesmo tempo: uma segunda cha
 
 1. `sh portal-prod.sh atualizar`. A API aplica os changesets `007-cota-e-objetos` (coluna `object_present` em `stored_file`, tabela `object_ledger`) e `008-objetos-bloqueados` (arquivos bloqueados existentes voltam a contar na cota até a limpeza periódica confirmar a exclusão do objeto, porque a versão anterior podia falhar ao apagá-lo).
 2. **Sessões abertas antes da atualização são encerradas.** Elas não têm vínculo com a conta do provedor, e sem esse vínculo a recuperação de MFA e a revogação não as alcançariam; o web as apaga ao subir e recusa qualquer linha assim que ainda apareça. Quem estava logado entra de novo; a equipe da Union passa pelo TOTP. Sessões criadas por esta versão em diante são preservadas em atualizações futuras.
-3. Nos dias seguintes, `object_ledger` com `attempts` crescendo ou arquivos bloqueados que continuem com `object_present = true` indicam que o armazenamento está recusando exclusões (`OPERACAO.md`).
+3. O changeset `009-notificacoes-retencao` cria `notification`, `email_outbox` e `retention_run` e a coluna `app_user.email_notifications` (ligada para todos). Nenhum aviso é gerado retroativamente. A retenção sobe desligada: nada é removido até `PORTAL_RETENTION_ENABLED=true` com `PORTAL_RETENTION_POLICY` preenchida.
+4. Nos dias seguintes, `object_ledger` com `attempts` crescendo ou arquivos bloqueados que continuem com `object_present = true` indicam que o armazenamento está recusando exclusões (`OPERACAO.md`).
 
 **Se a atualização falhar no meio:** as migrations são transacionais por changeset no PostgreSQL; um changeset que falhou não fica meio aplicado, e a API não sobe enquanto ele não aplicar. Restaure o backup feito no início de `atualizar` e volte ao commit anterior do código. A remoção de sessões pelo web é idempotente: reiniciar repete sem efeito.
 
@@ -132,5 +134,7 @@ bash portal/deploy/production/teste/prova.sh testes tests/01-jornada.spec.js tes
 bash portal/deploy/production/teste/prova.sh auditar
 bash portal/deploy/production/teste/prova.sh destruir
 ```
+
+`destruir` preserva os volumes `union-portal-prova-evidencias` (estado e capturas dos testes) e `union-portal-prova-repositorio` (backup). Antes de uma nova rodada completa, remova os dois com `docker volume rm`: o estado antigo faz a jornada tentar a senha de administração da rodada anterior, e o repositório antigo recusa a senha nova de backup.
 
 O ambiente de prova usa projeto, volumes e portas próprios e não altera nada no computador. O arquivo `teste/compose.teste.yaml` acrescenta só uma autoridade de certificação de teste, o Mailpit como SMTP e um destino local de backup. Não existe opção que desligue validações de produção, autenticação, TLS, autorização ou antivírus.

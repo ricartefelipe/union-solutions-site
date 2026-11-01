@@ -37,6 +37,8 @@ Este relatório descreve o que foi implementado e testado. **Não atesta conform
 
 O inventário, os cookies e os campos a preencher estão em [`PRIVACIDADE.md`](PRIVACIDADE.md).
 
+Avisos e e-mails: o e-mail de aviso leva só título e link; o conteúdo fica no portal, atrás do login. A fila de e-mails mostra destinatários mascarados e descarta o corpo depois do envio. Convites continuam com token em hash e uso único.
+
 ## Vulnerabilidades
 
 Resultados, avaliação individual das ocorrências altas e decisão pendente em [`VULNERABILIDADES.md`](VULNERABILIDADES.md).

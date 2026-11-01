@@ -29,7 +29,8 @@ export interface PendingApproval { deliveryId: string; deliveryVersionId: string
 export interface TicketSummary { id: string; tenantId: string; organizationName: string; projectId: string | null; projectName: string | null; subject: string; category: string; priority: string; status: string; slaDueAt: string | null; createdAt: string; updatedAt: string }
 export interface CommentView { id: string; body: string; internal: boolean; authorName: string; fromUnion: boolean; createdAt: string }
 export interface AttachmentView { id: string; file: FileView; internal: boolean; createdAt: string }
-export interface TicketDetail { ticket: TicketSummary; description: string; openedByName: string; assigneeName: string | null; assigneeId: string | null; version: number; canManage: boolean; comments: CommentView[]; attachments: AttachmentView[] }
+export interface TicketHistoryItem { action: string; summary: string | null; actorName: string | null; createdAt: string }
+export interface TicketDetail { ticket: TicketSummary; description: string; openedByName: string; assigneeName: string | null; assigneeId: string | null; version: number; canManage: boolean; comments: CommentView[]; attachments: AttachmentView[]; history: TicketHistoryItem[] }
 
 export interface DocumentRef { id: string; title: string; latestVersionId: string; downloadable: boolean }
 export interface ProductView { id: string; tenantId: string; organizationName: string; productName: string; commercialStatus: string; accessUrl: string | null; supportNotes: string | null; slaNote: string | null; archived: boolean; documents: DocumentRef[]; version: number; canManage: boolean }
@@ -38,3 +39,11 @@ export interface UpcomingItem { kind: string; id: string; projectId: string; tit
 export interface ActivityItem { action: string; summary: string | null; projectId: string | null; projectName: string | null; createdAt: string }
 export interface Dashboard { activeProjects: ProjectSummary[]; upcoming: UpcomingItem[]; pendingApprovals: PendingApproval[]; openTickets: TicketSummary[]; activity: ActivityItem[] }
 export interface AuditView { id: string; tenantId: string | null; organizationName: string | null; actorId: string | null; actorEmail: string | null; action: string; resourceType: string; resourceId: string | null; projectId: string | null; summary: string | null; correlationId: string | null; createdAt: string }
+
+export interface NotificationView { id: string; kind: string; title: string; link: string | null; projectId: string | null; createdAt: string; readAt: string | null }
+export interface UnreadCount { unread: number }
+export interface PreferencesView { emailNotifications: boolean }
+export interface OutboxView { id: string; recipient: string; subject: string; status: string; attempts: number; createdAt: string; sentAt: string | null; nextAttemptAt: string | null; lastError: string | null }
+export interface RetentionCategory { category: string; days: number; matching: number; note: string }
+export interface RetentionReport { enabled: boolean; policyReference: string; generatedAt: string; categories: RetentionCategory[] }
+export interface RetentionRunView { id: string; mode: string; startedAt: string; finishedAt: string | null; summary: string; removed: number; error: string | null }

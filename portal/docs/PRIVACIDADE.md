@@ -19,6 +19,9 @@ As afirmações sobre o site institucional não valem aqui: **o site não usa co
 | Sessão: identificador em hash, tokens cifrados, datas | Manter o login | Banco `portal_sessao` | Só o BFF |
 | Registros técnicos: IP, caminho sem parâmetros, status | Operação e segurança | Saída dos containers, até 50 MB por serviço | Quem administra o servidor |
 | E-mails: convites, definição e recuperação de senha | Dar acesso | Provedor de SMTP (a contratar) | Provedor de SMTP |
+| Avisos: título, link, data e leitura; preferência de e-mail | Informar a pessoa sobre atividade nos seus projetos | `notification`, `app_user.email_notifications` | A própria pessoa |
+| Fila de e-mails: destinatário, assunto, situação, erro; corpo só até o envio | Entrega durável dos avisos e convites | `email_outbox` | Administração da Union (destinatário mascarado) |
+| Simulações e execuções de retenção: contagens por categoria | Aplicar a política de retenção | `retention_run` | Administração da Union |
 | Backups: cópia cifrada de tudo acima, exceto sessões | Recuperação | Destino externo (a definir) | Quem tem a chave do backup |
 
 ## Cookies do portal
@@ -65,7 +68,7 @@ Nenhum destes dados foi inventado. Eles precisam existir antes de o portal ser a
 
 ## O que o software ainda não faz
 
-- Não expira nem apaga dados automaticamente. Registros são arquivados, não excluídos.
+- Não apaga dados automaticamente enquanto a retenção estiver desligada (estado inicial). Com a política aprovada e configurada, remove só as categorias de `OPERACAO.md`, "Retenção". Contas e auditoria não são removidas pela aplicação.
 - Não exporta os dados de um titular por uma tela própria.
 - Não publica política de privacidade: o texto e o endereço dependem dos campos acima.
 - A cifragem em repouso dos volumes depende do disco da VPS. O backup é cifrado pelo restic.

@@ -59,6 +59,10 @@ As páginas de conta do provedor (`/realms/*/account`) ficam fechadas no proxy, 
 
 **Último administrador.** Desativar ou rebaixar um `UNION_ADMIN` passa por uma fila única no banco (advisory lock transacional): duas alterações ao mesmo tempo são aplicadas uma depois da outra, com a autorização de quem pede reconferida na vez dele. Nunca fica zero administradores ativos; quem perde a vez recebe `409 LAST_ADMIN` ou, se já tiver sido desativado, `403`.
 
+**Papéis.** Em Equipe (Union) e em Organização ou na página do cliente (administração do cliente), "Tornar administração", "Tornar equipe" e "Tornar participante" trocam o papel dentro do mesmo tipo de conta. A API recusa transformar cliente em Union ou o contrário, e a troca de um `UNION_ADMIN` passa pela mesma fila do último administrador (`USER_ROLE_CHANGED` na auditoria).
+
+**Listas e filtros.** Projetos filtram por situação (arquivados só aparecem quando pedidos) e, para a Union, por cliente. Suporte filtra por situação, cliente e "só as não encerradas". Auditoria filtra por código da ação e cliente. Cada documento tem página própria com todas as versões; a equipe edita título, categoria e visibilidade ali.
+
 **Revogar acesso.** São mecanismos diferentes, e os dois foram testados:
 
 | Ação | Efeito |
@@ -71,6 +75,32 @@ As páginas de conta do provedor (`/realms/*/account`) ficam fechadas no proxy, 
 **Arquivamento.** Organizações, projetos, documentos e produtos são arquivados, não excluídos. A aplicação não oferece exclusão de registros com histórico.
 
 **Produtos.** Links aceitam apenas HTTPS e os domínios de `PORTAL_PRODUCT_LINK_HOSTS`. Altere a variável e reinicie a API para autorizar um novo destino.
+
+## Notificações e e-mails
+
+**Central de notificações.** Cada pessoa vê em Notificações os avisos dos projetos de que participa: documento disponível, entrega e nova versão publicadas, aprovação solicitada, decisão do cliente (só para a Union), solicitação aberta, respondida, com anexo ou com situação alterada, associação a projeto e atualização de projeto. Quem fez a ação não recebe aviso dela. Notas internas e documentos internos nunca geram aviso. O contador no topo mostra as não lidas.
+
+**E-mails.** O aviso por e-mail traz só o título e o link para o portal, nunca descrições, comentários ou documentos. Cada pessoa pode desligar os avisos em Notificações (`PREFERENCES_CHANGED` na auditoria); convites continuam sendo enviados. O e-mail é gravado na tabela `email_outbox` **na mesma transação** do fato que o gera: se a transação falhar, não há e-mail; se o SMTP estiver fora, o fato fica registrado e o e-mail espera. Uma tarefa da API (`PORTAL_OUTBOX_INTERVAL`, padrão 30 s) reserva lotes com `FOR UPDATE SKIP LOCKED`, de modo que duas instâncias não enviam o mesmo item, e envia fora da transação. Falha gera nova tentativa com espera crescente (30 s, 1 min, 2 min... até 1 h); depois de 12 tentativas o item passa a `FAILED`, com `EMAIL_FAILED` na auditoria. O corpo é descartado depois do envio.
+
+**Fila de e-mails** (Administração, só `UNION_ADMIN`): situação, tentativas, próximo envio e último erro, com destinatário mascarado. "Voltar à fila" reenvia um item que desistiu com o aviso genérico (`EMAIL_RETRY_REQUESTED`). Se muitos itens estiverem `PENDING` com erro, confira `PORTAL_SMTP_*` e o provedor de SMTP.
+
+## Retenção
+
+A retenção **nasce desligada** e não há prazo sugerido: os períodos são decisão da empresa e dependem de obrigações contratuais e legais. Com `PORTAL_RETENTION_ENABLED=false`, a tela Retenção e a tarefa diária (`PORTAL_RETENTION_SCHEDULE`, padrão 03:30) só **simulam**: contam o que seria removido por categoria. Abrir a tela não grava nada; "Registrar simulação" e a tarefa diária gravam o resultado (`retention_run`, `RETENTION_SIMULATED`). Nada é removido.
+
+Para ligar, defina `PORTAL_RETENTION_ENABLED=true` e `PORTAL_RETENTION_POLICY` com a identificação da política aprovada; sem a referência, a API recusa subir (`ProductionChecks`) e a execução responde `409 RETENTION_DISABLED`. Os prazos, em dias, valem por categoria e `0` significa nunca remover:
+
+| Categoria | Variável | O que sai |
+| --- | --- | --- |
+| Avisos lidos | `PORTAL_RETENTION_NOTIFICATIONS_DAYS` | Notificações lidas há mais tempo que o prazo |
+| Registros de e-mails | `PORTAL_RETENTION_EMAILS_DAYS` | Itens `SENT` ou `FAILED` da fila |
+| Convites encerrados | `PORTAL_RETENTION_INVITATIONS_DAYS` | Convites aceitos, revogados ou expirados |
+| Solicitações encerradas | `PORTAL_RETENTION_CLOSED_TICKETS_DAYS` | Solicitações fechadas, com comentários e anexos (objetos no armazenamento também) |
+| Documentos arquivados | `PORTAL_RETENTION_ARCHIVED_DOCUMENTS_DAYS` | Documentos arquivados que não pertencem a nenhuma versão de entrega |
+| Contas desativadas | `PORTAL_RETENTION_DISABLED_USERS_DAYS` | Só contagem: a remoção de contas exige decisão caso a caso e o provedor |
+| Auditoria | `PORTAL_RETENTION_AUDIT_DAYS` | Só contagem: a auditoria não é removida pela aplicação |
+
+Com a retenção ligada, "Executar agora" (com confirmação) e a tarefa diária removem o que a simulação conta e registram `RETENTION_EXECUTED` com o resumo por categoria. Cada execução fica em `retention_run`. Faça backup antes de ligar.
 
 ## Arquivos e antivírus
 
@@ -148,6 +178,8 @@ A porta de gestão (9000) não é publicada. Consulte de dentro da rede, por exe
 | `/q/health/live`, `/q/health/ready` | Saúde e prontidão |
 | `/q/metrics` | Métricas em formato Prometheus |
 | `/q/openapi` | Contrato da API |
+
+Fila de e-mails e retenção: `SELECT status, count(*) FROM email_outbox GROUP BY status` e `SELECT mode, started_at, removed, error FROM retention_run ORDER BY started_at DESC LIMIT 10`. Um item `PENDING` com `attempts` alto indica SMTP indisponível.
 
 Logs da API são JSON na saída padrão, com `correlationId` no MDC. Toda resposta traz `X-Correlation-Id`, e as telas exibem esse código nos erros. Conteúdo de documentos, tokens e links de convite não vão para os logs, e o proxy remove parâmetros de URL do registro de acesso. Cada serviço guarda até 50 MB de log (`max-size` 10 MB, 5 arquivos).
 

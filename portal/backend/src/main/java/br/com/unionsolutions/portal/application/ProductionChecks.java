@@ -40,6 +40,11 @@ public final class ProductionChecks {
         String secretKey = config.apply("portal.storage.secret-key");
         if (blank(accessKey) || blank(secretKey) || placeholder(accessKey) || placeholder(secretKey)) problems.add("credenciais do armazenamento precisam ser definidas");
 
+        // Retenção destrutiva só com política aprovada identificada: nunca com prazos inventados.
+        if ("true".equalsIgnoreCase(config.apply("portal.retention.enabled")) && blank(config.apply("portal.retention.policy-reference"))) {
+            problems.add("portal.retention.enabled exige portal.retention.policy-reference com a política aprovada");
+        }
+
         String endpoint = lower(config.apply("portal.storage.endpoint"));
         if (!endpoint.isEmpty() && !endpoint.startsWith("https://") && !endpoint.equals(INTERNAL_STORAGE)) problems.add("portal.storage.endpoint precisa usar HTTPS ou o serviço interno da implantação");
         return problems;

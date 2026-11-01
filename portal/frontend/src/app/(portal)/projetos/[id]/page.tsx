@@ -4,7 +4,7 @@ import { apiGet, apiGetOptional, getMe } from '@/lib/api';
 import { formatDate, label, options } from '@/lib/labels';
 import type { DeliverySummary, DocumentView, Page, ProjectDetail, UserView } from '@/lib/types';
 import { ApiButton, ApiForm, RefreshWhilePending } from '@/components/forms';
-import { Badge, Disclosure, Empty, FileLink, PageTitle, Section, When } from '@/components/ui';
+import { Badge, Disclosure, Empty, FileLink, PageTitle, Section, Truncated, When } from '@/components/ui';
 
 export const metadata: Metadata = { title: 'Projeto' };
 
@@ -94,8 +94,22 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
                 </div>
                 {milestone.description && <p className="muted">{milestone.description}</p>}
                 <p className="meta"><span>Previsão: {formatDate(milestone.dueDate)}</span></p>
-                {project.canManage && milestone.status !== 'DONE' && (
-                  <ApiButton path={`/v1/projects/${id}/milestones/${milestone.id}`} method="PUT" tone="ghost" label="Marcar como concluída" body={{ title: milestone.title, description: milestone.description, dueDate: milestone.dueDate, status: 'DONE', version: milestone.version }} />
+                {project.canManage && (
+                  <div className="page-title__actions">
+                    {milestone.status !== 'DONE' && (
+                      <ApiButton path={`/v1/projects/${id}/milestones/${milestone.id}`} method="PUT" tone="ghost" label="Marcar como concluída" body={{ title: milestone.title, description: milestone.description, dueDate: milestone.dueDate, status: 'DONE', version: milestone.version }} />
+                    )}
+                  </div>
+                )}
+                {project.canManage && (
+                  <Disclosure summary={`Editar etapa: ${milestone.title}`}>
+                    <ApiForm path={`/v1/projects/${id}/milestones/${milestone.id}`} method="PUT" values={{ version: milestone.version }} submitLabel="Salvar etapa" successMessage="Etapa atualizada." fields={[
+                      { name: 'title', label: 'Título', type: 'text', required: true, maxLength: 200, defaultValue: milestone.title },
+                      { name: 'description', label: 'Descrição', type: 'textarea', maxLength: 2000, defaultValue: milestone.description ?? '' },
+                      { name: 'dueDate', label: 'Previsão', type: 'date', defaultValue: milestone.dueDate ?? '' },
+                      { name: 'status', label: 'Situação', type: 'select', required: true, defaultValue: milestone.status, options: options('milestone') },
+                    ]} />
+                  </Disclosure>
                 )}
               </li>
             ))}
@@ -127,6 +141,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
             ))}
           </ul>
         )}
+        <Truncated page={deliveries} hint="As entregas mais antigas ficam acessíveis pelo painel e pelas notificações." />
         {project.canManage && (
           <Disclosure summary="Publicar entrega">
             <ApiForm path={`/v1/projects/${id}/deliveries`} submitLabel="Publicar entrega" redirectTo="/entregas/{id}" fields={[
@@ -145,7 +160,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
             {documents.items.map((doc) => (
               <li key={doc.id}>
                 <div className="list__row">
-                  <span className="list__title">{doc.title}</span>
+                  <Link className="list__title" href={`/documentos/${doc.id}`}>{doc.title}</Link>
                   <span className="meta"><span>{label('category', doc.category)}</span><span>Versão {doc.currentVersion}</span>{project.canManage && <span>{label('visibility', doc.visibility)}</span>}</span>
                 </div>
                 {doc.latest && <FileLink file={doc.latest.file} href={`/bff/v1/documents/${doc.id}/versions/${doc.latest.id}/download`} />}
@@ -154,6 +169,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
             ))}
           </ul>
         )}
+        <Truncated page={documents} hint="Use a tela Documentos para buscar os demais." />
         {project.canManage && (
           <Disclosure summary="Disponibilizar documento">
             <ApiForm path="/v1/documents" values={{ projectId: id }} submitLabel="Enviar documento" successMessage="Documento recebido. Ele fica disponível depois da verificação de segurança." fields={DOCUMENT_FIELDS} />

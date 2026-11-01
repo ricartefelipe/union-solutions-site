@@ -3,6 +3,7 @@ export const labels = {
   role: { UNION_ADMIN: 'Administração Union', UNION_STAFF: 'Equipe Union', CLIENT_ADMIN: 'Administração do cliente', CLIENT_MEMBER: 'Participante do cliente' },
   userStatus: { ACTIVE: 'Ativo', DISABLED: 'Desativado' },
   orgStatus: { ACTIVE: 'Ativa', ARCHIVED: 'Arquivada' },
+  docStatus: { ACTIVE: 'Ativo', ARCHIVED: 'Arquivado' },
   project: { PLANNED: 'Planejado', ACTIVE: 'Em andamento', ON_HOLD: 'Em pausa', COMPLETED: 'Concluído', ARCHIVED: 'Arquivado' },
   serviceLine: { PRODUCT: 'Produto', CONSULTING: 'Consultoria', ARCHITECTURE: 'Arquitetura', DEVELOPMENT: 'Desenvolvimento' },
   milestone: { PENDING: 'Pendente', IN_PROGRESS: 'Em andamento', DONE: 'Concluída' },
@@ -16,6 +17,8 @@ export const labels = {
   ticket: { OPEN: 'Aberta', IN_PROGRESS: 'Em atendimento', WAITING_CLIENT: 'Aguardando você', RESOLVED: 'Resolvida', CLOSED: 'Encerrada' },
   product: { ACTIVE: 'Ativo', IMPLEMENTING: 'Em implantação', SUSPENDED: 'Suspenso', ENDED: 'Encerrado' },
   invitation: { PENDING: 'Pendente', ACCEPTED: 'Aceito', REVOKED: 'Revogado', EXPIRED: 'Expirado' },
+  email: { PENDING: 'Na fila', SENT: 'Enviado', FAILED: 'Desistiu' },
+  retentionCategory: { 'notificacoes-lidas': 'Avisos lidos', 'emails-enviados': 'Registros de e-mails', 'convites-encerrados': 'Convites encerrados', 'solicitacoes-encerradas': 'Solicitações encerradas', 'documentos-arquivados': 'Documentos arquivados', 'contas-desativadas': 'Contas desativadas', auditoria: 'Auditoria' },
 } as const;
 
 export const activityLabels: Record<string, string> = {
@@ -35,9 +38,22 @@ export const activityLabels: Record<string, string> = {
   TICKET_STATUS_CHANGED: 'Situação da solicitação alterada',
   TICKET_COMMENTED: 'Novo comentário em solicitação',
   TICKET_ATTACHMENT_ADDED: 'Anexo em solicitação',
+  PROJECT_MEMBER_SET: 'Associação a projeto',
   PRODUCT_REGISTERED: 'Produto registrado',
   PRODUCT_STATUS_CHANGED: 'Situação do produto alterada',
+  USER_ROLE_CHANGED: 'Papel alterado',
 };
+
+/** Grupo de rótulos do código que encerra o resumo de auditoria de cada ação de mudança de situação. */
+const SUMMARY_GROUPS: Record<string, keyof typeof labels> = { TICKET_STATUS_CHANGED: 'ticket', MILESTONE_STATUS_CHANGED: 'milestone', PROJECT_STATUS_CHANGED: 'project', PRODUCT_STATUS_CHANGED: 'product' };
+
+/** Resumos de auditoria terminam com o código da situação; nas telas, o código vira o rótulo em português. */
+export function humanizeSummary(action: string, summary: string | null | undefined): string {
+  if (!summary) return '';
+  const group = SUMMARY_GROUPS[action];
+  if (!group) return summary;
+  return summary.replace(/([A-Z][A-Z_]+)$/, (code) => label(group, code));
+}
 
 export function label(group: keyof typeof labels, value: string | null | undefined): string {
   if (!value) return '';

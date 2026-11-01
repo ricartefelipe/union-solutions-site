@@ -18,6 +18,11 @@ public final class Ports {
         void delete(String key);
     }
 
+    /** Envio de um e-mail. Lança exceção quando o servidor não aceita; a fila tenta de novo. */
+    public interface MailSender {
+        void send(String recipient, String subject, String text);
+    }
+
     public interface MalwareScanner {
         /** Lança exceção quando não consegue concluir: falha nunca significa arquivo limpo. */
         ScanVerdict scan(InputStream content);
