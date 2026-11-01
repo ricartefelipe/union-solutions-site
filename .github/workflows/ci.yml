@@ -3,13 +3,14 @@
 # A análise de imagens (imagens.yml) bloqueia publicação, não integração: corre nos PRs para main e semanalmente.
 name: Verificações
 
+# Pull requests cobrem feature, release e hotfix; o push roda só nas branches integradas, para não executar tudo duas vezes.
 on:
   push:
-    branches: [develop, main, 'feature/**', 'release/**', 'hotfix/**']
+    branches: [develop, main]
   pull_request:
 
 concurrency:
-  group: verificacoes-${{ github.ref }}
+  group: verificacoes-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
@@ -83,7 +84,8 @@ jobs:
           docker run --rm -v "$PWD:/src:ro" -v "$HOME/.cache/trivy:/root/.cache/trivy" aquasec/trivy:0.70.0 \
             fs --scanners vuln --pkg-types library --severity CRITICAL,HIGH --exit-code 1 --ignore-unfixed /src/pom.xml
       - name: Contrato OpenAPI versionado corresponde ao gerado
-        run: diff target/openapi/openapi.yaml ../docs/api/openapi.yaml || { echo "Atualize portal/docs/api/openapi.yaml a partir de portal/backend/target/openapi/openapi.yaml"; exit 1; }
+        # A URL do provedor OIDC no esquema de segurança depende do ambiente de build e fica fora da comparação.
+        run: diff <(grep -v openIdConnectUrl target/openapi/openapi.yaml) <(grep -v openIdConnectUrl ../docs/api/openapi.yaml) || { echo "Atualize portal/docs/api/openapi.yaml a partir de portal/backend/target/openapi/openapi.yaml, sem a linha openIdConnectUrl"; exit 1; }
 
   portal-producao:
     name: Portal, configuração de produção
