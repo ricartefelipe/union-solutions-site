@@ -58,14 +58,38 @@ services:
         aliases:
           - ${PORTAL_SMTP_HOST:?}
 
-  restic-alvo:
-    image: restic/rest-server:0.14.0@sha256:d2aff06f47eb38637dff580c3e6bce4af98f386c396a25d32eb6727ec96214a5
-    restart: unless-stopped
-    environment:
-      DISABLE_AUTHENTICATION: "1"
+  # Chave do backup gerada uma vez, legível pelo usuário ops (uid 1002) do container de operação.
+  backup-ssh-init:
+    image: alpine:3.22@sha256:2e0b81d60597f449baa56dc25d355367869d2dca4cd57e866f1e2b52af3eb55f
+    restart: "no"
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        [ -f /run/backup-ssh/chave ] || {
+          for tentativa in 1 2 3 4 5 6; do apk add --no-cache openssh-keygen >/dev/null 2>&1 && break; sleep 5; done
+          ssh-keygen -q -t ed25519 -N "" -C union-portal-backup-prova -f /run/backup-ssh/chave
+          chown 1002:1002 /run/backup-ssh/chave /run/backup-ssh/chave.pub && chmod 600 /run/backup-ssh/chave
+        }
     volumes:
-      - repositorio-prova:/data
+      - backup-ssh-prova:/run/backup-ssh
+
+  # Destino do backup por sftp, como a conta de hospedagem na implantação real: só chave, sem senha.
+  sftp-alvo:
+    build:
+      # Caminhos relativos resolvem a partir do primeiro arquivo compose (deploy/production).
+      context: ./teste
+      dockerfile: sftp-alvo.Dockerfile
+    restart: unless-stopped
+    volumes:
+      - repositorio-prova:/backups
+      - backup-ssh-prova:/run/backup-ssh
     networks: [saida]
+
+  ops:
+    volumes:
+      - backup-ssh-prova:/run/backup-ssh:ro
 
   keycloak:
     environment:
@@ -112,6 +136,9 @@ volumes:
   evidencias:
     external: true
     name: union-portal-prova-evidencias
+  backup-ssh-prova:
+    external: true
+    name: union-portal-prova-backup-ssh
   repositorio-prova:
     external: true
     name: union-portal-prova-repositorio
