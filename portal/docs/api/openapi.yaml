@@ -2853,7 +2853,7 @@ paths:
       summary: Role
 info:
   title: Portal do Cliente Union Solutions
-  version: 1.2.0
+  version: 1.2.1
 servers:
 - url: http://localhost:8080
   description: Auto generated value

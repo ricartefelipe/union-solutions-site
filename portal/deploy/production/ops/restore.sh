@@ -12,7 +12,7 @@ trap cleanup EXIT
 rm -rf "$STAGE"
 mkdir -p "$STAGE"
 
-restic restore "$SNAPSHOT" --host portal --tag portal --target "$STAGE" --quiet
+/ops/restic.sh restore "$SNAPSHOT" --host portal --tag portal --target "$STAGE" --quiet
 ROOT=$(dirname "$(find "$STAGE" -name SHA256SUMS -type f | head -n 1)")
 (cd "$ROOT" && sha256sum --quiet -c SHA256SUMS)
 echo "Somas conferidas."

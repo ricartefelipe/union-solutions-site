@@ -15,7 +15,7 @@ check() { if [ "$1" = 0 ]; then ok=$((ok + 1)); echo "OK     $2"; else bad=$((ba
 api() { docker inspect --format '{{.State.Status}} {{.State.Paused}}' "$P-backend-1"; }
 staging_dirs() { compose run --rm --no-deps -T --entrypoint sh ops -c 'ls -1 /staging 2>/dev/null | wc -l' 2>/dev/null | tr -d '[:space:]'; }
 db() { docker exec "$P-postgres-1" psql -U postgres -d "$1" -Atc "$2"; }
-snapshots() { compose run --rm --no-deps -T --entrypoint sh ops -c 'restic snapshots --host portal --tag portal --json' 2>/dev/null | grep -o '"short_id"' | wc -l; }
+snapshots() { compose run --rm --no-deps -T --entrypoint sh ops -c '/ops/restic.sh snapshots --host portal --tag portal --json' 2>/dev/null | grep -o '"short_id"' | wc -l; }
 
 echo "== Backup: duas execuções sobrepostas"
 prod backup >/tmp/op-a.log 2>&1 &
@@ -72,10 +72,10 @@ prod backup >/tmp/op-a.log 2>&1; r=$?
 check "$([ $r -eq 4 ] && grep -q 'sem objeto' /tmp/op-a.log && [ "$(api)" = "running false" ] && echo 0 || echo 1)" "reconciliação falha: saída $r, API despausada"
 compose run --rm --no-deps -T --entrypoint bash ops -c 'source /ops/s3-env.sh; for k in $(rclone lsf -R --files-only "LOCAL:$BUCKET/_teste"); do rclone moveto "LOCAL:$BUCKET/_teste/$k" "LOCAL:$BUCKET/$k"; done' >/dev/null 2>&1
 prod reconciliar >/tmp/op-a.log 2>&1; check "$?" "objeto de volta: reconciliação limpa"
-compose stop restic-alvo >/dev/null 2>&1
+compose stop sftp-alvo >/dev/null 2>&1
 PORTAL_BACKUP_TIMEOUT_SECONDS=20 prod backup >/tmp/op-a.log 2>&1; r=$?
 check "$([ $r -ne 0 ] && [ $r -ne 4 ] && [ "$(api)" = "running false" ] && [ "$(staging_dirs)" = 0 ] && echo 0 || echo 1)" "destino inacessível: saída $r, API despausada, área removida"
-compose start restic-alvo >/dev/null 2>&1
+compose start sftp-alvo >/dev/null 2>&1
 RESTIC_PASSWORD=errada prod backup >/tmp/op-a.log 2>&1; r=$?
 check "$([ $r -eq 12 ] && grep -q 'incorreta' /tmp/op-a.log && [ "$(staging_dirs)" = 0 ] && echo 0 || echo 1)" "senha de backup errada: saída $r, repositório não reinicializado"
 n2=$(snapshots)
