@@ -33,8 +33,11 @@ if [ -n "$PROIBIDOS" ]; then
   exit 1
 fi
 
-# Nem endereços locais, valores de exemplo ou o botão do portal, que só entra depois de o portal estar validado.
-if grep -rlE 'localhost|127\.0\.0\.1|\.invalid|example\.(com|org)|SUBSTITUIR|data-client-portal' "$WORK/extraido" --include='*.html' --include='*.xml' --include='*.txt' --include='.htaccess' --include='*.js'; then
+# Nem endereços locais ou valores de exemplo. O botão do portal só pode aparecer quando PUBLIC_PORTAL_URL está
+# configurada no .env (check:publish já confere que o endereço gerado é o configurado).
+PROIBIDO='localhost|127\.0\.0\.1|\.invalid|example\.(com|org)|SUBSTITUIR'
+grep -qE '^PUBLIC_PORTAL_URL=https://' .env 2>/dev/null || PROIBIDO="$PROIBIDO|data-client-portal"
+if grep -rlE "$PROIBIDO" "$WORK/extraido" --include='*.html' --include='*.xml' --include='*.txt' --include='.htaccess' --include='*.js'; then
   echo "O pacote contém valores que não são de produção."
   exit 1
 fi

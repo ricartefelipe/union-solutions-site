@@ -21,7 +21,7 @@ PUBLIC_CONTACT_FORM_ENDPOINT=https://unionsolutions.tech/contato.php
 
 Com o endpoint, a página de contato mostra o formulário, que envia para `contato.php` (publicado junto com o site) e dali para a caixa `contato@` pelo `mail()` do PHP da Hostinger; o e-mail e o WhatsApp seguem como alternativa. Sem a variável, a página volta ao modo de contato direto.
 
-`PUBLIC_PORTAL_URL` fica **ausente**: o botão "Área do cliente" só entra depois de o portal estar validado.
+`PUBLIC_PORTAL_URL=https://clientes.unionsolutions.tech` está configurada desde 01/11/2026: o botão "Área do cliente" aparece no cabeçalho e no menu móvel e leva ao portal implantado.
 
 ### Gerar o pacote
 
@@ -35,11 +35,11 @@ sh scripts/empacotar-site.sh
 
 O script só gera o ZIP se `check:publish` aprovar. Ele extrai o pacote, compara com `dist/`, recusa arquivos que não deveriam estar nele, como `.env`, código-fonte, dependências, mapas ou endereços locais, e grava o SHA-256 e o inventário.
 
-**Pacote atual (1.2.0, gerado em 01/11/2026, ainda não publicado):** `artifacts/pacotes/site-union-solutions-20261101-150354.zip`
+**Pacote atual (gerado em 01/11/2026 com o botão "Área do cliente"):** `artifacts/pacotes/site-union-solutions-20261101-202817.zip`
 
-**SHA-256:** `e70eb377d64b648dfa68174dbc76cd4ca628127e6e05b653f65c0b10c97884f4`
+**SHA-256:** `f6d5005ce2bae9bba524cb2dbee5ff5e8b8db8e20b538068cf4a1138fdbfe9a4`
 
-**Publicado na Hostinger em 31/10/2026 (1.1.0):** `site-union-solutions-20261031-215233.zip`. O pacote novo muda só o cabeçalho (botão de contato marcado como página atual em Contato) e a frase de assunto no formulário quando se chega por um produto ou serviço. Publique-o pelo mesmo procedimento quando quiser; não é obrigatório para o portal.
+**Publicado na Hostinger em 31/10/2026 (1.1.0):** `site-union-solutions-20261031-215233.zip`. O pacote atual acrescenta o botão "Área do cliente" para `https://clientes.unionsolutions.tech`, o botão de contato marcado como página atual em Contato e a frase de assunto no formulário ao chegar por um produto ou serviço. O pacote intermediário `site-union-solutions-20261101-150354.zip` (sem o botão) fica como alternativa caso se queira publicar sem a área do cliente.
 
 O pacote foi testado em Apache 2.4 com o `.htaccess` real. A Hostinger pode usar LiteSpeed, então confira o resultado depois de publicar.
 
@@ -53,7 +53,7 @@ O pacote foi testado em Apache 2.4 com o `.htaccess` real. A Hostinger pode usar
 
 ### Publicar
 
-1. Confira a soma do pacote: `cd artifacts/pacotes && sha256sum -c site-union-solutions-20261101-150354.zip.sha256`.
+1. Confira a soma do pacote: `cd artifacts/pacotes && sha256sum -c site-union-solutions-20261101-202817.zip.sha256`.
 2. Em `public_html`, envie o ZIP e extraia com o conteúdo na raiz. `index.html` e `.htaccess` precisam ficar diretamente em `public_html`.
 3. Apague o ZIP de `public_html` depois de extrair.
 4. Ative o SSL do domínio no hPanel. Sem certificado, o redirecionamento para HTTPS falha.
@@ -114,16 +114,6 @@ Itens originais, mantidos para referência do que cada variável exige:
 7. Na atualização para esta versão, avisar quem estiver logado: todas as sessões anteriores são encerradas (`IMPLANTACAO.md`, "Atualização").
 8. **Aprovar a política de retenção** antes de ligar `PORTAL_RETENTION_ENABLED`: até lá o portal só simula e nada é removido (`portal/docs/OPERACAO.md`, "Retenção"). Nenhum prazo foi definido no código.
 
-### Ativar o botão "Área do cliente"
+### Botão "Área do cliente"
 
-Só depois de o portal estar operacional e validado:
-
-```bash
-# Em .env, acrescente:
-PUBLIC_PORTAL_URL=https://clientes.unionsolutions.tech
-npm run verify
-npm run check:publish
-sh scripts/empacotar-site.sh
-```
-
-Publique o novo pacote pelo mesmo procedimento. Sem essa variável, o botão não é gerado e o site continua válido.
+Ativado na configuração em 01/11/2026 e incluído no pacote atual. Para gerar um pacote **sem** o botão, remova `PUBLIC_PORTAL_URL` do `.env` e repita `verify`, `check:publish` e `empacotar-site.sh`; `empacotar-site.sh` recusa o botão no pacote sempre que a variável estiver ausente. O botão convida clientes a entrar no portal: as decisões sobre `VULNERABILIDADES.md` e `PRIVACIDADE.md` continuam pendentes e são responsabilidade de quem publica.
