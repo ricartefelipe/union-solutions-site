@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from '@/components/link';
 import { apiGet, getMe } from '@/lib/api';
-import { activityLabels, formatDate } from '@/lib/labels';
+import { activityLabels, formatDate, humanizeSummary } from '@/lib/labels';
 import type { Dashboard } from '@/lib/types';
 import { Badge, Empty, PageTitle, Section, When } from '@/components/ui';
 
@@ -72,7 +72,7 @@ export default async function DashboardPage() {
             {data.activity.map((item, index) => (
               <li key={index}>
                 <span className="list__title">{activityLabels[item.action] ?? 'Atualização'}</span>
-                {item.summary && <span>: {item.summary}</span>}
+                {item.summary && <span>: {humanizeSummary(item.action, item.summary)}</span>}
                 <p className="meta">{item.projectName && <span>{item.projectName}</span>}<When value={item.createdAt} /></p>
               </li>
             ))}

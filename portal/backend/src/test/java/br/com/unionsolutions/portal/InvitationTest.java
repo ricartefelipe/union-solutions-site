@@ -6,8 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import br.com.unionsolutions.portal.domain.AppUser;
 import br.com.unionsolutions.portal.domain.Types.Role;
-import io.quarkus.mailer.Mail;
-import io.quarkus.mailer.MockMailbox;
+import br.com.unionsolutions.portal.application.NotificationService;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.oidc.server.OidcWiremockTestResource;
@@ -24,11 +23,13 @@ import org.junit.jupiter.api.Test;
 @QuarkusTest
 @QuarkusTestResource(OidcWiremockTestResource.class)
 class InvitationTest extends ApiTestBase {
-    @Inject MockMailbox mailbox;
+    @Inject TestSupport.FakeMailSender mailbox;
+    @Inject NotificationService notifications;
 
     @BeforeEach
     void clearMail() {
-        mailbox.clear();
+        notifications.dispatch();
+        mailbox.sent.clear();
     }
 
     private String email() {
@@ -39,9 +40,11 @@ class InvitationTest extends ApiTestBase {
         var body = new java.util.HashMap<String, Object>(Map.of("email", email, "role", role));
         if (org != null) body.put("organizationId", org);
         json(by).body(body).post("/v1/invitations").then().statusCode(200);
-        List<Mail> mails = mailbox.getMailsSentTo(email);
+        // O convite entra na fila durável e sai pela tarefa de envio.
+        notifications.dispatch();
+        List<TestSupport.FakeMailSender.Sent> mails = mailbox.to(email);
         assertEquals(1, mails.size(), "convite enviado por e-mail");
-        Matcher m = Pattern.compile("#t=([A-Za-z0-9_-]+)").matcher(mails.get(0).getText());
+        Matcher m = Pattern.compile("#t=([A-Za-z0-9_-]+)").matcher(mails.get(0).text());
         assertTrue(m.find(), "o link do convite traz o token no fragmento");
         return m.group(1);
     }
@@ -136,7 +139,7 @@ class InvitationTest extends ApiTestBase {
     void conviteRevogadoERejeitadoENovoConviteSubstituiOAnterior() {
         String email = email();
         String first = invite(adminA, email, "CLIENT_MEMBER", null);
-        mailbox.clear();
+        mailbox.sent.clear();
         String second = invite(adminA, email, "CLIENT_MEMBER", null);
         accept(first, UUID.randomUUID().toString(), email, true).then().statusCode(404);
 

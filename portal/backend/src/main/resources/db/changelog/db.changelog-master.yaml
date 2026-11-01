@@ -15,3 +15,5 @@ databaseChangeLog:
       file: db/changelog/007-cota-e-objetos.yaml
   - include:
       file: db/changelog/008-objetos-bloqueados.yaml
+  - include:
+      file: db/changelog/009-notificacoes-retencao.yaml

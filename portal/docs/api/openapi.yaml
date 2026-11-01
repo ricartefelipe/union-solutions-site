@@ -5,6 +5,7 @@ tags:
 - name: Convites
 - name: Documentos
 - name: Entregas
+- name: Notificações
 - name: Painel
 - name: Produtos
 - name: Projetos
@@ -536,6 +537,23 @@ components:
         version:
           type: integer
           format: int64
+    NotificationView:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        kind:
+          type: string
+        title:
+          type: string
+        link:
+          type: string
+        projectId:
+          $ref: "#/components/schemas/UUID"
+        createdAt:
+          $ref: "#/components/schemas/Instant"
+        readAt:
+          $ref: "#/components/schemas/Instant"
     OrgStatus:
       type: string
       enum:
@@ -601,6 +619,28 @@ components:
           format: int64
         createdAt:
           $ref: "#/components/schemas/Instant"
+    OutboxView:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        recipient:
+          type: string
+        subject:
+          type: string
+        status:
+          type: string
+        attempts:
+          type: integer
+          format: int32
+        createdAt:
+          $ref: "#/components/schemas/Instant"
+        sentAt:
+          $ref: "#/components/schemas/Instant"
+        nextAttemptAt:
+          $ref: "#/components/schemas/Instant"
+        lastError:
+          type: string
     PageAuditView:
       type: object
       properties:
@@ -665,6 +705,22 @@ components:
         total:
           type: integer
           format: int64
+    PageNotificationView:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationView"
+        page:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        total:
+          type: integer
+          format: int64
     PageOrganizationView:
       type: object
       properties:
@@ -672,6 +728,22 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/OrganizationView"
+        page:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        total:
+          type: integer
+          format: int64
+    PageOutboxView:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OutboxView"
         page:
           type: integer
           format: int32
@@ -763,6 +835,16 @@ components:
           format: int32
         requestedAt:
           $ref: "#/components/schemas/Instant"
+    PreferencesInput:
+      type: object
+      properties:
+        emailNotifications:
+          type: boolean
+    PreferencesView:
+      type: object
+      properties:
+        emailNotifications:
+          type: boolean
     ProductInput:
       type: object
       required:
@@ -991,11 +1073,64 @@ components:
           format: int64
         updatedAt:
           $ref: "#/components/schemas/Instant"
+    ReadInput:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+            pattern: "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"
     RecordStatus:
       type: string
       enum:
       - ACTIVE
       - ARCHIVED
+    RetentionCategory:
+      type: object
+      properties:
+        category:
+          type: string
+        days:
+          type: integer
+          format: int32
+        matching:
+          type: integer
+          format: int64
+        note:
+          type: string
+    RetentionReport:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        policyReference:
+          type: string
+        generatedAt:
+          $ref: "#/components/schemas/Instant"
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/RetentionCategory"
+    RetentionRunView:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        mode:
+          type: string
+        startedAt:
+          $ref: "#/components/schemas/Instant"
+        finishedAt:
+          $ref: "#/components/schemas/Instant"
+        summary:
+          type: string
+        removed:
+          type: integer
+          format: int32
+        error:
+          type: string
     Role:
       type: string
       enum:
@@ -1067,6 +1202,21 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AttachmentView"
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/TicketHistoryItem"
+    TicketHistoryItem:
+      type: object
+      properties:
+        action:
+          type: string
+        summary:
+          type: string
+        actorName:
+          type: string
+        createdAt:
+          $ref: "#/components/schemas/Instant"
     TicketInput:
       type: object
       properties:
@@ -1100,6 +1250,8 @@ components:
           $ref: "#/components/schemas/TicketPriority"
         assigneeId:
           $ref: "#/components/schemas/UUID"
+        clearAssignee:
+          type: boolean
         slaDueAt:
           $ref: "#/components/schemas/Instant"
         version:
@@ -1163,6 +1315,12 @@ components:
       type: string
       format: uuid
       pattern: "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"
+    UnreadCount:
+      type: object
+      properties:
+        unread:
+          type: integer
+          format: int64
     UpcomingItem:
       type: object
       properties:
@@ -1227,6 +1385,115 @@ components:
       type: openIdConnect
       description: Authentication
 paths:
+  /v1/admin/emails:
+    get:
+      tags:
+      - Administração
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          format: int32
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          format: int32
+          maximum: 100
+          minimum: 1
+          default: 25
+      - name: status
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PageOutboxView"
+      summary: List
+  /v1/admin/emails/{id}/retry:
+    post:
+      tags:
+      - Administração
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutboxView"
+      summary: Retry
+  /v1/admin/retention/execute:
+    post:
+      tags:
+      - Administração
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RetentionRunView"
+      summary: Execute
+  /v1/admin/retention/runs:
+    get:
+      tags:
+      - Administração
+      parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          format: int32
+          maximum: 50
+          minimum: 1
+          default: 20
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RetentionRunView"
+      summary: Runs
+  /v1/admin/retention/simulate:
+    post:
+      tags:
+      - Administração
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RetentionReport"
+      summary: Simulate
+  /v1/admin/retention/simulation:
+    get:
+      tags:
+      - Administração
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RetentionReport"
+      summary: Simulation
   /v1/audit:
     get:
       tags:
@@ -1653,6 +1920,100 @@ paths:
               schema:
                 $ref: "#/components/schemas/Me"
       summary: Me
+  /v1/me/preferences:
+    patch:
+      tags:
+      - Sessão
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PreferencesInput"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PreferencesView"
+      summary: Set
+    get:
+      tags:
+      - Sessão
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PreferencesView"
+      summary: Get
+  /v1/notifications:
+    get:
+      tags:
+      - Notificações
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          format: int32
+          minimum: 0
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          format: int32
+          maximum: 100
+          minimum: 1
+          default: 25
+      - name: unread
+        in: query
+        schema:
+          type: boolean
+          default: false
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PageNotificationView"
+      summary: List
+  /v1/notifications/read:
+    post:
+      tags:
+      - Notificações
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReadInput"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnreadCount"
+        "400":
+          description: Bad Request
+      summary: Read
+  /v1/notifications/unread-count:
+    get:
+      tags:
+      - Notificações
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnreadCount"
+      summary: Unread
   /v1/organizations:
     get:
       tags:
@@ -2492,7 +2853,7 @@ paths:
       summary: Role
 info:
   title: Portal do Cliente Union Solutions
-  version: 0.1.0
+  version: 1.1.0
 servers:
 - url: http://localhost:8080
   description: Auto generated value

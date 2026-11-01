@@ -8,7 +8,7 @@ export type Field =
   | { name: string; label: string; type: 'textarea'; required?: boolean; maxLength?: number; hint?: string; defaultValue?: string; rows?: number }
   | { name: string; label: string; type: 'select'; required?: boolean; hint?: string; defaultValue?: string; options: { value: string; label: string }[]; placeholder?: string }
   | { name: string; label: string; type: 'checkbox'; hint?: string; defaultChecked?: boolean }
-  | { name: string; label: string; type: 'checkboxes'; hint?: string; options: { value: string; label: string }[] }
+  | { name: string; label: string; type: 'checkboxes'; hint?: string; options: { value: string; label: string; checked?: boolean }[] }
   | { name: string; label: string; type: 'file'; required?: boolean; hint?: string; accept?: string };
 
 interface ApiFailure {
@@ -146,7 +146,7 @@ export function ApiForm({ path, method = 'POST', fields, values = {}, submitLabe
               {field.options.length === 0 && <p className="field__hint">Nenhuma opção disponível.</p>}
               {field.options.map((option, index) => (
                 <div className="field--check" key={option.value}>
-                  <input id={`${id}-${index}`} name={field.name} type="checkbox" value={option.value} />
+                  <input id={`${id}-${index}`} name={field.name} type="checkbox" value={option.value} defaultChecked={option.checked} />
                   <label htmlFor={`${id}-${index}`}>{option.label}</label>
                 </div>
               ))}

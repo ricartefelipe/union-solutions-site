@@ -29,6 +29,8 @@ public class Startup {
     @Inject AuditService audit;
     @Inject FileService files;
     @Inject ObjectLedgerService ledger;
+    @Inject NotificationService notifications;
+    @Inject RetentionService retention;
     @ConfigProperty(name = "portal.bootstrap.admin-email") Optional<String> bootstrapAdmin;
     @ConfigProperty(name = "portal.demo.enabled") boolean demoEnabled;
     private volatile String pendingBootstrap;
@@ -211,6 +213,17 @@ public class Startup {
         milestone.createdAt = now;
         milestone.updatedAt = now;
         milestone.persist();
+    }
+
+    @Scheduled(every = "{portal.outbox.interval}", delayed = "20s", identity = "email-outbox", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
+    void dispatchEmails() {
+        notifications.dispatch();
+    }
+
+    /** Simula todo dia e registra; só remove com a retenção ligada e a política identificada. */
+    @Scheduled(cron = "{portal.retention.schedule}", identity = "retention", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
+    void retention() {
+        retention.scheduled();
     }
 
     @Scheduled(every = "{portal.ledger.interval}", delayed = "2m", identity = "ledger-reconcile", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)

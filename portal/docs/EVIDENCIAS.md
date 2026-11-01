@@ -32,6 +32,44 @@ As pastas em `artifacts/` são locais e não versionadas. As capturas não cont�
 | Imagens finais com Trivy 0.70.0 (base de 31/10/2026) | Produção | 0 críticas; 6 altas avaliadas uma a uma em `VULNERABILIDADES.md` |
 | Web: `tsc`, `check:brand`, `npm audit --omit=dev` | Scratch | Passaram, 0 vulnerabilidades |
 
+## Revisão completa de interface e funcionalidades (01/11/2026, segunda rodada)
+
+Depois da rodada de notificações, a entrega foi confrontada com o escopo inteiro: revisão visual do site e do portal, lacunas funcionais do portal, CI e pacote do site. Evidências em `artifacts/portal-qa/revisao-final/` (capturas por largura e navegador, relatórios de axe e rolagem, registros das suítes).
+
+| Verificação | Ambiente | Resultado |
+| --- | --- | --- |
+| Capturas de todas as telas do site (16) e do portal (35 entre públicas, cliente e administração) em 320, 390, 768, 1024 e 1440 px, com axe (WCAG 2.1 AA, exceto 320 px), rolagem horizontal e console; inspeção visual das capturas | Chromium | 255 capturas; sem rolagem horizontal, sem violação do axe e sem erro de console, exceto o `400` esperado ao inspecionar um convite inválido |
+| As mesmas telas em 390 e 1440 px | Firefox local; WebKit na imagem oficial do Playwright, já que faltam bibliotecas do sistema nesta máquina | 102 de 102 em cada um, sem problemas |
+| API, suíte completa, com a consulta de retenção sem efeito e o registro explícito, histórico da solicitação e remoção do responsável | Maven, PostgreSQL real | 80 de 80 |
+| `01-jornada` com o passo 11 novo: edição de etapa, histórico de situação da solicitação sem a nota interna, filtros de suporte, página do documento com versões, produto arquivado some e volta, troca de papel com recusa de cliente → Union pela API (`403 FORBIDDEN`) | Desenvolvimento, de banco vazio | 17 de 17 |
+| `02-seguranca`, com `/projetos?situacao=`, `/suporte?abertas=1` e `/documentos/{id}` na verificação de acessibilidade e rolagem | Desenvolvimento | 19 de 19 |
+| `03-operacao` | Desenvolvimento | 4 de 4 |
+| Atualização sobre dados persistidos: `develop` (`bb21af1`, 8 changesets) com a jornada completa, depois o código atual sobre os mesmos volumes | Desenvolvimento | Jornada na `develop` 15 de 15; 8 changesets antes, 9 depois; 1 projeto, 1 solicitação, 1 documento e 3 contas preservados; 0 erros na API ao subir; preferência de e-mail ligada para as 3 contas existentes; `02-seguranca` com o código novo sobre esses dados 19 de 19 |
+| Prova da configuração de produção, de volumes vazios | Produção | 52 de 52 (`01` 17, `02` 19, `04` 15, `05` 1); `auditar` completo, inclusive TLS verificado com a autoridade de teste; `backup` com reconciliação 3 de 3 e 1 snapshot |
+| Site: `verify` (15 páginas, 600 referências), `check:contact` (12 modos), `check:publish`, pacote `site-union-solutions-20261101-150354.zip` (44 arquivos, SHA-256 `e70eb377…`) | Scratch | Passaram |
+| Web: `tsc`, `check:brand` | Scratch | Passaram |
+
+Correções de interface encontradas na inspeção visual: selo esticado nas linhas com botão (convites), "Sair" quebrando linha no celular, tela Retenção gravando uma simulação a cada visita, botão de contato do site sem marcação de página atual, formulário de contato sem a frase de assunto ao chegar por produto ou serviço. Lacunas funcionais fechadas: troca de papel, edição de etapas, filtros de projetos, suporte e auditoria, página de documento com versões e edição, documentos e arquivamento de produto, histórico e responsável da solicitação, paginação de produtos, pessoas e equipe, aviso de listas truncadas.
+
+## Notificações, fila de e-mails, retenção e CI (01/11/2026)
+
+Execução em 01/11/2026, ambiente de desenvolvimento recriado a partir de volumes vazios e testes de unidade e integração. Evidências locais em `artifacts/portal-qa/notificacoes/`.
+
+| Verificação | Ambiente | Resultado |
+| --- | --- | --- |
+| API, suíte completa com os 10 testes novos: destinatários por lado do projeto e por organização, decisão avisa a Union, nota interna sem aviso nem e-mail, solicitação aberta avisa a equipe, preferência desliga só o e-mail, fila com falha, espera crescente, desistência e reenvio, convite pela fila com corpo descartado, reserva concorrente sem envio duplo, retenção desligada simula e recusa executar, simulação conta e execução remove com os objetos | Maven, PostgreSQL real | 80 de 80 |
+| Sessões | Node + PostgreSQL | 14 de 14 |
+| `01-jornada`, de banco vazio, com os passos novos: aviso no portal e e-mail no Mailpit só com título e link, marcar lidas, preferência, quem agiu não é avisado, decisão avisa a Union, nota interna sem aviso, fila de e-mails com destinatário mascarado, retenção desligada sem botão de execução, cliente recusado nas telas e na API de administração | Desenvolvimento | 16 de 16 |
+| `02-seguranca`, com `/notificacoes`, `/admin/emails` e `/admin/retencao` na verificação de acessibilidade e de rolagem horizontal em 1280, 390 e 320 px | Desenvolvimento | 19 de 19 |
+| `03-operacao` | Desenvolvimento | 4 de 4 |
+| Web: `tsc`, `check:brand` | Scratch | Passaram |
+| Compose de produção com o modelo de `.env` (`config -q`), sintaxe dos scripts de operação | Local | Passaram |
+| Migrations em banco vazio | Desenvolvimento | 9 changesets, 0 erros no log da API |
+| Prova da configuração de produção, a partir de volumes vazios: `01-jornada` (16), `02-seguranca` (19), `04-producao` (15) e `05-essencial` (1), com TLS, MFA, Mailpit como SMTP e `auditar` e `backup` em seguida | Produção | 51 de 51. `auditar`: portas, usuários, recusas de configuração, registros sem dados sensíveis e permissões conferidos; a etapa de TLS do `auditar` não rodou porque o container auxiliar não conseguiu baixar o `curl` (espelho do Alpine indisponível no momento), e o TLS com a autoridade de teste foi verificado pelo `04-producao`. `backup`: reconciliação 3 de 3 e 1 snapshot |
+| Changeset 009 na prova de produção | Produção | Aplicado em banco vazio, sem erro |
+
+Correções encontradas pelos testes de navegador nesta rodada: o nome acessível do link de notificações não continha o texto visível (regra `label-content-name-mismatch`), e o cabeçalho de coluna visualmente oculto da fila de e-mails ficava fora da área de rolagem da tabela e causava rolagem horizontal no celular. As duas foram corrigidas e os testes passaram em seguida. Na prova de produção, o navegador do runner calcula o nome acessível do link de notificações com espaçamento diferente do Chrome local; o nome passou a ser formado pelo texto visível mais um sufixo oculto, e o teste aceita qualquer espaçamento. Uma rodada da prova executada ao mesmo tempo que a suíte local falhou num teste anterior a esta rodada (login logo depois de o banco de sessões ser derrubado, com o provedor ainda se recuperando); repetida sozinha, passou inteira.
+
 ## Correções da revisão, com o teste que as cobre
 
 | ID | Correção | Teste |
