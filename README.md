@@ -92,7 +92,7 @@ Preencha `.env` com dados reais e apague as linhas que não usar. **Os valores e
 | Variável | Efeito |
 | --- | --- |
 | `PUBLIC_SITE_URL` | Domínio definitivo com HTTPS. Habilita canonical, sitemap, `og:url`, `og:image` e dados estruturados, além da linha `Sitemap` no `robots.txt`. |
-| `PUBLIC_CONTACT_FORM_ENDPOINT` | Endpoint HTTPS que recebe o formulário. |
+| `PUBLIC_CONTACT_FORM_ENDPOINT` | Endpoint HTTPS que recebe o formulário. O site inclui um em `public/contato.php`, publicado junto com ele: `https://unionsolutions.tech/contato.php`. |
 | `PUBLIC_CONTACT_EMAIL` | E-mail exibido no rodapé e na página de contato. |
 | `PUBLIC_CONTACT_WHATSAPP` | WhatsApp, com DDI, DDD e número. |
 | `PUBLIC_CONTACT_PHONE` | Telefone, opcional. Sozinho, não conta como canal de contato. |
@@ -112,6 +112,12 @@ A página `/contato/` se apresenta conforme a configuração:
 | **C. Sem canal** | Sem endpoint, e-mail nem WhatsApp | Aviso curto de indisponibilidade, com o assunto preservado. Nenhum campo é exibido. | Bloqueada |
 
 Links podem indicar o assunto: `/contato/?interesse=consultoria` ou `/contato/?interesse=produto&produto=hookguard`. Valores desconhecidos são ignorados. Esses parâmetros nunca carregam dados pessoais.
+
+### Endpoint incluído: `contato.php`
+
+`public/contato.php` vai para `public_html` junto com o site e cumpre o contrato abaixo usando o `mail()` do PHP da hospedagem, com remetente `contato@unionsolutions.tech` e `Reply-To` de quem escreveu. Ele aceita só `POST` JSON da própria origem (ou de `https://unionsolutions.tech` e `www`), valida os campos como a página, ignora envios com o campo-armadilha preenchido respondendo sucesso, limita a 5 envios por hora por endereço (registro em `contato-limite/`, fora de `public_html`) e não grava o conteúdo das mensagens em lugar nenhum. Erro do servidor de e-mail responde `502`, e a página mantém os dados para nova tentativa.
+
+Teste local com Apache e PHP reais, e-mail capturado em arquivo: `sh scripts/testa-contato.sh` (exige Docker e o build gerado). Depois de publicar, envie uma mensagem de verdade e confira a chegada na caixa `contato@`, inclusive na pasta de spam; se não chegar, o PHP `mail()` da hospedagem está bloqueado ou mal avaliado por SPF, e o caminho é trocar o envio por SMTP autenticado.
 
 ### Contrato do endpoint
 
