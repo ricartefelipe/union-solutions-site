@@ -1,18 +1,19 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { apiGet, getMe } from '@/lib/api';
+import { apiGet, getMe, pageQuery } from '@/lib/api';
 import { options } from '@/lib/labels';
 import type { InvitationView, Page, UserView } from '@/lib/types';
 import { ApiForm } from '@/components/forms';
 import { InvitationList, PeopleList } from '@/components/people';
-import { PageTitle, Section } from '@/components/ui';
+import { PageTitle, Pagination, Section, Truncated } from '@/components/ui';
 
 export const metadata: Metadata = { title: 'Equipe' };
 
-export default async function TeamPage() {
+export default async function TeamPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+  const params = await searchParams;
   const me = await getMe();
   if (me.role !== 'UNION_ADMIN') redirect('/');
-  const [users, invitations] = await Promise.all([apiGet<Page<UserView>>('/v1/users?scope=UNION&size=100'), apiGet<Page<InvitationView>>('/v1/invitations?size=100')]);
+  const [users, invitations] = await Promise.all([apiGet<Page<UserView>>(`/v1/users?${pageQuery(params, { scope: 'UNION' })}`), apiGet<Page<InvitationView>>('/v1/invitations?size=100')]);
   const teamInvitations = invitations.items.filter((i) => !i.tenantId);
   return (
     <>
@@ -24,9 +25,9 @@ export default async function TeamPage() {
             { name: 'role', label: 'Papel', type: 'select', required: true, defaultValue: 'UNION_STAFF', options: options('role', ['UNION_STAFF', 'UNION_ADMIN']) },
           ]} />
         </Section>
-        <Section title="Convites"><InvitationList invitations={teamInvitations} /></Section>
+        <Section title="Convites"><InvitationList invitations={teamInvitations} /><Truncated page={invitations} hint="Os convites mais antigos ficam nas páginas dos clientes." /></Section>
       </div>
-      <Section title="Profissionais"><PeopleList users={users.items} selfId={me.id} /></Section>
+      <Section title="Profissionais"><PeopleList users={users.items} selfId={me.id} /><Pagination page={users} basePath="/admin/usuarios" /></Section>
     </>
   );
 }

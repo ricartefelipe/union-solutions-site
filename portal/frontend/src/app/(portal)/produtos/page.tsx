@@ -1,13 +1,14 @@
 import type { Metadata } from 'next';
-import { apiGet, getMe } from '@/lib/api';
+import { apiGet, getMe, pageQuery } from '@/lib/api';
 import type { Page, ProductView } from '@/lib/types';
-import { Badge, Empty, PageTitle, Section } from '@/components/ui';
+import { Badge, Empty, PageTitle, Pagination, Section } from '@/components/ui';
 
 export const metadata: Metadata = { title: 'Produtos contratados' };
 
-export default async function ProductsPage() {
+export default async function ProductsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+  const params = await searchParams;
   const me = await getMe();
-  const data = await apiGet<Page<ProductView>>('/v1/products?size=100');
+  const data = await apiGet<Page<ProductView>>(`/v1/products?${pageQuery(params)}`);
   return (
     <>
       <PageTitle title="Produtos contratados" intro="Acesse os produtos registrados para a sua organização. Cada produto tem login próprio, e o portal não guarda essas senhas." />
@@ -33,6 +34,7 @@ export default async function ProductsPage() {
           )}
         </Section>
       ))}
+      <Pagination page={data} basePath="/produtos" />
     </>
   );
 }

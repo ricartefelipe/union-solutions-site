@@ -68,6 +68,21 @@ public final class TestSupport {
         }
     }
 
+    /** Guarda os e-mails em memória e simula um servidor que recusa, para a fila tentar de novo. */
+    @Singleton
+    public static class FakeMailSender implements Ports.MailSender {
+        public record Sent(String recipient, String subject, String text) {}
+        public final List<Sent> sent = new CopyOnWriteArrayList<>();
+        public volatile boolean refuse;
+
+        @Override public void send(String recipient, String subject, String text) {
+            if (refuse) throw new IllegalStateException("SMTP recusou a conexão");
+            sent.add(new Sent(recipient, subject, text));
+        }
+
+        public List<Sent> to(String recipient) { return sent.stream().filter(m -> m.recipient().equals(recipient)).toList(); }
+    }
+
     /** Sinaliza como malware o conteúdo com a marca, e simula indisponibilidade quando pedido. */
     @Singleton
     public static class ScriptedScanner implements Ports.MalwareScanner {
@@ -248,6 +263,45 @@ public final class TestSupport {
         @Transactional
         public void backdateLedger(UUID tenantId) {
             br.com.unionsolutions.portal.domain.ObjectLedger.update("createdAt = ?1 where tenantId = ?2", Instant.now().minusSeconds(3600), tenantId);
+        }
+
+        @Transactional
+        public void outboxDue(UUID id) {
+            EmailOutbox e = EmailOutbox.findById(id);
+            e.nextAttemptAt = Instant.now().minusSeconds(1);
+            e.claimedUntil = null;
+        }
+
+        @Transactional
+        public String outboxBody(UUID id) {
+            return EmailOutbox.<EmailOutbox>findById(id).body;
+        }
+
+        @Transactional
+        public UUID outboxIdFor(String recipient) {
+            return EmailOutbox.<EmailOutbox>find("recipient = ?1 order by createdAt desc", recipient).firstResult().id;
+        }
+
+        @Transactional
+        public void ageNotifications(UUID userId, int days) {
+            Notification.update("createdAt = ?1, readAt = ?1 where userId = ?2 and readAt is not null", Instant.now().minus(java.time.Duration.ofDays(days)), userId);
+        }
+
+        @Transactional
+        public void closeTicket(UUID ticketId, int daysAgo) {
+            Ticket t = Ticket.findById(ticketId);
+            t.status = TicketStatus.CLOSED;
+            t.updatedAt = Instant.now().minus(java.time.Duration.ofDays(daysAgo));
+        }
+
+        @Transactional
+        public List<String> attachmentKeys(UUID ticketId) {
+            return TicketAttachment.<TicketAttachment>list("ticketId", ticketId).stream().map(a -> StoredFile.<StoredFile>findById(a.fileId).objectKey).toList();
+        }
+
+        @Transactional
+        public long auditCountByAction(String action) {
+            return AuditEvent.count("action", action);
         }
 
         @Transactional
