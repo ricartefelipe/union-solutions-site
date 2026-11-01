@@ -66,11 +66,11 @@ Resultados com a configuração real (`PUBLIC_SITE_URL=https://unionsolutions.te
 | --- | --- |
 | `npm run verify` | 15 páginas e 600 referências internas corretas |
 | `npm run check:contact` | Cenários aprovados e `dist/` sem valores de teste |
-| `npm run check:publish` | **Aprovado.** Modo de contato direto. Avisa que não há política de privacidade publicada |
+| `npm run check:publish` | **Aprovado.** Modo formulário, com `contato.php` incluído no pacote. Avisa que não há política de privacidade publicada |
 | `sh scripts/empacotar-site.sh` | 44 arquivos. Conteúdo extraído idêntico a `dist/`, sem `.env`, fontes, dependências, mapas ou endereços locais |
 | Apache 2.4 com o `.htaccess` do pacote | HTTP redireciona para HTTPS, 14 rotas com 200, `/nao-existe/` com 404 e página do site, `/produtos` redireciona para `/produtos/`, listagem de pasta recusada, cabeçalhos de segurança presentes |
 | Chrome sobre o pacote extraído | 14 rotas em 320, 390, 768 e 1280 px: sem rolagem horizontal, erros de console ou requisições externas. Canonical e `og:image` corretos, nenhum botão do portal, axe sem violações em 390 e 1280 |
-| Contato | `mailto:` real, assunto por produto, parâmetro hostil ignorado, sem formulário |
+| Contato | Formulário enviando para `contato.php` (Apache+PHP reais, e-mail capturado): 25 verificações do endpoint e fluxo no Chrome com sucesso, erro de envio e dados mantidos. Veja `artifacts/qa-final/contato-php.txt` |
 
 Rodadas anteriores do site cobriram, com a mesma versão do código: formulário e WhatsApp com configuração sintética (138 checagens), Firefox 157 em 9 rotas e primeira dobra.
 
