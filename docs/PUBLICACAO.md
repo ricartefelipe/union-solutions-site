@@ -16,7 +16,10 @@ Este é o ponto de partida para publicar. **Nada foi publicado, nenhum DNS foi a
 ```bash
 PUBLIC_SITE_URL=https://unionsolutions.tech
 PUBLIC_CONTACT_EMAIL=contato@unionsolutions.tech
+PUBLIC_CONTACT_FORM_ENDPOINT=https://unionsolutions.tech/contato.php
 ```
+
+Com o endpoint, a página de contato mostra o formulário, que envia para `contato.php` (publicado junto com o site) e dali para a caixa `contato@` pelo `mail()` do PHP da Hostinger; o e-mail e o WhatsApp seguem como alternativa. Sem a variável, a página volta ao modo de contato direto.
 
 `PUBLIC_PORTAL_URL` fica **ausente**: o botão "Área do cliente" só entra depois de o portal estar validado.
 
@@ -53,6 +56,7 @@ O pacote foi testado em Apache 2.4 com o `.htaccess` real. A Hostinger pode usar
 3. Apague o ZIP de `public_html` depois de extrair.
 4. Ative o SSL do domínio no hPanel. Sem certificado, o redirecionamento para HTTPS falha.
 5. Rode a conferência da seção "Conferência depois de publicar" do [`README.md`](../README.md).
+6. Envie uma mensagem real pelo formulário e confira que ela chegou em `contato@unionsolutions.tech` (também na pasta de spam). `https://unionsolutions.tech/contato.php` aberto no navegador deve responder `405`. Se a mensagem não chegar, o `mail()` da hospedagem não está entregando: veja "Endpoint incluído" no README.
 
 Referências da Hostinger: [Gerenciador de Arquivos](https://docs.hostinger.com/websites/file-manager) e [como enviar um site](https://www.hostinger.com/tutorials/how-to-upload-your-website/).
 
