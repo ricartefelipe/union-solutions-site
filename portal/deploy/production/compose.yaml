@@ -313,9 +313,12 @@ services:
       PORTAL_BACKUP_KEEP_MONTHLY: ${PORTAL_BACKUP_KEEP_MONTHLY:-}
       PORTAL_BACKUP_MIN_FREE_MB: ${PORTAL_BACKUP_MIN_FREE_MB:-2048}
       PORTAL_BACKUP_TIMEOUT_SECONDS: ${PORTAL_BACKUP_TIMEOUT_SECONDS:-14400}
+      PORTAL_BACKUP_SFTP_PORT: ${PORTAL_BACKUP_SFTP_PORT:-22}
     volumes:
       - backup-staging:/staging
       - backup-local:/repositorio-local
+      # Chave e identidade do servidor de destino, só para RESTIC_REPOSITORY=sftp:... (portal-prod.sh chave-backup e destino-backup).
+      - ${PORTAL_BACKUP_SSH_DIR:-./backup-ssh}:/run/backup-ssh:ro
     networks: [dados, saida]
 
 networks:

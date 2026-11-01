@@ -96,7 +96,8 @@ jobs:
         run: |
           sh -n portal/deploy/production/portal-prod.sh
           sh -n portal/deploy/local/portal.sh
-          bash -n portal/deploy/production/ops/backup.sh portal/deploy/production/ops/restore.sh portal/deploy/production/ops/reconciliar.sh portal/deploy/production/ops/mfa-reset-portal.sh portal/deploy/production/teste/prova.sh portal/deploy/production/teste/testa-operacao.sh
+          bash -n portal/deploy/production/ops/backup.sh portal/deploy/production/ops/restore.sh portal/deploy/production/ops/reconciliar.sh portal/deploy/production/ops/mfa-reset-portal.sh portal/deploy/production/teste/prova.sh portal/deploy/production/teste/testa-operacao.sh portal/deploy/production/teste/sftp-alvo-entrada.sh
+          sh -n portal/deploy/production/ops/restic.sh
           sh -n portal/deploy/keycloak/portal-mfa-reset.sh
       - name: Compose de produção válido com o modelo de configuração
         run: |
@@ -110,6 +111,7 @@ jobs:
           docker build -q portal/deploy/production/proxy
           docker build -q portal/deploy/keycloak
           docker build -q portal/deploy/production/ops
+          docker build -q -f portal/deploy/production/teste/sftp-alvo.Dockerfile portal/deploy/production/teste
 
   portal-navegador:
     name: Portal, jornadas em navegador

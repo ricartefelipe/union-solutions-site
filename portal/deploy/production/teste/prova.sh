@@ -27,7 +27,7 @@ criar_env() {
     -e 's|^PORTAL_SMTP_PASSWORD=.*|PORTAL_SMTP_PASSWORD=prova-smtp-local|' \
     -e 's|^PORTAL_BOOTSTRAP_ADMIN_EMAIL=.*|PORTAL_BOOTSTRAP_ADMIN_EMAIL=administracao-prova@unionsolutions.tech|' \
     -e 's|^PORTAL_PRODUCT_LINK_HOSTS=.*|PORTAL_PRODUCT_LINK_HOSTS=produtos-prova.unionsolutions.tech|' \
-    -e 's|^RESTIC_REPOSITORY=.*|RESTIC_REPOSITORY=rest:http://restic-alvo:8000/portal|' \
+    -e 's|^RESTIC_REPOSITORY=.*|RESTIC_REPOSITORY=sftp:backup@sftp-alvo:/backups/portal|' \
     -e 's|^PORTAL_BACKUP_KEEP_DAILY=.*|PORTAL_BACKUP_KEEP_DAILY=7|' \
     -e 's|^PORTAL_BACKUP_KEEP_WEEKLY=.*|PORTAL_BACKUP_KEEP_WEEKLY=4|' \
     -e 's|^PORTAL_BACKUP_KEEP_MONTHLY=.*|PORTAL_BACKUP_KEEP_MONTHLY=3|' \
@@ -38,8 +38,10 @@ iniciar() {
   criar_env
   docker volume create union-portal-prova-evidencias >/dev/null
   docker volume create union-portal-prova-repositorio >/dev/null
+  docker volume create union-portal-prova-backup-ssh >/dev/null
   $COMPOSE run --rm --no-deps pki-init
-  $COMPOSE up -d --no-deps --wait --wait-timeout 60 mailpit restic-alvo
+  $COMPOSE run --rm --no-deps backup-ssh-init
+  $COMPOSE up -d --no-deps --wait --wait-timeout 60 mailpit sftp-alvo
   prod subir
 }
 
@@ -106,8 +108,10 @@ falhas_operacao() { bash "$DIR/testa-operacao.sh"; }
 preparar_restauracao() {
   docker volume create union-portal-prova-evidencias >/dev/null
   docker volume create union-portal-prova-repositorio >/dev/null
+  docker volume create union-portal-prova-backup-ssh >/dev/null
   $COMPOSE run --rm --no-deps pki-init >/dev/null
-  $COMPOSE up -d --no-deps --wait --wait-timeout 60 mailpit restic-alvo >/dev/null 2>&1
+  $COMPOSE run --rm --no-deps backup-ssh-init >/dev/null
+  $COMPOSE up -d --no-deps --wait --wait-timeout 60 mailpit sftp-alvo >/dev/null 2>&1
 }
 
 # Objeto apagado de propósito: a reconciliação precisa acusar.
