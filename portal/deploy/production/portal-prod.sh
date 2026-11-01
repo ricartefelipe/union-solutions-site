@@ -149,7 +149,8 @@ case "$command" in
     ;;
   chave-backup)
     # Chave só do backup, lida pelo usuário ops (uid 1002) do container. A privada nunca sai da VPS.
-    mkdir -p "$DIR/backup-ssh" && chmod 700 "$DIR/backup-ssh"
+    # A pasta inteira pertence ao usuário ops: sem isso o container não atravessa o diretório para ler a chave.
+    mkdir -p "$DIR/backup-ssh" && chown 1002:1002 "$DIR/backup-ssh" && chmod 700 "$DIR/backup-ssh"
     [ -f "$DIR/backup-ssh/chave" ] || ssh-keygen -q -t ed25519 -N "" -C "union-portal-backup" -f "$DIR/backup-ssh/chave"
     chown 1002:1002 "$DIR/backup-ssh/chave" "$DIR/backup-ssh/chave.pub" && chmod 600 "$DIR/backup-ssh/chave"
     echo "Cadastre esta chave pública no destino do backup:"
@@ -158,7 +159,7 @@ case "$command" in
   destino-backup)
     host=${1:-}; port=${2:-22}
     [ -n "$host" ] || { echo "Uso: sh portal-prod.sh destino-backup <servidor> [porta]"; exit 2; }
-    mkdir -p "$DIR/backup-ssh" && chmod 700 "$DIR/backup-ssh"
+    mkdir -p "$DIR/backup-ssh" && chown 1002:1002 "$DIR/backup-ssh" && chmod 700 "$DIR/backup-ssh"
     ssh-keyscan -p "$port" -t ed25519 "$host" 2>/dev/null > "$DIR/backup-ssh/known_hosts"
     [ -s "$DIR/backup-ssh/known_hosts" ] || { echo "Não foi possível obter a identidade de $host:$port."; exit 1; }
     chown 1002:1002 "$DIR/backup-ssh/known_hosts" && chmod 644 "$DIR/backup-ssh/known_hosts"
