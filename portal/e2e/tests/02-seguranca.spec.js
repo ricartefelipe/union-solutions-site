@@ -203,7 +203,8 @@ test.describe.serial('Segurança e acessibilidade', () => {
     await expect(form.getByText(/depois da verificação/)).toBeVisible();
     const row = admin.page.locator('li', { hasText: `EICAR ${RUN}` });
     await expect(row.getByText('Bloqueado')).toBeVisible({ timeout: 120_000 });
-    await expect(row.getByRole('link')).toHaveCount(0);
+    // O título leva à página do documento; o arquivo em si não tem link de download.
+    await expect(row.getByRole('link', { name: /teste-eicar/ })).toHaveCount(0);
     // O cliente não recebe nada sobre o arquivo bloqueado.
     const client = await signedIn(browser, state.clientA);
     expect(await (await client.page.request.get(`/bff/v1/documents?q=${encodeURIComponent(`EICAR ${RUN}`)}`)).json()).toMatchObject({ total: 0 });
@@ -362,8 +363,9 @@ test.describe.serial('Segurança e acessibilidade', () => {
   test('acessibilidade e layout nas telas principais', async ({ browser }) => {
     const client = await signedIn(browser, state.clientA);
     const admin = await signedIn(browser, state.adminEmail, state.adminPassword);
-    const clientPaths = ['/', '/projetos', `/projetos/${state.ids.project}`, `/entregas/${state.ids.delivery}`, '/documentos', '/suporte', `/suporte/${state.ids.ticket}`, '/produtos', '/organizacao'];
-    const adminPaths = ['/', '/admin/organizacoes', `/admin/organizacoes/${state.ids.orgA}`, '/admin/usuarios', '/admin/auditoria', `/projetos/${state.ids.project}`];
+    const documentId = (await (await client.page.request.get('/bff/v1/documents?size=1')).json()).items[0]?.id;
+    const clientPaths = ['/', '/projetos', '/projetos?situacao=ACTIVE', `/projetos/${state.ids.project}`, `/entregas/${state.ids.delivery}`, '/documentos', ...(documentId ? [`/documentos/${documentId}`] : []), '/suporte', '/suporte?abertas=1', `/suporte/${state.ids.ticket}`, '/produtos', '/organizacao', '/notificacoes'];
+    const adminPaths = ['/', '/admin/organizacoes', `/admin/organizacoes/${state.ids.orgA}`, '/admin/usuarios', '/admin/auditoria', '/admin/emails', '/admin/retencao', '/notificacoes', `/projetos/${state.ids.project}`];
     for (const [session, paths] of [[client, clientPaths], [admin, adminPaths]]) {
       for (const size of [{ width: 1280, height: 900 }, { width: 390, height: 844 }, { width: 320, height: 700 }]) {
         await session.page.setViewportSize(size);

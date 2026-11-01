@@ -17,6 +17,10 @@
   --notice-ink: #4f3505;
   --success: #17603f;
   --success-bg: #e9f5ef;
+  --danger-deep: #861a2f;
+  --neutral-bg: #e8e8ef;
+  --neutral-ink: #33324a;
+  --info-bg: #e6e4f5;
 
   /* Bordas */
   --line: #d9d9e2;
@@ -27,6 +31,7 @@
   /* Tipografia */
   --font-display: 'Outfit Variable', 'Segoe UI', system-ui, sans-serif;
   --font-body: 'Hanken Grotesk Variable', 'Segoe UI', system-ui, sans-serif;
+  --text-xs: 0.8125rem;
   --text-sm: 0.9375rem;
   --text-base: 1.0625rem;
   --text-lg: clamp(1.125rem, 1.08rem + 0.2vw, 1.25rem);
@@ -34,6 +39,9 @@
   --text-h2: clamp(1.625rem, 1.35rem + 1.1vw, 2.375rem);
   --text-h1-page: clamp(2rem, 1.55rem + 1.9vw, 3.125rem);
   --text-h1-home: clamp(2.5rem, 1.6rem + 3.2vw, 4.25rem);
+  /* Escala de aplicação (portal): telas densas, títulos menores que os do site */
+  --text-h1-app: clamp(1.75rem, 1.5rem + 1vw, 2.375rem);
+  --text-h2-app: clamp(1.25rem, 1.15rem + 0.4vw, 1.5rem);
   --leading-body: 1.6;
   --leading-title: 1.1;
 

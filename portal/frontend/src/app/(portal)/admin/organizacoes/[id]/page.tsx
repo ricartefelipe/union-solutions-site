@@ -6,7 +6,7 @@ import { label, options } from '@/lib/labels';
 import type { DocumentView, InvitationView, OrganizationView, Page, ProductView, ProjectSummary, StaffView, UserView } from '@/lib/types';
 import { ApiButton, ApiForm } from '@/components/forms';
 import { InvitationList, PeopleList } from '@/components/people';
-import { Badge, Disclosure, Empty, PageTitle, Section } from '@/components/ui';
+import { Badge, Disclosure, Empty, PageTitle, Section, Truncated } from '@/components/ui';
 
 export const metadata: Metadata = { title: 'Cliente' };
 
@@ -53,6 +53,7 @@ export default async function OrganizationPage({ params }: { params: Promise<{ i
           {isAdmin ? <PeopleList users={users.items} selfId={me.id} /> : users.items.length === 0 ? <Empty>Nenhuma pessoa com acesso.</Empty> : (
             <ul className="list">{users.items.map((u) => <li key={u.id}>{u.name ?? u.email} <span className="meta">{label('role', u.role)}</span></li>)}</ul>
           )}
+          <Truncated page={users} hint="" />
         </Section>
         {isAdmin && (
           <Section title="Convites">
@@ -60,7 +61,7 @@ export default async function OrganizationPage({ params }: { params: Promise<{ i
               { name: 'email', label: 'E-mail', type: 'email', required: true, maxLength: 254, autoComplete: 'off' },
               { name: 'role', label: 'Papel', type: 'select', required: true, defaultValue: 'CLIENT_ADMIN', options: options('role', ['CLIENT_ADMIN', 'CLIENT_MEMBER']) },
             ]} />
-            <div style={{ marginTop: '1rem' }}><InvitationList invitations={invitations.items} /></div>
+            <div style={{ marginTop: '1rem' }}><InvitationList invitations={invitations.items} /><Truncated page={invitations} hint="" /></div>
           </Section>
         )}
       </div>
@@ -98,23 +99,38 @@ export default async function OrganizationPage({ params }: { params: Promise<{ i
             ))}
           </ul>
         )}
+        <Truncated page={projects} hint={`Veja todos em Projetos, filtrando por ${org.name}.`} />
       </Section>
 
       <Section title="Produtos contratados">
+        <Truncated page={products} hint="" />
         {products.items.length === 0 ? <Empty>Nenhum produto registrado.</Empty> : (
           <ul className="list">
             {products.items.map((p) => (
               <li key={p.id}>
-                <div className="list__row"><span className="list__title">{p.productName}</span><Badge group="product" value={p.commercialStatus} /></div>
+                <div className="list__row">
+                  <span className="list__title">{p.productName}</span>
+                  <span className="page-title__actions">{p.archived && <Badge group="docStatus" value="ARCHIVED" />}<Badge group="product" value={p.commercialStatus} /></span>
+                </div>
                 {p.accessUrl && <p className="meta"><span>{p.accessUrl}</span></p>}
-                <Disclosure summary="Editar produto">
-                  <ApiForm path={`/v1/products/${p.id}`} method="PATCH" values={{ version: p.version }} submitLabel="Salvar produto" successMessage="Produto atualizado." fields={[
-                    { name: 'commercialStatus', label: 'Situação comercial', type: 'select', required: true, defaultValue: p.commercialStatus, options: options('product') },
-                    { name: 'accessUrl', label: 'Link de acesso', type: 'url', maxLength: 500, defaultValue: p.accessUrl ?? '' },
-                    { name: 'supportNotes', label: 'Orientações de suporte', type: 'textarea', maxLength: 4000, defaultValue: p.supportNotes ?? '' },
-                    { name: 'slaNote', label: 'Prazo registrado em contrato', type: 'text', maxLength: 500, defaultValue: p.slaNote ?? '' },
-                  ]} />
-                </Disclosure>
+                {p.documents.length > 0 && <p className="meta"><span>Documentos: {p.documents.map((d) => d.title).join(', ')}</span></p>}
+                {p.archived ? (
+                  <ApiButton path={`/v1/products/${p.id}`} method="PATCH" tone="ghost" body={{ archived: false, version: p.version }} label="Reativar produto" />
+                ) : (
+                  <Disclosure summary={`Editar produto: ${p.productName}`}>
+                    <ApiForm path={`/v1/products/${p.id}`} method="PATCH" values={{ version: p.version }} submitLabel="Salvar produto" successMessage="Produto atualizado." fields={[
+                      { name: 'productName', label: 'Produto', type: 'text', required: true, maxLength: 160, defaultValue: p.productName },
+                      { name: 'commercialStatus', label: 'Situação comercial', type: 'select', required: true, defaultValue: p.commercialStatus, options: options('product') },
+                      { name: 'accessUrl', label: 'Link de acesso', type: 'url', maxLength: 500, defaultValue: p.accessUrl ?? '' },
+                      { name: 'supportNotes', label: 'Orientações de suporte', type: 'textarea', maxLength: 4000, defaultValue: p.supportNotes ?? '' },
+                      { name: 'slaNote', label: 'Prazo registrado em contrato', type: 'text', maxLength: 500, defaultValue: p.slaNote ?? '' },
+                      { name: 'documentIds', label: 'Documentos pertinentes', type: 'checkboxes', hint: 'Desmarcar todos remove os vínculos.', options: productDocs.map((d) => ({ value: d.id, label: d.title, checked: p.documents.some((pd) => pd.id === d.id) })) },
+                    ]} />
+                    <div style={{ marginTop: '1rem' }}>
+                      <ApiButton path={`/v1/products/${p.id}`} method="PATCH" tone="ghost" body={{ archived: true, version: p.version }} label="Arquivar produto" confirm={`Arquivar ${p.productName}? O cliente deixa de vê-lo; o registro e o histórico são mantidos.`} />
+                    </div>
+                  </Disclosure>
+                )}
               </li>
             ))}
           </ul>

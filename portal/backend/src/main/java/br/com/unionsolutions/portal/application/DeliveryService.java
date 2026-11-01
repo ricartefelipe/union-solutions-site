@@ -20,6 +20,7 @@ import java.util.UUID;
 public class DeliveryService {
     @Inject AccessPolicy policy;
     @Inject AuditService audit;
+    @Inject NotificationService notifications;
     @Inject EntityManager em;
 
     @Transactional
@@ -85,6 +86,8 @@ public class DeliveryService {
         delivery.persist();
         DeliveryVersion version = publish(actor, delivery, 1, input.description(), input.documentVersionIds());
         audit.record(actor, "DELIVERY_PUBLISHED", "delivery_version", version.id, project.tenantId, project.id, delivery.title + " v1", true);
+        notifications.notify(actor.id(), notifications.clientSide(project), "DELIVERY_PUBLISHED", "Nova entrega: " + delivery.title, "/entregas/" + delivery.id,
+                project.tenantId, project.id, "delivery", delivery.id);
         return detail(actor, delivery, project);
     }
 
@@ -100,6 +103,8 @@ public class DeliveryService {
         delivery.updatedAt = Instant.now();
         DeliveryVersion version = publish(actor, delivery, delivery.currentVersion, input.description(), input.documentVersionIds());
         audit.record(actor, "DELIVERY_VERSION_PUBLISHED", "delivery_version", version.id, project.tenantId, project.id, delivery.title + " v" + version.versionNo, true);
+        notifications.notify(actor.id(), notifications.clientSide(project), "DELIVERY_VERSION_PUBLISHED", "Nova versão da entrega: " + delivery.title + " v" + version.versionNo,
+                "/entregas/" + delivery.id, project.tenantId, project.id, "delivery", delivery.id);
         project.updatedAt = Instant.now();
         return detail(actor, delivery, project);
     }
@@ -155,6 +160,8 @@ public class DeliveryService {
         version.approvalRequestedAt = Instant.now();
         version.approvalRequestedBy = actor.id();
         audit.record(actor, "APPROVAL_REQUESTED", "delivery_version", version.id, project.tenantId, project.id, delivery.title + " v" + version.versionNo, true);
+        notifications.notify(actor.id(), notifications.clientSide(project), "APPROVAL_REQUESTED", "Aprovação solicitada: " + delivery.title + " v" + version.versionNo,
+                "/entregas/" + delivery.id, project.tenantId, project.id, "delivery", delivery.id);
         return detail(actor, delivery, project);
     }
 
@@ -192,6 +199,9 @@ public class DeliveryService {
         delivery.updatedAt = Instant.now();
         audit.record(actor, target == DeliveryVersionStatus.APPROVED ? "DELIVERY_APPROVED" : "DELIVERY_CHANGES_REQUESTED", "delivery_version", version.id,
                 version.tenantId, scope.id, delivery.title + " v" + version.versionNo, true);
+        notifications.notify(actor.id(), notifications.unionSide(scope), target == DeliveryVersionStatus.APPROVED ? "DELIVERY_APPROVED" : "DELIVERY_CHANGES_REQUESTED",
+                (target == DeliveryVersionStatus.APPROVED ? "Entrega aprovada: " : "Ajustes solicitados: ") + delivery.title + " v" + version.versionNo,
+                "/entregas/" + delivery.id, version.tenantId, scope.id, "delivery", delivery.id);
         return detail(actor, delivery, scope);
     }
 

@@ -4,15 +4,18 @@ import { apiGet, apiGetOptional, getMe, pageQuery } from '@/lib/api';
 import { formatDate, label, options } from '@/lib/labels';
 import type { OrganizationView, Page, ProjectSummary } from '@/lib/types';
 import { ApiForm } from '@/components/forms';
-import { Badge, Disclosure, Empty, PageTitle, Pagination, Section } from '@/components/ui';
+import { Badge, Disclosure, Empty, PageTitle, Pagination, Section, Truncated } from '@/components/ui';
 
 export const metadata: Metadata = { title: 'Projetos' };
 
 export default async function ProjectsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const params = await searchParams;
   const me = await getMe();
-  const data = await apiGet<Page<ProjectSummary>>(`/v1/projects?${pageQuery(params, { q: params.q })}`);
+  const status = params.situacao && options('project').some((o) => o.value === params.situacao) ? params.situacao : undefined;
   const orgs = me.canManage ? await apiGetOptional<Page<OrganizationView>>('/v1/organizations?size=100', { items: [], page: 0, size: 100, total: 0 }) : null;
+  const organizationId = orgs?.items.some((o) => o.id === params.cliente) ? params.cliente : undefined;
+  const data = await apiGet<Page<ProjectSummary>>(`/v1/projects?${pageQuery(params, { q: params.q, status, organizationId })}`);
+  const filters = { q: params.q, situacao: status, cliente: organizationId };
 
   return (
     <>
@@ -34,13 +37,30 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
         </Section>
       )}
       <Section title="Lista">
-        <form className="form" role="search" method="get" action="/projetos">
+        <form className="form form--filters" role="search" method="get" action="/projetos">
           <div className="field">
             <label htmlFor="busca">Buscar por nome</label>
             <input id="busca" name="q" type="search" defaultValue={params.q ?? ''} maxLength={100} />
           </div>
+          <div className="field">
+            <label htmlFor="situacao">Situação</label>
+            <select id="situacao" name="situacao" defaultValue={status ?? ''}>
+              <option value="">Todas, exceto arquivados</option>
+              {options('project').map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+          {orgs && (
+            <div className="field">
+              <label htmlFor="cliente">Cliente</label>
+              <select id="cliente" name="cliente" defaultValue={organizationId ?? ''}>
+                <option value="">Todos</option>
+                {orgs.items.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+              </select>
+            </div>
+          )}
+          <div><button className="btn btn--ghost" type="submit">Filtrar</button></div>
         </form>
-        {data.items.length === 0 ? <Empty>{params.q ? 'Nenhum projeto encontrado com esse nome.' : 'Nenhum projeto disponível para você.'}</Empty> : (
+        {data.items.length === 0 ? <Empty>{params.q || status || organizationId ? 'Nenhum projeto encontrado com esses filtros.' : 'Nenhum projeto disponível para você.'}</Empty> : (
           <ul className="list" style={{ marginTop: '1rem' }}>
             {data.items.map((project) => (
               <li key={project.id}>
@@ -58,7 +78,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
             ))}
           </ul>
         )}
-        <Pagination page={data} basePath="/projetos" query={{ q: params.q }} />
+        <Pagination page={data} basePath="/projetos" query={filters} />
       </Section>
     </>
   );

@@ -3,8 +3,6 @@ package br.com.unionsolutions.portal.application;
 import br.com.unionsolutions.portal.application.Dtos.*;
 import br.com.unionsolutions.portal.domain.*;
 import br.com.unionsolutions.portal.domain.Types.*;
-import io.quarkus.mailer.Mail;
-import io.quarkus.mailer.Mailer;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
@@ -29,7 +27,7 @@ public class InvitationService {
 
     @Inject AccessPolicy policy;
     @Inject AuditService audit;
-    @Inject Mailer mailer;
+    @Inject NotificationService notifications;
     @Inject EntityManager em;
     @Inject Ports.IdentityProvider identity;
     @Inject RateLimiter limiter;
@@ -106,13 +104,8 @@ public class InvitationService {
                 + "Para aceitar, acesse:\n" + link + "\n\n"
                 + "O link é pessoal, vale até " + ttl.toDays() + " dia(s) e só pode ser usado uma vez.\n"
                 + "Se você não esperava este convite, ignore esta mensagem.\n";
-        try {
-            mailer.send(Mail.withText(email, "Convite para o portal da Union Solutions", text));
-        } catch (RuntimeException e) {
-            // Nunca registrar o link: ele dá acesso ao convite.
-            LOG.errorf("Falha ao enviar convite: %s", e.getClass().getSimpleName());
-            throw new ApiException(502, "EMAIL_FAILED", "Não foi possível enviar o convite por e-mail. Tente novamente.");
-        }
+        // Fila durável: gravado na transação do convite e enviado pela tarefa, com novas tentativas. O corpo (que leva o link) some depois do envio.
+        notifications.enqueueTo(email, "Convite para o portal da Union Solutions", text);
     }
 
     @Transactional

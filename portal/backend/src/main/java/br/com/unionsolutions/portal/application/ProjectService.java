@@ -14,6 +14,7 @@ import java.util.UUID;
 public class ProjectService {
     @Inject AccessPolicy policy;
     @Inject AuditService audit;
+    @Inject NotificationService notifications;
 
     @Transactional
     public Page<ProjectSummary> list(Actor actor, ProjectStatus status, UUID organizationId, String q, int page, int size) {
@@ -123,6 +124,7 @@ public class ProjectService {
             member.responsibility = input.responsibility();
             member.canApprove = input.canApprove();
         }
+        notifications.notify(actor.id(), List.of(user.id), "PROJECT_MEMBER_SET", "Você foi associado ao projeto " + p.name, "/projetos/" + p.id, p.tenantId, p.id, "project", p.id);
         audit.record(actor, "PROJECT_MEMBER_SET", "project", p.id, p.tenantId, p.id, user.email + (input.canApprove() ? " (aprova)" : ""), false);
         return detail(actor, p);
     }
@@ -209,6 +211,7 @@ public class ProjectService {
         update.body = input.body().trim();
         update.createdAt = Instant.now();
         update.persist();
+        notifications.notify(actor.id(), notifications.clientSide(p), "PROJECT_UPDATE_PUBLISHED", "Atualização no projeto " + p.name, "/projetos/" + p.id, p.tenantId, p.id, "project", p.id);
         audit.record(actor, "PROJECT_UPDATE_PUBLISHED", "project", p.id, p.tenantId, p.id, "Nova atualização do projeto", true);
         touch(p);
         return new UpdateView(update.id, update.body, Names.user(actor.id()), update.createdAt);

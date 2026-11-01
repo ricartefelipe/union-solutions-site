@@ -52,7 +52,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
             {data.items.map((doc) => (
               <li key={doc.id}>
                 <div className="list__row">
-                  <span className="list__title">{doc.title}</span>
+                  <Link className="list__title" href={`/documentos/${doc.id}`}>{doc.title}</Link>
                   <span className="meta">
                     <span>{label('category', doc.category)}</span>
                     <span>Versão {doc.currentVersion}</span>

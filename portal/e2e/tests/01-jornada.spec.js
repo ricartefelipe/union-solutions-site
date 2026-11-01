@@ -170,6 +170,42 @@ test.describe.serial('Jornada completa do portal', () => {
     await page.close();
   });
 
+  test('cliente é avisado da entrega no portal e por e-mail, sem o conteúdo', async () => {
+    const page = await clientA.newPage();
+    await page.goto('/');
+    const bell = page.getByRole('link', { name: /^Notificações\s*\d+\s*não lida/ });
+    await expect(bell).toBeVisible();
+    await bell.click();
+    await expect(page.getByRole('heading', { level: 1, name: 'Notificações' })).toBeVisible();
+    await expect(page.getByRole('link', { name: `Nova entrega: ${DELIVERY}` })).toBeVisible();
+    await expect(page.getByRole('link', { name: `Aprovação solicitada: ${DELIVERY} v1` })).toBeVisible();
+    await expect(page.getByRole('link', { name: `Documento disponível: Especificação ${RUN}` })).toBeVisible();
+    await shot(page, '05b-cliente-notificacoes');
+
+    // O e-mail é gravado junto com a entrega e enviado por uma tarefa: traz o título e o link, nunca a descrição.
+    const mail = await latestMailFor(CLIENT_A, 'Nova entrega', { timeoutMs: 90_000 });
+    expect(mail.Subject).toBe(`Portal Union Solutions: Nova entrega: ${DELIVERY}`);
+    expect(mail.Text).toContain(`${BASE}/entregas/${ids.delivery}`);
+    expect(mail.Text).not.toContain('Primeira versão da especificação');
+
+    await page.getByRole('button', { name: 'Marcar todas como lidas' }).click();
+    await expect(page.getByRole('button', { name: 'Marcar todas como lidas' })).toBeHidden();
+    await expect(page.getByRole('link', { name: /^Notificações$/ })).toBeVisible();
+
+    // Preferência: desligar os avisos por e-mail fica registrado e pode ser desfeito.
+    await page.getByRole('button', { name: 'Desligar avisos por e-mail' }).click();
+    await expect(page.getByText('Os avisos por e-mail estão desligados.')).toBeVisible();
+    await page.getByRole('button', { name: 'Ligar avisos por e-mail' }).click();
+    await expect(page.getByRole('button', { name: 'Desligar avisos por e-mail' })).toBeVisible();
+
+    // Quem publicou não é avisado da própria ação.
+    const staff = await admin.newPage();
+    await staff.goto('/notificacoes');
+    await expect(staff.getByText('Nenhuma notificação.')).toBeVisible();
+    await staff.close();
+    await page.close();
+  });
+
   test('5. cliente consulta, baixa o documento e solicita ajuste', async () => {
     const page = await clientA.newPage();
     await page.goto('/');
@@ -192,6 +228,12 @@ test.describe.serial('Jornada completa do portal', () => {
     await expect(page.getByText('Faltou detalhar o fluxo de cancelamento.')).toBeVisible();
     await shot(page, '07-cliente-ajuste-solicitado');
     await page.close();
+
+    // A decisão do cliente avisa a equipe da Union.
+    const staff = await admin.newPage();
+    await staff.goto('/notificacoes?filtro=nao-lidas');
+    await expect(staff.getByRole('link', { name: `Ajustes solicitados: ${DELIVERY} v1` })).toBeVisible();
+    await staff.close();
   });
 
   test('6. equipe publica nova versão, que não herda decisão', async () => {
@@ -251,7 +293,39 @@ test.describe.serial('Jornada completa do portal', () => {
     const raw = await page.request.get(`/bff/v1/tickets/${ids.ticket}`);
     expect(await raw.text()).not.toContain(INTERNAL_NOTE);
     await shot(page, '10-cliente-suporte');
+
+    // A nota interna não gera aviso nem e-mail; a resposta pública gera um só.
+    await page.goto('/notificacoes?filtro=nao-lidas');
+    await expect(page.getByRole('link', { name: `Nova resposta em: ${TICKET}` })).toHaveCount(1);
+    await expect(page.locator('body')).not.toContainText(INTERNAL_NOTE);
+    const notices = await page.request.get('/bff/v1/notifications?size=50');
+    expect(await notices.text()).not.toContain(INTERNAL_NOTE);
     await page.close();
+
+    const union = await admin.newPage();
+    await union.goto('/notificacoes');
+    await expect(union.getByRole('link', { name: `Nova solicitação: ${TICKET}` })).toBeVisible();
+
+    // Fila de e-mails: destinatário mascarado, corpo descartado depois do envio; retenção desligada só simula.
+    await union.goto('/admin/emails?situacao=SENT');
+    await expect(union.getByRole('cell', { name: `Portal Union Solutions: Nova entrega: ${DELIVERY}` })).toBeVisible();
+    await expect(union.locator('body')).not.toContainText(CLIENT_A);
+    await shot(union, '10b-admin-fila-emails');
+    await union.goto('/admin/retencao');
+    await expect(union.getByRole('heading', { name: 'Desligada' })).toBeVisible();
+    await expect(union.getByRole('button', { name: 'Executar agora' })).toHaveCount(0);
+    await expect(union.getByRole('cell', { name: 'Solicitações encerradas', exact: true })).toBeVisible();
+    await shot(union, '10c-admin-retencao-simulacao');
+    await union.close();
+
+    const forbidden = await clientA.newPage();
+    for (const path of ['/admin/emails', '/admin/retencao']) {
+      await forbidden.goto(path);
+      await expect(forbidden).toHaveURL(`${BASE}/`);
+    }
+    const api = await forbidden.request.get('/bff/v1/admin/retention/simulation');
+    expect(api.status()).toBe(403);
+    await forbidden.close();
   });
 
   test('9. cliente acessa o produto contratado', async () => {
@@ -324,6 +398,83 @@ test.describe.serial('Jornada completa do portal', () => {
     await page.goto('/projetos');
     await expect(page.getByText('Nenhum projeto disponível para você.')).toBeVisible();
     await page.close();
+  });
+
+  test('11. etapas editáveis, histórico de documento, filtros, histórico da solicitação, arquivamento de produto e papéis', async () => {
+    // Etapa: a equipe muda a situação e o cliente vê o resultado.
+    const staff = await admin.newPage();
+    await staff.goto(`/projetos/${ids.project}`);
+    const milestone = await disclosure(staff, 'Editar etapa: Levantamento concluído');
+    await milestone.getByLabel('Situação').selectOption('IN_PROGRESS');
+    await milestone.getByRole('button', { name: 'Salvar etapa' }).click();
+    await expect(staff.getByText('Etapa atualizada.')).toBeVisible();
+    await expect(staff.locator('li', { hasText: 'Levantamento concluído' }).locator('.badge', { hasText: 'Em andamento' })).toBeVisible();
+
+    // Solicitação: situação alterada e responsável removido; o cliente vê o histórico, sem a nota interna.
+    await staff.goto(`/suporte/${ids.ticket}`);
+    const service = staff.locator('section', { has: staff.getByRole('heading', { name: 'Atendimento' }) });
+    await service.getByLabel('Situação').selectOption('IN_PROGRESS');
+    await service.getByRole('button', { name: 'Salvar atendimento' }).click();
+    await expect(staff.getByText('Solicitação atualizada.')).toBeVisible();
+    await expect(staff.getByRole('heading', { level: 1, name: TICKET })).toBeVisible();
+    await shot(staff, '13-equipe-atendimento');
+    await staff.close();
+
+    const page = await clientA.newPage();
+    await page.goto(`/projetos/${ids.project}`);
+    await expect(page.locator('li', { hasText: 'Levantamento concluído' }).locator('.badge', { hasText: 'Em andamento' })).toBeVisible();
+    await page.goto(`/suporte/${ids.ticket}`);
+    const history = page.locator('section', { has: page.getByRole('heading', { name: 'Histórico' }) });
+    await expect(history.getByText('Solicitação aberta')).toBeVisible();
+    await expect(history.getByText('Situação: Em atendimento')).toBeVisible();
+    await expect(page.locator('body')).not.toContainText(INTERNAL_NOTE);
+    await shot(page, '14-cliente-historico-solicitacao');
+
+    // Filtros de suporte.
+    await page.goto('/suporte?situacao=IN_PROGRESS');
+    await expect(page.getByRole('link', { name: TICKET })).toBeVisible();
+    await page.goto('/suporte?situacao=CLOSED');
+    await expect(page.getByText('Nenhuma solicitação com esses filtros.')).toBeVisible();
+
+    // Documento: histórico de versões em tela própria.
+    await page.goto('/documentos');
+    await page.getByRole('link', { name: `Especificação ${RUN}` }).click();
+    await expect(page.getByRole('heading', { level: 1, name: `Especificação ${RUN}` })).toBeVisible();
+    await expect(page.getByText('Versão 1')).toBeVisible();
+    await expect(page.getByRole('link', { name: /especificacao-v1/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Gerenciar documento' })).toHaveCount(0);
+    await shot(page, '15-cliente-documento-versoes');
+
+    // Produto arquivado some para o cliente e volta ao ser reativado.
+    const union = await admin.newPage();
+    await union.goto(`/admin/organizacoes/${ids.orgA}`);
+    const edit = await disclosure(union, 'Editar produto: HookGuard');
+    await confirmAction(union, edit.getByRole('button', { name: 'Arquivar produto' }));
+    await expect(union.getByRole('button', { name: 'Reativar produto' })).toBeVisible();
+    await page.goto('/produtos');
+    await expect(page.getByText('Nenhum produto registrado para você.')).toBeVisible();
+    await union.getByRole('button', { name: 'Reativar produto' }).click();
+    await expect(union.getByRole('button', { name: 'Reativar produto' })).toHaveCount(0);
+    await page.goto('/produtos');
+    await expect(page.getByRole('link', { name: /Acessar HookGuard/ })).toBeVisible();
+    await page.close();
+
+    // Papel: a administração rebaixa e promove a pessoa do outro cliente; a API protege o tipo de conta.
+    await union.goto(`/admin/organizacoes/${ids.orgB}`);
+    const person = union.locator('li', { hasText: CLIENT_B });
+    await confirmAction(union, person.getByRole('button', { name: 'Tornar participante' }));
+    await expect(union.locator('li', { hasText: CLIENT_B }).getByText('Participante do cliente', { exact: true })).toBeVisible();
+    const other = await clientB.newPage();
+    await other.goto('/organizacao');
+    await expect(other).toHaveURL(`${BASE}/`);
+    await other.close();
+    await confirmAction(union, union.locator('li', { hasText: CLIENT_B }).getByRole('button', { name: 'Tornar administração' }));
+    await expect(union.locator('li', { hasText: CLIENT_B }).getByText('Administração do cliente', { exact: true })).toBeVisible();
+    const forbidden = await union.request.put(`/bff/v1/users/${encodeURIComponent((await (await union.request.get(`/bff/v1/users?organizationId=${ids.orgB}`)).json()).items[0].id)}/role`, { data: { role: 'UNION_STAFF' }, headers: { 'X-CSRF-Token': await union.evaluate(() => document.querySelector('meta[name="csrf-token"]').content), 'Content-Type': 'application/json' } });
+    expect(forbidden.status()).toBe(403);
+    expect((await forbidden.json()).code).toBe('FORBIDDEN');
+    await shot(union, '16-admin-papeis');
+    await union.close();
   });
 
   test('projeto, entrega e solicitação sobrevivem à reinicialização', async () => {

@@ -86,6 +86,12 @@ export function Pagination({ page, basePath, query = {} }: { page: Page<unknown>
   );
 }
 
+/** Listas carregadas de uma vez: avisa quando há mais registros do que os exibidos. */
+export function Truncated({ page, hint }: { page: Page<unknown>; hint?: string }) {
+  if (page.total <= page.items.length) return null;
+  return <p className="truncated">Mostrando {page.items.length} de {page.total}. {hint ?? 'Use os filtros para encontrar o restante.'}</p>;
+}
+
 export function When({ value }: { value: string }) {
   return <time dateTime={value}>{formatDateTime(value)}</time>;
 }

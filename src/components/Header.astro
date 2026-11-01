@@ -30,7 +30,7 @@ const isCurrent = (href: string) => path === href || path.startsWith(href);
           </li>
         )}
       </ul>
-      <a class="btn site-nav__cta" href={primaryCta.href}>{primaryCta.label}</a>
+      <a class="btn site-nav__cta" href={primaryCta.href} aria-current={isCurrent(primaryCta.href) ? 'page' : undefined}>{primaryCta.label}</a>
     </nav>
   </div>
 </header>
