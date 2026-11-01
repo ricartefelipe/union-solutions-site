@@ -4,6 +4,8 @@ Resumo versionado da análise das imagens finais e das dependências. O relatór
 
 **Decisão pendente.** Os achados altos abaixo não têm atualização suportada disponível na data. Cada um traz uma recomendação individual; **nenhum aceite foi registrado**, e a decisão cabe a Felipe. Até ela existir, a abertura do portal a clientes fica **bloqueada operacionalmente** por este documento (ver "Bloqueio operacional").
 
+**Reavaliação de 01/11/2026** (base de vulnerabilidades do próprio dia, imagens da configuração de produção reconstruídas com a versão 1.2.1, relatório em `artifacts/portal-qa/producao/vulnerabilidades-2026-11-01/`): os mesmos seis achados altos, nenhum crítico, nenhuma atualização suportada nova. Keycloak 26.8.1 continua sendo a última versão publicada; SeaweedFS 4.51 idem; `go-jose/v3` continua sem correção (a linha v4 está em 4.1.7). Evidência adicional para o item 6: o armazém de confiança do JDK da imagem do Keycloak não contém nenhum certificado da eMudhra (`keytool -list -cacerts`, 0 ocorrências), portanto a desconfiança que o pacote corrigido traria já é o estado efetivo. A imagem do Keycloak é `ubi9-micro`, sem gerenciador de pacotes: o `sqlite-libs` dos itens 4 e 5 não pode ser removido pela imagem derivada, e nenhum processo o carrega.
+
 **Critério de reavaliação:** repetir a análise antes de cada implantação e sempre que uma imagem base mudar, ou a cada 30 dias enquanto o portal estiver no ar. Um item volta a exigir ação quando o projeto publicar versão corrigida, ou quando surgir caminho de exploração a partir de dados do cliente.
 
 | Ferramenta | Versão | Base de dados | Escopo |
