@@ -38,3 +38,7 @@ __pycache__/
 
 # Ferramentas locais de apoio
 .ai/
+
+# Chave e identidade do destino de backup: só o README é versionado
+portal/deploy/production/backup-ssh/*
+!portal/deploy/production/backup-ssh/README.md
