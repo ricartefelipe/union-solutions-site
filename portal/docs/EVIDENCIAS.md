@@ -32,6 +32,21 @@ As pastas em `artifacts/` são locais e não versionadas. As capturas não cont�
 | Imagens finais com Trivy 0.70.0 (base de 31/10/2026) | Produção | 0 críticas; 6 altas avaliadas uma a uma em `VULNERABILIDADES.md` |
 | Web: `tsc`, `check:brand`, `npm audit --omit=dev` | Scratch | Passaram, 0 vulnerabilidades |
 
+## Backup por sftp e implantação real (01/11/2026, terceira rodada)
+
+O destino de backup passou a ser sftp, com chave própria e identidade fixa do servidor, e o ensaio de produção trocou o servidor REST do restic por um servidor SFTP de teste com a mesma configuração da implantação real. Evidências em `artifacts/portal-qa/backup-sftp/`.
+
+| Verificação | Ambiente | Resultado |
+| --- | --- | --- |
+| `01-jornada` (17) e `04-producao` (15) em volumes vazios, com o destino sftp | Produção | 17 de 17; 04 com 14 de 15 na primeira rodada (o teste "provedor fora do ar" falhou no login logo após a derrubada do banco de sessões, como já visto sob carga). Rodada limpa em seguida: `01` 17 de 17, `04` 15 de 15, `02` 19 de 19 |
+| `backup` para `sftp:backup@sftp-alvo:/backups/portal`: repositório criado pelo restic no destino, `backup-status` dentro do limite | Produção | OK, 1 snapshot inicial |
+| `testa-operacao.sh`: 33 cenários, inclusive destino sftp inacessível, senha errada e backups sobrepostos | Produção | 33 de 33 |
+| `auditar`: portas, usuários, TLS com a autoridade de teste, recusas de configuração, registros sem dados sensíveis, permissões | Produção | sem erro |
+| `06-restauracao` em projeto separado a partir do primeiro snapshot do repositório sftp: login com TOTP, organização, arquivo byte a byte idêntico, registro criado depois do backup ausente | Produção | 3 de 3 |
+| Implantação real: VPS KVM 2 (Campinas), Ubuntu 24.04, Docker oficial, `ufw` 22/80/443, `v1.2.0`, `verificar`, `subir`, 9 changesets, certificado Let's Encrypt, HTTP → HTTPS, console do Keycloak bloqueado, portas internas fechadas de fora, autenticação SMTP conferida sem envio, e-mail do primeiro administrador aceito, timer de backup e primeiro backup | VPS | OK |
+
+Lições desta rodada, já corrigidas: `docker compose run` consome a entrada padrão, então a verificação de chave dentro do container precisa de `</dev/null` para não engolir a confirmação da restauração; o ensaio precisa restaurar pelo identificador do snapshot quando outros backups acontecem depois do registro de referência; duas sequências do ensaio não podem rodar ao mesmo tempo no mesmo projeto.
+
 ## Revisão completa de interface e funcionalidades (01/11/2026, segunda rodada)
 
 Depois da rodada de notificações, a entrega foi confrontada com o escopo inteiro: revisão visual do site e do portal, lacunas funcionais do portal, CI e pacote do site. Evidências em `artifacts/portal-qa/revisao-final/` (capturas por largura e navegador, relatórios de axe e rolagem, registros das suítes).

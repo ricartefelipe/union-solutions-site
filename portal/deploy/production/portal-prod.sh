@@ -107,6 +107,16 @@ check_config() {
   public=$(value PORTAL_PUBLIC_URL)
   [ "$public" = "https://$host" ] || { echo "PORTAL_PUBLIC_URL precisa ser https://PORTAL_HOST."; problems=1; }
   if [ -n "$(value PORTAL_DEMO_ENABLED)" ]; then echo "PORTAL_DEMO_ENABLED não pertence à produção."; problems=1; fi
+  case "$(value RESTIC_REPOSITORY)" in
+    sftp:*)
+      # Conferido de dentro do container de operação: é ele quem precisa ler a chave e a identidade do servidor.
+      $COMPOSE run --rm --no-deps -T --entrypoint sh ops -c 'test -r /run/backup-ssh/chave' </dev/null 2>/dev/null \
+        || { echo "Backup por sftp sem chave legível pelo container: rode sh portal-prod.sh chave-backup."; problems=1; }
+      $COMPOSE run --rm --no-deps -T --entrypoint sh ops -c 'test -s /run/backup-ssh/known_hosts' </dev/null 2>/dev/null \
+        || { echo "Backup por sftp sem identidade do servidor: rode sh portal-prod.sh destino-backup <servidor> <porta>."; problems=1; }
+      ;;
+    /repositorio-local) echo "Aviso: backup provisório na própria VPS. Defina um destino externo antes de receber dados reais." ;;
+  esac
   $COMPOSE config -q || problems=1
   return "$problems"
 }
@@ -136,6 +146,24 @@ case "$command" in
   verificar)
     check_config
     echo "Configuração sem pendências."
+    ;;
+  chave-backup)
+    # Chave só do backup, lida pelo usuário ops (uid 1002) do container. A privada nunca sai da VPS.
+    mkdir -p "$DIR/backup-ssh" && chmod 700 "$DIR/backup-ssh"
+    [ -f "$DIR/backup-ssh/chave" ] || ssh-keygen -q -t ed25519 -N "" -C "union-portal-backup" -f "$DIR/backup-ssh/chave"
+    chown 1002:1002 "$DIR/backup-ssh/chave" "$DIR/backup-ssh/chave.pub" && chmod 600 "$DIR/backup-ssh/chave"
+    echo "Cadastre esta chave pública no destino do backup:"
+    cat "$DIR/backup-ssh/chave.pub"
+    ;;
+  destino-backup)
+    host=${1:-}; port=${2:-22}
+    [ -n "$host" ] || { echo "Uso: sh portal-prod.sh destino-backup <servidor> [porta]"; exit 2; }
+    mkdir -p "$DIR/backup-ssh" && chmod 700 "$DIR/backup-ssh"
+    ssh-keyscan -p "$port" -t ed25519 "$host" 2>/dev/null > "$DIR/backup-ssh/known_hosts"
+    [ -s "$DIR/backup-ssh/known_hosts" ] || { echo "Não foi possível obter a identidade de $host:$port."; exit 1; }
+    chown 1002:1002 "$DIR/backup-ssh/known_hosts" && chmod 644 "$DIR/backup-ssh/known_hosts"
+    echo "Identidade fixada para $host:$port. Confira a impressão digital com o painel do destino, se ele a mostrar:"
+    ssh-keygen -lf "$DIR/backup-ssh/known_hosts"
     ;;
   subir)
     check_config
@@ -167,7 +195,7 @@ case "$command" in
   backup-status)
     require_env
     limit=$(value PORTAL_BACKUP_MAX_AGE_HOURS)
-    latest=$($COMPOSE run --rm --no-deps -T --entrypoint sh ops -c 'restic snapshots --host portal --tag portal --latest 1 --json' | sed -n 's/.*"time":"\([^".]*\).*/\1/p' | head -n 1)
+    latest=$($COMPOSE run --rm --no-deps -T --entrypoint sh ops -c '/ops/restic.sh snapshots --host portal --tag portal --latest 1 --json' | sed -n 's/.*"time":"\([^".]*\).*/\1/p' | head -n 1)
     [ -n "$latest" ] || { echo "Nenhum backup encontrado."; exit 1; }
     age=$(( ($(date -u +%s) - $(date -u -d "$latest" +%s)) / 3600 ))
     echo "Último backup: $latest UTC, há $age h. Limite: ${limit:-26} h."
@@ -182,7 +210,7 @@ case "$command" in
     snapshot=${1:-latest}
     echo "Isto substitui bancos e arquivos de '$PROJECT' pelo backup '$snapshot'."
     printf "Digite RESTAURAR para confirmar: "
-    read -r answer
+    read -r answer || answer=""
     [ "$answer" = "RESTAURAR" ] || { echo "Cancelado."; exit 1; }
     do_restore() {
       $COMPOSE stop proxy frontend backend keycloak 2>/dev/null || true
