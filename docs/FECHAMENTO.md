@@ -1,8 +1,8 @@
 # Relatório de fechamento
 
-**Estado: pacote pronto para publicar, com domínio e e-mail reais.** Falta confirmar o tipo de site no hPanel (seção 6). O procedimento está em [`PUBLICACAO.md`](PUBLICACAO.md). Nada foi publicado.
+**Estado: pacote pronto para publicar, com domínio e e-mail reais.** Falta confirmar o tipo de site no hPanel (seção 6). O procedimento está em [`PUBLICACAO.md`](PUBLICACAO.md). Atualização de 01/11/2026: o site 1.1.0 foi publicado na Hostinger em 31/10/2026 pelo responsável, a partir do pacote `site-union-solutions-20261031-215233.zip`; o estado abaixo descreve a rodada original e vale como histórico. Nada foi publicado.
 
-Data de referência: 31/10/2026. Branch: `feature/portal-cliente-union-solutions`. O portal é uma aplicação separada, em `portal/`, e não bloqueia o site.
+Data de referência: 31/10/2026, rodada de preparação do site. O trabalho foi integrado à `develop` e publicado como release 1.1.0; a rodada seguinte está descrita em `portal/docs/EVIDENCIAS.md` e `portal/docs/MATRIZ.md`. O portal é uma aplicação separada, em `portal/`, e não bloqueia o site.
 
 ## 1. O que foi alterado na rodada do site
 

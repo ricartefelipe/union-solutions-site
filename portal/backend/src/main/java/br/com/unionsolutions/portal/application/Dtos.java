@@ -75,14 +75,15 @@ public final class Dtos {
     // ---------- Suporte ----------
     public record TicketInput(UUID organizationId, UUID projectId, @NotBlank @Size(max = 200) String subject, @NotBlank @Size(max = 8000) String description,
                               @NotNull TicketCategory category, @NotNull TicketPriority priority) {}
-    public record TicketPatch(TicketStatus status, TicketPriority priority, UUID assigneeId, Instant slaDueAt, @NotNull Long version) {}
+    public record TicketPatch(TicketStatus status, TicketPriority priority, UUID assigneeId, Boolean clearAssignee, Instant slaDueAt, @NotNull Long version) {}
+    public record TicketHistoryItem(String action, String summary, String actorName, Instant createdAt) {}
     public record TicketSummary(UUID id, UUID tenantId, String organizationName, UUID projectId, String projectName, String subject, TicketCategory category, TicketPriority priority,
                                 TicketStatus status, Instant slaDueAt, Instant createdAt, Instant updatedAt) {}
     public record CommentInput(@NotBlank @Size(max = 8000) String body, boolean internal) {}
     public record CommentView(UUID id, String body, boolean internal, String authorName, boolean fromUnion, Instant createdAt) {}
     public record AttachmentView(UUID id, FileView file, boolean internal, Instant createdAt) {}
     public record TicketDetail(TicketSummary ticket, String description, String openedByName, String assigneeName, UUID assigneeId, long version, boolean canManage,
-                               List<CommentView> comments, List<AttachmentView> attachments) {}
+                               List<CommentView> comments, List<AttachmentView> attachments, List<TicketHistoryItem> history) {}
 
     // ---------- Produtos ----------
     public record ProductInput(@NotNull UUID organizationId, @NotBlank @Size(max = 160) String productName, @NotNull ProductStatus commercialStatus,
@@ -102,4 +103,15 @@ public final class Dtos {
     // ---------- Auditoria ----------
     public record AuditView(UUID id, UUID tenantId, String organizationName, UUID actorId, String actorEmail, String action, String resourceType, UUID resourceId, UUID projectId,
                             String summary, String correlationId, Instant createdAt) {}
+
+    // ---------- Notificações, e-mails e retenção ----------
+    public record NotificationView(UUID id, String kind, String title, String link, UUID projectId, Instant createdAt, Instant readAt) {}
+    public record UnreadCount(long unread) {}
+    public record ReadInput(List<UUID> ids) {}
+    public record PreferencesInput(Boolean emailNotifications) {}
+    public record PreferencesView(boolean emailNotifications) {}
+    public record OutboxView(UUID id, String recipient, String subject, String status, int attempts, Instant createdAt, Instant sentAt, Instant nextAttemptAt, String lastError) {}
+    public record RetentionCategory(String category, int days, long matching, String note) {}
+    public record RetentionReport(boolean enabled, String policyReference, Instant generatedAt, List<RetentionCategory> categories) {}
+    public record RetentionRunView(UUID id, String mode, Instant startedAt, Instant finishedAt, String summary, int removed, String error) {}
 }

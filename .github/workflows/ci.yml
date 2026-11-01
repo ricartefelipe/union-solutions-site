@@ -1,0 +1,145 @@
+# Verificações de integração. Nenhum passo usa dados reais, publica ou implanta.
+# Bloqueiam integração (develop/main): site, portal-web, portal-api, portal-producao e portal-navegador.
+# A análise de imagens (imagens.yml) bloqueia publicação, não integração: corre nos PRs para main e semanalmente.
+name: Verificações
+
+on:
+  push:
+    branches: [develop, main, 'feature/**', 'release/**', 'hotfix/**']
+  pull_request:
+
+concurrency:
+  group: verificacoes-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  site:
+    name: Site institucional
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Tipos, build e links internos
+        run: npm run verify
+      - name: Build em cada modo de contato, em pasta isolada
+        run: npm run check:contact
+      - name: Pacote de produção com configuração pública (sem segredos)
+        run: |
+          printf 'PUBLIC_SITE_URL=https://unionsolutions.tech\nPUBLIC_CONTACT_EMAIL=contato@unionsolutions.tech\nPUBLIC_CONTACT_FORM_ENDPOINT=https://unionsolutions.tech/contato.php\n' > .env
+          npm run build
+          npm run check:publish
+          sh scripts/empacotar-site.sh "$RUNNER_TEMP/pacote"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site-pacote
+          path: ${{ runner.temp }}/pacote
+          retention-days: 14
+
+  portal-web:
+    name: Portal, web
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: portal/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: portal/frontend/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run check:brand
+      - run: npm audit --omit=dev
+      - name: Build de produção
+        run: node node_modules/next/dist/bin/next build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+      - name: Armazenamento de sessões com PostgreSQL real
+        run: npm run test:session
+
+  portal-api:
+    name: Portal, API
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: portal/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+      - name: Testes de integração com PostgreSQL em container e empacotamento
+        run: mvn -B --no-transfer-progress package
+      - name: Dependências Java com vulnerabilidades conhecidas
+        run: |
+          docker run --rm -v "$PWD:/src:ro" -v "$HOME/.cache/trivy:/root/.cache/trivy" aquasec/trivy:0.70.0 \
+            fs --scanners vuln --pkg-types library --severity CRITICAL,HIGH --exit-code 1 --ignore-unfixed /src/pom.xml
+      - name: Contrato OpenAPI versionado corresponde ao gerado
+        run: diff target/openapi/openapi.yaml ../docs/api/openapi.yaml || { echo "Atualize portal/docs/api/openapi.yaml a partir de portal/backend/target/openapi/openapi.yaml"; exit 1; }
+
+  portal-producao:
+    name: Portal, configuração de produção
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sintaxe dos scripts de operação
+        run: |
+          sh -n portal/deploy/production/portal-prod.sh
+          sh -n portal/deploy/local/portal.sh
+          bash -n portal/deploy/production/ops/backup.sh portal/deploy/production/ops/restore.sh portal/deploy/production/ops/reconciliar.sh portal/deploy/production/ops/mfa-reset-portal.sh portal/deploy/production/teste/prova.sh portal/deploy/production/teste/testa-operacao.sh
+          sh -n portal/deploy/keycloak/portal-mfa-reset.sh
+      - name: Compose de produção válido com o modelo de configuração
+        run: |
+          cd portal/deploy/production
+          sed 's/SUBSTITUIR/valor/g; s/GERADO/0123456789abcdef0123456789abcdef/g' .env.example > "$RUNNER_TEMP/env"
+          docker compose --env-file "$RUNNER_TEMP/env" -f compose.yaml config -q
+      - name: Imagens de produção constroem
+        run: |
+          docker build -q portal/backend
+          docker build -q portal/frontend
+          docker build -q portal/deploy/production/proxy
+          docker build -q portal/deploy/keycloak
+          docker build -q portal/deploy/production/ops
+
+  portal-navegador:
+    name: Portal, jornadas em navegador
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: portal/e2e/package-lock.json
+      - name: Ambiente local completo (Keycloak, PostgreSQL, SeaweedFS, ClamAV, Mailpit)
+        run: sh portal/deploy/local/portal.sh up
+      - run: npm ci
+        working-directory: portal/e2e
+      - run: node node_modules/@playwright/test/cli.js install --with-deps chromium
+        working-directory: portal/e2e
+      - name: Jornada completa, segurança e operação
+        run: node node_modules/@playwright/test/cli.js test tests/01-jornada.spec.js tests/02-seguranca.spec.js tests/03-operacao.spec.js
+        working-directory: portal/e2e
+        env:
+          E2E_BROWSER: chromium
+          E2E_SHOTS_DIR: ${{ runner.temp }}/evidencias
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: portal-navegador-evidencias
+          path: |
+            ${{ runner.temp }}/evidencias
+            portal/e2e/test-results
+          retention-days: 14
+          if-no-files-found: ignore
+      - if: always()
+        run: sh portal/deploy/local/portal.sh down

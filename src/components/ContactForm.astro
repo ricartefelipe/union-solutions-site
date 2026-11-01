@@ -8,6 +8,7 @@ import { interests, productOptions } from '../lib/contact-options';
     <p class="contact-form__noscript">Este formulário precisa de JavaScript para funcionar. Ative o JavaScript no navegador para enviar sua mensagem.</p>
   </noscript>
 
+  <p class="contact-form__context" data-context hidden></p>
   <p class="muted contact-form__legend">Campos sem indicação são obrigatórios.</p>
 
   <div class="field-grid">
@@ -78,6 +79,7 @@ import { interests, productOptions } from '../lib/contact-options';
 <script>
   import { createContactAdapter, type ContactFailure, type ContactSubmission } from '../lib/contact-adapter';
   import { readPreselection } from '../lib/contact-preselection';
+  import { buildContactMessage } from '../lib/contact-links';
 
   type Field = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
 
@@ -121,6 +123,13 @@ import { interests, productOptions } from '../lib/contact-options';
     interest.value = preselection.interest;
     product.value = preselection.product;
     syncProductField();
+    // Mesma frase de contexto dos outros modos de contato: quem vem de um produto ou serviço vê o assunto já definido.
+    const context = form.querySelector<HTMLElement>('[data-context]');
+    if (context && preselection.interest) {
+      const productName = product.selectedOptions[0]?.value ? product.selectedOptions[0].textContent?.trim() : undefined;
+      context.textContent = `Assunto: ${buildContactMessage(preselection, productName).subject}.`;
+      context.hidden = false;
+    }
     interest.addEventListener('change', syncProductField);
 
     function errorFor(field: Field): string {
@@ -244,6 +253,15 @@ import { interests, productOptions } from '../lib/contact-options';
   .contact-form__legend {
     margin-bottom: var(--space-4);
     font-size: var(--text-sm);
+  }
+
+  .contact-form__context {
+    margin-bottom: var(--space-3);
+    font-weight: 600;
+  }
+
+  .contact-form__context[hidden] {
+    display: none;
   }
 
   .contact-form__noscript {

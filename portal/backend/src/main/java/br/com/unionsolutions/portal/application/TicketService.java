@@ -14,6 +14,7 @@ import java.util.UUID;
 public class TicketService {
     @Inject AccessPolicy policy;
     @Inject AuditService audit;
+    @Inject NotificationService notifications;
     @Inject FileService files;
 
     /** Mesmo critério de AccessPolicy.canReadTicket, em forma de consulta, para listagens e contagens. */
@@ -60,7 +61,10 @@ public class TicketService {
         String attachmentFilter = actor.isUnion() ? "ticketId = ?1 order by createdAt" : "ticketId = ?1 and internal = false order by createdAt";
         List<AttachmentView> attachments = TicketAttachment.<TicketAttachment>list(attachmentFilter, t.id).stream()
                 .map(a -> new AttachmentView(a.id, FileService.view(StoredFile.findById(a.fileId)), a.internal, a.createdAt)).toList();
-        return new TicketDetail(summary(t), t.description, Names.user(t.openedBy), Names.user(t.assigneeId), t.assigneeId, t.version, actor.isUnion(), comments, attachments);
+        // Histórico de situação a partir da auditoria do próprio recurso: só eventos visíveis ao cliente.
+        List<TicketHistoryItem> history = AuditEvent.<AuditEvent>list("resourceType = 'ticket' and resourceId = ?1 and visibleToClient = true and action in ('TICKET_OPENED', 'TICKET_STATUS_CHANGED') order by createdAt", t.id)
+                .stream().map(e -> new TicketHistoryItem(e.action, e.summary, e.actorId == null ? null : Names.user(e.actorId), e.createdAt)).toList();
+        return new TicketDetail(summary(t), t.description, Names.user(t.openedBy), Names.user(t.assigneeId), t.assigneeId, t.version, actor.isUnion(), comments, attachments, history);
     }
 
     @Transactional
@@ -92,6 +96,7 @@ public class TicketService {
         t.updatedAt = t.createdAt;
         t.persist();
         audit.record(actor, "TICKET_OPENED", "ticket", t.id, tenantId, t.projectId, t.subject, true);
+        notifications.notify(actor.id(), notifications.ticketCounterpart(actor, t), "TICKET_OPENED", "Nova solicitação: " + t.subject, "/suporte/" + t.id, tenantId, t.projectId, "ticket", t.id);
         return detail(actor, t);
     }
 
@@ -104,9 +109,12 @@ public class TicketService {
             if (!t.status.canMoveTo(patch.status())) throw ApiException.conflict("INVALID_TRANSITION", "Esta mudança de situação não é permitida.");
             audit.record(actor, "TICKET_STATUS_CHANGED", "ticket", t.id, t.tenantId, t.projectId, t.subject + ": " + patch.status(), true);
             t.status = patch.status();
+            notifications.notify(actor.id(), notifications.ticketCounterpart(actor, t), "TICKET_STATUS_CHANGED", "Solicitação atualizada: " + t.subject, "/suporte/" + t.id, t.tenantId, t.projectId, "ticket", t.id);
         }
         if (patch.priority() != null) t.priority = patch.priority();
-        if (patch.assigneeId() != null) {
+        if (Boolean.TRUE.equals(patch.clearAssignee())) {
+            t.assigneeId = null;
+        } else if (patch.assigneeId() != null) {
             AppUser assignee = AppUser.findById(patch.assigneeId());
             if (assignee == null || !assignee.role.isUnion()) throw ApiException.badRequest("INVALID_USER", "Selecione um profissional da equipe Union.");
             t.assigneeId = assignee.id;
@@ -135,6 +143,10 @@ public class TicketService {
         t.updatedAt = Instant.now();
         audit.record(actor, input.internal() ? "TICKET_NOTE_ADDED" : "TICKET_COMMENTED", "ticket", t.id, t.tenantId, t.projectId,
                 input.internal() ? null : t.subject, !input.internal());
+        // Nota interna nunca gera aviso ao cliente: só comentários visíveis chegam ao outro lado.
+        if (!input.internal()) {
+            notifications.notify(actor.id(), notifications.ticketCounterpart(actor, t), "TICKET_COMMENTED", "Nova resposta em: " + t.subject, "/suporte/" + t.id, t.tenantId, t.projectId, "ticket", t.id);
+        }
         return detail(actor, t);
     }
 
@@ -154,6 +166,9 @@ public class TicketService {
         attachment.persist();
         t.updatedAt = Instant.now();
         audit.record(actor, "TICKET_ATTACHMENT_ADDED", "ticket", t.id, t.tenantId, t.projectId, null, !internal);
+        if (!internal) {
+            notifications.notify(actor.id(), notifications.ticketCounterpart(actor, t), "TICKET_ATTACHMENT_ADDED", "Novo anexo em: " + t.subject, "/suporte/" + t.id, t.tenantId, t.projectId, "ticket", t.id);
+        }
         return detail(actor, t);
     }
 
