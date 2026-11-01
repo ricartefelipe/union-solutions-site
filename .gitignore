@@ -35,3 +35,6 @@ Thumbs.db
 # Python auxiliar
 __pycache__/
 *.pyc
+
+# Ferramentas locais de apoio
+.ai/
