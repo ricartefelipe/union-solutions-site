@@ -1,6 +1,6 @@
 # Implantação do portal
 
-**Nada foi publicado.** A VPS ainda não foi contratada. Os comandos de `portal-prod.sh` abaixo foram executados no ambiente de prova, com as imagens e o compose de produção. As etapas marcadas como "na VPS" dependem do servidor real e não foram executadas.
+**Implantado em 01/11/2026** numa VPS Hostinger KVM 2 (2 vCPU, 8 GB, 100 GB NVMe, Ubuntu 24.04, Campinas), seguindo o procedimento abaixo, com a versão `v1.2.0`. O estado atual e as pendências estão em [`docs/PUBLICACAO.md`](../../docs/PUBLICACAO.md). Os mesmos comandos continuam sendo exercitados no ambiente de prova antes de cada atualização.
 
 ## Topologia inicial
 
@@ -36,7 +36,7 @@ Serviços externos equivalentes, como banco gerenciado ou S3 contratado, podem s
 | SMTP real | `PORTAL_SMTP_HOST`, `PORTAL_SMTP_PORT`, `PORTAL_SMTP_USER`, `PORTAL_SMTP_PASSWORD`. O remetente já é `PORTAL_MAIL_FROM=contato@unionsolutions.tech` |
 | Primeiro administrador | `PORTAL_BOOTSTRAP_ADMIN_EMAIL` |
 | Links de produtos | `PORTAL_PRODUCT_LINK_HOSTS` |
-| Backup externo | `RESTIC_REPOSITORY`, `PORTAL_BACKUP_S3_ACCESS_KEY` e `PORTAL_BACKUP_S3_SECRET_KEY` (se o destino for S3) |
+| Backup externo | `RESTIC_REPOSITORY`. Por sftp (por exemplo, a conta de hospedagem do site, fora de `public_html`): `PORTAL_BACKUP_SFTP_PORT`, `sh portal-prod.sh chave-backup` e `sh portal-prod.sh destino-backup <servidor> <porta>`. Por S3: `PORTAL_BACKUP_S3_ACCESS_KEY` e `PORTAL_BACKUP_S3_SECRET_KEY` |
 | Retenção de backup | `PORTAL_BACKUP_KEEP_DAILY`, `PORTAL_BACKUP_KEEP_WEEKLY`, `PORTAL_BACKUP_KEEP_MONTHLY` |
 | Privacidade | Campos de `PRIVACIDADE.md`. Pendência para abrir o portal a clientes |
 | Retenção | Nasce desligada. Só ligue com `PORTAL_RETENTION_ENABLED=true` e `PORTAL_RETENTION_POLICY` depois de a empresa aprovar os prazos (ver `OPERACAO.md`) |
@@ -135,6 +135,6 @@ bash portal/deploy/production/teste/prova.sh auditar
 bash portal/deploy/production/teste/prova.sh destruir
 ```
 
-`destruir` preserva os volumes `union-portal-prova-evidencias` (estado e capturas dos testes) e `union-portal-prova-repositorio` (backup). Antes de uma nova rodada completa, remova os dois com `docker volume rm`: o estado antigo faz a jornada tentar a senha de administração da rodada anterior, e o repositório antigo recusa a senha nova de backup.
+`destruir` preserva os volumes `union-portal-prova-evidencias` (estado e capturas dos testes), `union-portal-prova-repositorio` (destino sftp do backup) e `union-portal-prova-backup-ssh` (chave do backup e identidade do servidor de teste). Antes de uma nova rodada completa, remova os três com `docker volume rm`: o estado antigo faz a jornada tentar a senha de administração da rodada anterior, e o repositório antigo recusa a senha nova de backup.
 
 O ambiente de prova usa projeto, volumes e portas próprios e não altera nada no computador. O arquivo `teste/compose.teste.yaml` acrescenta só uma autoridade de certificação de teste, o Mailpit como SMTP e um destino local de backup. Não existe opção que desligue validações de produção, autenticação, TLS, autorização ou antivírus.

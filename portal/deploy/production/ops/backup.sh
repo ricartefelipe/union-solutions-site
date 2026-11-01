@@ -43,7 +43,7 @@ enviar() {
   : "${PORTAL_BACKUP_KEEP_MONTHLY:?defina a retenção}"
   LIMIT=${PORTAL_BACKUP_TIMEOUT_SECONDS:-14400}
   [ -f "$STAGE/SHA256SUMS" ] || { echo "Não há cópia preparada." >&2; exit 1; }
-  r() { timeout "$LIMIT" restic "$@"; }
+  r() { timeout "$LIMIT" /ops/restic.sh "$@"; }
   # Só inicializa um repositório que o restic diz não existir (saída 10). Senha errada (12), indisponibilidade,
   # corrupção ou falta de permissão interrompem o backup, em vez de criar um repositório novo por engano.
   set +e
@@ -56,7 +56,7 @@ enviar() {
     12) echo "Senha do repositório de backup incorreta." >&2; exit 12 ;;
     *) echo "Repositório de backup inacessível (saída $status)." >&2; exit "$status" ;;
   esac
-  (cd "$STAGE" && timeout "$LIMIT" restic backup --quiet --host portal --tag portal .)
+  (cd "$STAGE" && timeout "$LIMIT" /ops/restic.sh backup --quiet --host portal --tag portal .)
   r forget --quiet --host portal --tag portal --keep-daily "$PORTAL_BACKUP_KEEP_DAILY" --keep-weekly "$PORTAL_BACKUP_KEEP_WEEKLY" --keep-monthly "$PORTAL_BACKUP_KEEP_MONTHLY" --prune
   r check --quiet
   r snapshots --host portal --tag portal --latest 1 --compact | tail -n 4

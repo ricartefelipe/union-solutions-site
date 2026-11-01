@@ -1,11 +1,11 @@
 # Publicação: índice operacional
 
-Este é o ponto de partida para publicar. **Nada foi publicado, nenhum DNS foi alterado e nenhuma conexão foi feita a servidores reais.** São duas aplicações independentes: o site pode ir ao ar sem o portal.
+Este é o ponto de partida para publicar e operar. Estado em 01/11/2026: o site 1.1.0 está no ar na Hostinger desde 31/10/2026, e o portal 1.2.0 foi implantado em 01/11/2026 numa VPS KVM 2 da Hostinger em Campinas (`187.41.111.129`), com DNS, HTTPS público e SMTP configurados. São duas aplicações independentes: o site funciona sem o portal.
 
 | Aplicação | Hospedagem | Endereço | Situação |
 | --- | --- | --- | --- |
-| Site institucional | Hostinger Business (contratada) | `https://unionsolutions.tech` | Pacote pronto e testado |
-| Portal do cliente | VPS (não contratada) | `https://clientes.unionsolutions.tech` | Configuração de produção exercitada em ambiente isolado |
+| Site institucional | Hostinger Business | `https://unionsolutions.tech` | No ar (1.1.0). Pacote 1.2.0 pronto, não publicado |
+| Portal do cliente | VPS Hostinger KVM 2, Ubuntu 24.04, Campinas | `https://clientes.unionsolutions.tech` | No ar (1.2.0), em validação pela administração; ainda fechado a clientes |
 
 ## Site institucional
 
@@ -92,13 +92,22 @@ Domínio e caixa postal **não são pendências**. A confirmação de que funcio
 | Matriz de requisitos, implementação e testes | [`MATRIZ.md`](../portal/docs/MATRIZ.md) |
 | Padrão visual compartilhado com o site | [`PADRAO-VISUAL.md`](PADRAO-VISUAL.md) |
 
-### Dependem de autorização e de configuração real
+### Executado em 01/11/2026
 
-Nada abaixo foi executado:
+1. VPS contratada e preparada: Ubuntu 24.04 atualizado, Docker pelo repositório oficial, `ufw` com 22, 80 e 443, código da tag `v1.2.0` em `/opt/union-solutions`, chave SSH de operação.
+2. Registro `A` `clientes.unionsolutions.tech` → `187.41.111.129`; MX, SPF e DKIM intactos.
+3. `.env` com segredos gerados, SMTP da Hostinger (`smtp.hostinger.com:587`, caixa `contato@`, autenticação conferida sem enviar e-mail), primeiro administrador `contato@unionsolutions.tech`, retenção de backup 7/4/6.
+4. `verificar` e `subir` sem pendências; 9 changesets; certificado Let's Encrypt emitido; HTTP → HTTPS; console do Keycloak bloqueado; portas internas fechadas vistas de fora; e-mail do primeiro administrador aceito pelo provedor; timer de backup instalado e primeiro backup feito.
 
-1. Contratar a VPS e dar acesso.
-2. Criar o DNS do portal.
-3. Preencher em `portal/deploy/production/.env`: `PORTAL_SMTP_HOST`, `PORTAL_SMTP_USER`, `PORTAL_SMTP_PASSWORD`, `PORTAL_BOOTSTRAP_ADMIN_EMAIL`, `PORTAL_PRODUCT_LINK_HOSTS`, `RESTIC_REPOSITORY`, `PORTAL_BACKUP_S3_ACCESS_KEY`, `PORTAL_BACKUP_S3_SECRET_KEY`, `PORTAL_BACKUP_KEEP_DAILY`, `PORTAL_BACKUP_KEEP_WEEKLY` e `PORTAL_BACKUP_KEEP_MONTHLY`.
+### Ainda dependem de decisão ou ação
+
+1. **Backup externo:** o repositório está provisoriamente em `/repositorio-local`, na própria VPS. O destino definitivo é a conta de hospedagem do site por sftp (`portal/docs/OPERACAO.md`, "Destino"), já testado no ensaio; falta aplicar na VPS. Até lá, sem dados reais de clientes.
+2. Primeiro acesso da administração pelo e-mail recebido em `contato@`, com definição de senha e MFA.
+3. Conferências com a administração logada: convite de teste, upload com antivírus, aviso por e-mail.
+
+Itens originais, mantidos para referência do que cada variável exige:
+
+3. Preencher em `portal/deploy/production/.env`: `PORTAL_SMTP_HOST`, `PORTAL_SMTP_USER`, `PORTAL_SMTP_PASSWORD`, `PORTAL_BOOTSTRAP_ADMIN_EMAIL`, `PORTAL_PRODUCT_LINK_HOSTS`, `RESTIC_REPOSITORY` (sftp na conta de hospedagem do site, com `chave-backup` e `destino-backup`), `PORTAL_BACKUP_SFTP_PORT`, `PORTAL_BACKUP_KEEP_DAILY`, `PORTAL_BACKUP_KEEP_WEEKLY` e `PORTAL_BACKUP_KEEP_MONTHLY`.
 4. Validar emissão do certificado, entrega de e-mail, backup externo e portas fechadas a partir de fora.
 5. Preencher os campos de `PRIVACIDADE.md` antes de abrir o portal a clientes.
 6. **Decidir sobre os seis achados altos de `VULNERABILIDADES.md`** (aceitar, mitigar antes ou bloquear): nenhum aceite foi registrado, e até a decisão o portal não deve ser aberto a clientes. Repetir a análise com a base do dia antes de implantar.
