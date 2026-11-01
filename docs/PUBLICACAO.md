@@ -99,11 +99,12 @@ Domínio e caixa postal **não são pendências**. A confirmação de que funcio
 3. `.env` com segredos gerados, SMTP da Hostinger (`smtp.hostinger.com:587`, caixa `contato@`, autenticação conferida sem enviar e-mail), primeiro administrador `contato@unionsolutions.tech`, retenção de backup 7/4/6.
 4. `verificar` e `subir` sem pendências; 9 changesets; certificado Let's Encrypt emitido; HTTP → HTTPS; console do Keycloak bloqueado; portas internas fechadas vistas de fora; e-mail do primeiro administrador aceito pelo provedor; timer de backup instalado e primeiro backup feito.
 
+5. Versão 1.2.1 aplicada com `atualizar`; backup apontado por sftp para a conta de hospedagem do site (`u415482304@147.93.38.49:65002`, pasta `backup-portal` fora de `public_html`), identidade do servidor fixada, primeiro backup real feito e `backup-status` dentro do limite. A hospedagem tem backup diário próprio ativado, que também copia esse repositório.
+
 ### Ainda dependem de decisão ou ação
 
-1. **Backup externo:** o repositório está provisoriamente em `/repositorio-local`, na própria VPS. O destino definitivo é a conta de hospedagem do site por sftp (`portal/docs/OPERACAO.md`, "Destino"), já testado no ensaio; falta aplicar na VPS. Até lá, sem dados reais de clientes.
-2. Primeiro acesso da administração pelo e-mail recebido em `contato@`, com definição de senha e MFA.
-3. Conferências com a administração logada: convite de teste, upload com antivírus, aviso por e-mail.
+1. Primeiro acesso da administração pelo e-mail recebido em `contato@`, com definição de senha e MFA.
+2. Conferências com a administração logada: convite de teste, upload com antivírus, aviso por e-mail.
 
 Itens originais, mantidos para referência do que cada variável exige:
 
