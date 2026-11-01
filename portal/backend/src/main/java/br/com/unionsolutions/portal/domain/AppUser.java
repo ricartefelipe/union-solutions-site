@@ -18,6 +18,8 @@ public class AppUser extends PanacheEntityBase {
     @Column(name = "tenant_id") public UUID tenantId;
     @Enumerated(EnumType.STRING) public UserStatus status;
     @Column(name = "created_at") public Instant createdAt;
+    /** Avisos também por e-mail. Desligar não afeta convites nem mensagens do provedor de identidade. */
+    @Column(name = "email_notifications") public boolean emailNotifications = true;
     @Column(name = "updated_at") public Instant updatedAt;
     @Column(name = "disabled_at") public Instant disabledAt;
     @Version public long version;

@@ -11,9 +11,15 @@ export const metadata: Metadata = { title: 'Suporte' };
 export default async function SupportPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const params = await searchParams;
   const me = await getMe();
-  const data = await apiGet<Page<TicketSummary>>(`/v1/tickets?${pageQuery(params)}`);
-  const projects = await apiGet<Page<ProjectSummary>>('/v1/projects?size=100');
+  const status = params.situacao && options('ticket').some((o) => o.value === params.situacao) ? params.situacao : undefined;
+  const open = params.abertas === '1' && !status ? 'true' : undefined;
   const orgs = me.canManage ? await apiGetOptional<Page<OrganizationView>>('/v1/organizations?size=100', { items: [], page: 0, size: 100, total: 0 }) : null;
+  const organizationId = orgs?.items.some((o) => o.id === params.cliente) ? params.cliente : undefined;
+  const [data, projects] = await Promise.all([
+    apiGet<Page<TicketSummary>>(`/v1/tickets?${pageQuery(params, { status, open, organizationId })}`),
+    apiGet<Page<ProjectSummary>>('/v1/projects?size=100'),
+  ]);
+  const filters = { situacao: status, abertas: open ? '1' : undefined, cliente: organizationId };
 
   return (
     <>
@@ -31,8 +37,31 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
         </Disclosure>
       </Section>
       <Section title="Solicitações">
-        {data.items.length === 0 ? <Empty>Nenhuma solicitação registrada.</Empty> : (
-          <ul className="list">
+        <form className="form form--filters" role="search" method="get" action="/suporte">
+          <div className="field">
+            <label htmlFor="situacao">Situação</label>
+            <select id="situacao" name="situacao" defaultValue={status ?? ''}>
+              <option value="">Todas</option>
+              {options('ticket').map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+          {orgs && (
+            <div className="field">
+              <label htmlFor="cliente">Cliente</label>
+              <select id="cliente" name="cliente" defaultValue={organizationId ?? ''}>
+                <option value="">Todos</option>
+                {orgs.items.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+              </select>
+            </div>
+          )}
+          <div className="field field--check">
+            <input id="abertas" name="abertas" type="checkbox" value="1" defaultChecked={Boolean(open)} />
+            <label htmlFor="abertas">Só as não encerradas</label>
+          </div>
+          <div><button className="btn btn--ghost" type="submit">Filtrar</button></div>
+        </form>
+        {data.items.length === 0 ? <Empty>{status || open || organizationId ? 'Nenhuma solicitação com esses filtros.' : 'Nenhuma solicitação registrada.'}</Empty> : (
+          <ul className="list" style={{ marginTop: '1rem' }}>
             {data.items.map((ticket) => (
               <li key={ticket.id}>
                 <div className="list__row">
@@ -50,7 +79,7 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
             ))}
           </ul>
         )}
-        <Pagination page={data} basePath="/suporte" />
+        <Pagination page={data} basePath="/suporte" query={filters} />
       </Section>
     </>
   );

@@ -1,0 +1,59 @@
+databaseChangeLog:
+  - changeSet:
+      id: 009-notificacoes-retencao
+      author: union-solutions
+      comment: Central de notificações, fila durável de e-mails e registro das execuções de retenção.
+      changes:
+        - sql:
+            splitStatements: true
+            sql: |
+              ALTER TABLE app_user ADD COLUMN email_notifications boolean NOT NULL DEFAULT true;
+
+              -- Notificações gravadas na mesma transação do fato que as gera: nunca se perdem nem chegam sem o fato.
+              CREATE TABLE notification (
+                id uuid PRIMARY KEY,
+                user_id uuid NOT NULL REFERENCES app_user (id),
+                tenant_id uuid REFERENCES organization (id),
+                project_id uuid,
+                resource_type varchar(40),
+                resource_id uuid,
+                kind varchar(40) NOT NULL,
+                title varchar(200) NOT NULL,
+                link varchar(300),
+                created_at timestamptz NOT NULL,
+                read_at timestamptz
+              );
+              CREATE INDEX notification_user_idx ON notification (user_id, created_at DESC);
+              CREATE INDEX notification_unread_idx ON notification (user_id) WHERE read_at IS NULL;
+
+              -- Fila de e-mails: gravada junto com o fato, enviada depois por tarefa com tentativas e espera crescente.
+              -- O corpo é apagado depois do envio (ou da desistência), porque pode conter links de uso único.
+              CREATE TABLE email_outbox (
+                id uuid PRIMARY KEY,
+                user_id uuid REFERENCES app_user (id),
+                recipient varchar(254) NOT NULL,
+                subject varchar(200) NOT NULL,
+                body text,
+                status varchar(10) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'SENT', 'FAILED')),
+                attempts integer NOT NULL DEFAULT 0,
+                next_attempt_at timestamptz NOT NULL,
+                claimed_until timestamptz,
+                created_at timestamptz NOT NULL,
+                sent_at timestamptz,
+                last_error varchar(300)
+              );
+              CREATE INDEX email_outbox_pending_idx ON email_outbox (next_attempt_at) WHERE status = 'PENDING';
+              CREATE INDEX email_outbox_status_idx ON email_outbox (status, created_at DESC);
+
+              -- Cada simulação ou execução de retenção fica registrada com o que contou e o que removeu.
+              CREATE TABLE retention_run (
+                id uuid PRIMARY KEY,
+                mode varchar(12) NOT NULL CHECK (mode IN ('SIMULATION', 'EXECUTION')),
+                triggered_by uuid REFERENCES app_user (id),
+                started_at timestamptz NOT NULL,
+                finished_at timestamptz,
+                summary text NOT NULL,
+                removed integer NOT NULL DEFAULT 0,
+                error varchar(300)
+              );
+              CREATE INDEX retention_run_started_idx ON retention_run (started_at DESC);

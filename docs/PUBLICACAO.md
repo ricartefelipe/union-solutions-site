@@ -35,9 +35,11 @@ sh scripts/empacotar-site.sh
 
 O script só gera o ZIP se `check:publish` aprovar. Ele extrai o pacote, compara com `dist/`, recusa arquivos que não deveriam estar nele, como `.env`, código-fonte, dependências, mapas ou endereços locais, e grava o SHA-256 e o inventário.
 
-**Pacote atual:** `artifacts/pacotes/site-union-solutions-20261031-152220.zip`
+**Pacote atual (1.2.0, gerado em 01/11/2026, ainda não publicado):** `artifacts/pacotes/site-union-solutions-20261101-150354.zip`
 
-**SHA-256:** `c4c4107367758f92fad15e3b9ff219ae3c7ed47210d0124a7f21843399ab5155`
+**SHA-256:** `e70eb377d64b648dfa68174dbc76cd4ca628127e6e05b653f65c0b10c97884f4`
+
+**Publicado na Hostinger em 31/10/2026 (1.1.0):** `site-union-solutions-20261031-215233.zip`. O pacote novo muda só o cabeçalho (botão de contato marcado como página atual em Contato) e a frase de assunto no formulário quando se chega por um produto ou serviço. Publique-o pelo mesmo procedimento quando quiser; não é obrigatório para o portal.
 
 O pacote foi testado em Apache 2.4 com o `.htaccess` real. A Hostinger pode usar LiteSpeed, então confira o resultado depois de publicar.
 
@@ -51,7 +53,7 @@ O pacote foi testado em Apache 2.4 com o `.htaccess` real. A Hostinger pode usar
 
 ### Publicar
 
-1. Confira a soma do pacote: `cd artifacts/pacotes && sha256sum -c site-union-solutions-20261031-152220.zip.sha256`.
+1. Confira a soma do pacote: `cd artifacts/pacotes && sha256sum -c site-union-solutions-20261101-150354.zip.sha256`.
 2. Em `public_html`, envie o ZIP e extraia com o conteúdo na raiz. `index.html` e `.htaccess` precisam ficar diretamente em `public_html`.
 3. Apague o ZIP de `public_html` depois de extrair.
 4. Ative o SSL do domínio no hPanel. Sem certificado, o redirecionamento para HTTPS falha.
@@ -65,7 +67,7 @@ Referências da Hostinger: [Gerenciador de Arquivos](https://docs.hostinger.com/
 | Item | Efeito |
 | --- | --- |
 | Tipo de site no hPanel (AI Builder ou arquivos) | **Bloqueia só a etapa de envio**, até ser confirmado |
-| Política de privacidade e identificação jurídica | Decisão da empresa. `check:publish` avisa, mas não bloqueia: o site não usa cookies nem formulário, e o contato é por e-mail. Veja "Privacidade" no README |
+| Política de privacidade e identificação jurídica | Decisão da empresa. `check:publish` avisa, mas não bloqueia. O site não usa cookies nem rastreadores; o formulário de contato envia nome, e-mail, empresa, telefone e mensagem por e-mail à própria Union, com aviso no formulário. Veja "Privacidade" no README |
 | Licenças comerciais e disponibilidade de demonstrações | Decisão da empresa, sobre textos do catálogo. Veja [`FECHAMENTO.md`](FECHAMENTO.md) |
 
 Domínio e caixa postal **não são pendências**. A confirmação de que funcionam não prova que a versão atual esteja publicada.
@@ -87,6 +89,8 @@ Domínio e caixa postal **não são pendências**. A confirmação de que funcio
 | Vulnerabilidades e decisão residual (de Felipe) | [`VULNERABILIDADES.md`](../portal/docs/VULNERABILIDADES.md) |
 | Privacidade | [`PRIVACIDADE.md`](../portal/docs/PRIVACIDADE.md) |
 | Resultados | [`EVIDENCIAS.md`](../portal/docs/EVIDENCIAS.md) |
+| Matriz de requisitos, implementação e testes | [`MATRIZ.md`](../portal/docs/MATRIZ.md) |
+| Padrão visual compartilhado com o site | [`PADRAO-VISUAL.md`](PADRAO-VISUAL.md) |
 
 ### Dependem de autorização e de configuração real
 
@@ -99,6 +103,7 @@ Nada abaixo foi executado:
 5. Preencher os campos de `PRIVACIDADE.md` antes de abrir o portal a clientes.
 6. **Decidir sobre os seis achados altos de `VULNERABILIDADES.md`** (aceitar, mitigar antes ou bloquear): nenhum aceite foi registrado, e até a decisão o portal não deve ser aberto a clientes. Repetir a análise com a base do dia antes de implantar.
 7. Na atualização para esta versão, avisar quem estiver logado: todas as sessões anteriores são encerradas (`IMPLANTACAO.md`, "Atualização").
+8. **Aprovar a política de retenção** antes de ligar `PORTAL_RETENTION_ENABLED`: até lá o portal só simula e nada é removido (`portal/docs/OPERACAO.md`, "Retenção"). Nenhum prazo foi definido no código.
 
 ### Ativar o botão "Área do cliente"
 

@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { apiGet, getMe, pageQuery } from '@/lib/api';
-import { formatDateTime } from '@/lib/labels';
-import type { AuditView, Page } from '@/lib/types';
+import { apiGet, apiGetOptional, getMe, pageQuery } from '@/lib/api';
+import { formatDateTime, humanizeSummary } from '@/lib/labels';
+import type { AuditView, OrganizationView, Page } from '@/lib/types';
 import { Empty, PageTitle, Pagination, Section } from '@/components/ui';
 
 export const metadata: Metadata = { title: 'Auditoria' };
@@ -11,15 +11,24 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
   const me = await getMe();
   if (me.role !== 'UNION_ADMIN') redirect('/');
   const params = await searchParams;
-  const data = await apiGet<Page<AuditView>>(`/v1/audit?${pageQuery(params, { action: params.acao })}`);
+  const orgs = await apiGetOptional<Page<OrganizationView>>('/v1/organizations?size=100', { items: [], page: 0, size: 100, total: 0 });
+  const organizationId = orgs.items.some((o) => o.id === params.cliente) ? params.cliente : undefined;
+  const data = await apiGet<Page<AuditView>>(`/v1/audit?${pageQuery(params, { action: params.acao, organizationId })}`);
   return (
     <>
       <PageTitle title="Auditoria" intro="Registro de ações relevantes. O portal só acrescenta eventos e não oferece edição nem exclusão." />
       <Section title="Eventos">
-        <form className="form" role="search" method="get" action="/admin/auditoria">
+        <form className="form form--filters" role="search" method="get" action="/admin/auditoria">
           <div className="field">
-            <label htmlFor="acao">Filtrar por código da ação</label>
-            <input id="acao" name="acao" type="text" defaultValue={params.acao ?? ''} maxLength={60} />
+            <label htmlFor="acao">Código da ação</label>
+            <input id="acao" name="acao" type="text" defaultValue={params.acao ?? ''} maxLength={60} placeholder="Por exemplo, TICKET_OPENED" />
+          </div>
+          <div className="field">
+            <label htmlFor="cliente">Cliente</label>
+            <select id="cliente" name="cliente" defaultValue={organizationId ?? ''}>
+              <option value="">Todos</option>
+              {orgs.items.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+            </select>
           </div>
           <div><button className="btn btn--ghost" type="submit">Filtrar</button></div>
         </form>
@@ -35,14 +44,14 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
                     <td>{event.actorEmail ?? 'Sistema'}</td>
                     <td>{event.organizationName ?? ''}</td>
                     <td>{event.resourceType}</td>
-                    <td>{event.summary ?? ''}</td>
+                    <td>{humanizeSummary(event.action, event.summary)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         )}
-        <Pagination page={data} basePath="/admin/auditoria" query={{ acao: params.acao }} />
+        <Pagination page={data} basePath="/admin/auditoria" query={{ acao: params.acao, cliente: organizationId }} />
       </Section>
     </>
   );

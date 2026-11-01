@@ -42,6 +42,15 @@ O projeto funciona em discos vfat/exFAT, que não aceitam symlinks. Por isso, o 
 
 `npm run check` e `npm run check:links` também podem ser executados isoladamente.
 
+No GitHub há dois workflows, nenhum usa dados reais nem publica:
+
+| Workflow | Quando | Verifica | Bloqueia |
+| --- | --- | --- | --- |
+| `.github/workflows/ci.yml` | Push e pull request | Site: `verify`, `check:contact`, build com a configuração pública e pacote (`check:publish` + `empacotar-site.sh`, com o ZIP como artefato). Portal web: tipos, identidade visual, `npm audit`, build de produção e testes de sessão com PostgreSQL. API: `mvn package` (testes de integração com PostgreSQL em container), dependências Java com Trivy e contrato OpenAPI igual ao versionado. Produção: sintaxe dos scripts, Compose validado com o modelo de `.env` e build das cinco imagens. Navegador: ambiente local completo e suítes `01`, `02` e `03` em Chromium | Integração em `develop` e `main` |
+| `.github/workflows/imagens.yml` | Pull request para `main`, toda segunda-feira e manual | Trivy nas imagens finais; falha com vulnerabilidade alta ou crítica que tenha correção; o relatório completo vai para o resumo da execução | Publicação, não integração |
+
+Os workflows foram escritos e validados localmente comando a comando; a primeira execução no GitHub acontece quando o repositório os receber. O padrão visual compartilhado está em [`docs/PADRAO-VISUAL.md`](docs/PADRAO-VISUAL.md).
+
 ## Estrutura
 
 ```text
