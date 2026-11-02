@@ -100,6 +100,8 @@ jobs:
           sh -n portal/deploy/production/ops/restic.sh
           sh -n portal/deploy/keycloak/portal-mfa-reset.sh
           sh -n demos/hookguard/demo.sh
+          sh -n demos/filenorm/demo.sh
+          sh -n demos/comercialcloud/demo.sh
       - name: Compose de produção válido com o modelo de configuração
         run: |
           cd portal/deploy/production
@@ -108,6 +110,12 @@ jobs:
           cd ../../../demos/hookguard
           printf 'DEMO_HOST=demo.example\nHOOKGUARD_DB_PASSWORD=x\nDEMO_SMTP_HOST=h\nDEMO_SMTP_USER=u\nDEMO_SMTP_PASSWORD=p\nDEMO_MAIL_FROM=m@e.test\n' > "$RUNNER_TEMP/demo.env"
           docker compose --env-file "$RUNNER_TEMP/demo.env" -f compose.yaml config -q
+          cd ../filenorm
+          printf 'DEMO_HOST=demo.example\nFILENORM_DB_PASSWORD=x\nDEMO_SMTP_HOST=h\nDEMO_SMTP_USER=u\nDEMO_SMTP_PASSWORD=p\nDEMO_MAIL_FROM=m@e.test\n' > "$RUNNER_TEMP/fn.env"
+          docker compose --env-file "$RUNNER_TEMP/fn.env" -f compose.yaml config -q
+          cd ../comercialcloud
+          printf 'DEMO_HOST=demo.example\nCOMERCIALCLOUD_DB_PASSWORD=x\n' > "$RUNNER_TEMP/cc.env"
+          docker compose --env-file "$RUNNER_TEMP/cc.env" -f compose.yaml config -q
       - name: Imagens de produção constroem
         run: |
           docker build -q portal/backend
