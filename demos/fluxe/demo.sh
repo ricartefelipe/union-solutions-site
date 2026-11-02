@@ -22,20 +22,12 @@ checkout() {
   git -C "$dest" checkout -q "$tag" && echo "$repo $tag ($(git -C "$dest" rev-parse --short HEAD))."
 }
 
-# Correções ainda não publicadas nos repositórios do produto (ver README). Reaplicar é inofensivo.
-aplicar_correcao() {
-  repo=$(value FLUXE_SRC)/$1
-  git -C "$repo" apply --reverse --check "$DIR/patches/$2" 2>/dev/null || git -C "$repo" apply "$DIR/patches/$2"
-}
-
-# Ajustes na carga inicial do produto, feitos só aqui: as contas da plataforma têm senha pública no repositório do produto e
-# um e-mail real, as regiões fictícias da carga não são as que a política de pagamentos das telas aceita, e a conta pública
-# precisa abrir as três aplicações.
+# Ajustes na carga de demonstração do produto, feitos só aqui: a senha da conta global é pública no repositório do produto,
+# as regiões fictícias da carga não são as que a política de pagamentos das telas aceita, e a conta pública precisa abrir as
+# três aplicações.
 ajustar_carga() {
   $COMPOSE exec -T postgres psql -q -v ON_ERROR_STOP=1 -U fluxe -d saascore <<'SQL'
 UPDATE users SET password_hash = 'desativada' WHERE tenant_id = '00000000-0000-0000-0000-000000000001';
-UPDATE users SET email = 'plataforma@demo.example.com', name = 'Plataforma' WHERE email NOT LIKE '%@local' AND tenant_id = '00000000-0000-0000-0000-000000000001';
-UPDATE audit_log SET actor_sub = 'plataforma@demo.example.com' WHERE actor_sub NOT LIKE '%@local' AND tenant_id = '00000000-0000-0000-0000-000000000001' OR actor_sub LIKE '%@gmail.com';
 UPDATE tenants SET region = 'region-a';
 UPDATE users SET roles = 'admin', name = 'Demonstração', email = 'visitante@demo-fluxe.unionsolutions.tech' WHERE email = 'ops@demo.example.com';
 SQL
@@ -61,9 +53,6 @@ case "${1:-ajuda}" in
     ;;
   construir)
     require_env
-    aplicar_correcao node-b2b-orders orders-total.patch
-    aplicar_correcao fluxe-b2b-suite shop-confirmacao.patch
-    docker build -q -t demo-fluxe-orders-base -f "$(value FLUXE_SRC)/node-b2b-orders/docker/api.Dockerfile" "$(value FLUXE_SRC)/node-b2b-orders"
     $COMPOSE build
     ;;
   subir)
