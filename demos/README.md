@@ -1,13 +1,13 @@
-# Demonstrações de produtos na VPS do portal
+# Demonstrações de produtos
 
-Cada pasta (`demos/<produto>/`) é uma demonstração pública de um produto da Union, com dados fictícios, rodando na mesma VPS do portal, **isolada dele**:
+Cada pasta (`demos/<produto>/`) é uma demonstração pública de um produto da Union, com dados fictícios, numa VPS própria, separada da VPS do portal. `demos/proxy` termina TLS e encaminha cada endereço à sua demonstração:
 
 | Aspecto | Como |
 | --- | --- |
-| Rede | Banco numa rede interna própria; o proxy alcança a aplicação pela rede `demos`, que não contém nenhum serviço do portal; só HookGuard e FileNorm têm saída para a internet, por uma rede só da API (entrega de webhooks e e-mail do link de acesso) |
-| Memória | Limite de memória em cada container; em falta de memória na máquina, o kernel encerra primeiro as demonstrações (`oom_score_adj: 500`) |
+| Rede | Banco numa rede interna própria; o proxy alcança a aplicação pela rede `union-demos`; só HookGuard e FileNorm têm saída para a internet, por uma rede só da API (entrega de webhooks e e-mail do link de acesso) |
+| Memória | Limite de memória em cada container; em falta de memória na máquina, o kernel encerra primeiro as demonstrações, antes do proxy (`oom_score_adj: 500`) |
 | Dados | Descartados e recriados todo dia, em horários escalonados entre 04:30 e 05:40 UTC (`demo.sh reiniciar-dados`, timer `systemd`); nada de cliente entra aqui |
-| Entrada | Pelo proxy do portal, com certificado próprio por ACME; só as rotas do produto, sem `actuator` além da vivacidade |
+| Entrada | Pelo proxy das demonstrações, com certificado próprio por ACME; só as rotas do produto, sem `actuator` além da vivacidade |
 | Limites do produto | Ver a tabela de cada demonstração abaixo |
 
 ## Demonstrações
@@ -22,7 +22,7 @@ Cada pasta (`demos/<produto>/`) é uma demonstração pública de um produto da 
 | AssinaFlow | `demo-assinaflow.unionsolutions.tech` | Visitante cria conta, contrata, troca e cancela um plano; sem verificação de e-mail e sem envio de e-mail | cerca de 550 MB | Modo `demo` com gateway `simulated`: nada é cobrado, sem Stripe e sem saída para a internet. O painel `/admin` não é oferecido: mostraria os e-mails dos outros visitantes |
 | Fluxe B2B Suite | `demo-fluxe.unionsolutions.tech` | Conta pública `visitante@demo-fluxe.unionsolutions.tech` (nenhum e-mail é enviado): compra na loja (`/`), acompanha na operação (`/ops/`) e na administração (`/admin/`); perfil de piloto do produto, sem Keycloak e sem observabilidade | cerca de 1 GB | Gateway fictício, e-mail só em log, sem saída para a internet; autocadastro, troca e recuperação de senha fechados no proxy, porque as contas são compartilhadas |
 
-Medido na VPS em 02/11/2026 com as seis demonstrações no ar e sem visitantes: cerca de 2,4 GB ainda disponíveis de 7,9 GB, com 350 MB de swap em uso. Atenção: no modo de demonstração do ComercialCloud a API aceita o locatário informado pelo navegador; só existem locatários fictícios da carga inicial, e os dados são recriados todo dia. Defeito do produto observado no teste: rotas inexistentes respondem 500 em vez de 404 (`GlobalExceptionMapper`), e duas imagens de produtos da carga inicial não carregam.
+Medido na VPS em 02/11/2026 com as seis demonstrações no ar e sem visitantes: cerca de 2,8 GB em uso e 4,4 GB disponíveis de 7,9 GB, sem swap. Atenção: no modo de demonstração do ComercialCloud a API aceita o locatário informado pelo navegador; só existem locatários fictícios da carga inicial, e os dados são recriados todo dia. Defeito do produto observado no teste: rotas inexistentes respondem 500 em vez de 404 (`GlobalExceptionMapper`), e duas imagens de produtos da carga inicial não carregam.
 
 ## Fluxe B2B Suite: o que a demonstração muda em relação ao produto
 
@@ -32,14 +32,23 @@ Defeitos do produto vistos no teste e ainda não tratados: uma cobrança recorre
 
 ## ArchLens e AssinaFlow
 
-Nome curto de serviço não é seguro na rede `demos`: `backend` responde também pelo ComercialCloud. Por isso o frontend do ArchLens usa o alias `archlens-api`. O ArchLens não publica tags: a versão fica presa ao commit de `.env.example`.
+Nome curto de serviço não é seguro na rede `union-demos`: `backend` responde também pelo ComercialCloud. Por isso o frontend do ArchLens usa o alias `archlens-api`. O ArchLens não publica tags: a versão fica presa ao commit de `.env.example`.
+
+## Proxy (na VPS, em `/opt/union-solutions/demos/proxy`)
+
+```bash
+cp .env.example .env && chmod 600 .env
+docker compose --env-file .env -f compose.yaml up -d --build
+```
+
+Depois de instalar ou alterar um site, reinicie o proxy: as demonstrações ficam indisponíveis por poucos segundos.
 
 ## Operação (na VPS, em `/opt/union-solutions/demos/<produto>`)
 
 ```bash
 sh demo.sh segredos     # cria .env com a senha do banco; preencha DEMO_SMTP_PASSWORD
-sh demo.sh instalar     # baixa a tag do produto e instala o site no proxy do portal
-(cd ../../portal/deploy/production && docker compose --env-file .env up -d --build proxy)
+sh demo.sh instalar     # baixa a tag do produto e instala o site no proxy das demonstrações
+(cd ../proxy && docker compose --env-file .env up -d --no-build proxy)
 sh demo.sh subir
 sh demo.sh status
 ```
@@ -48,4 +57,4 @@ Fluxe B2B Suite: `sh demo.sh construir` numa máquina de trabalho e carregue as 
 
 Registro DNS `A` de `demo-<produto>.unionsolutions.tech` para o IP da VPS, antes de `instalar`. Timer diário: copie `systemd/*` para `/etc/systemd/system` e `systemctl enable --now demo-<produto>.timer`.
 
-Condição para o aceite: a demonstração é provisória, na capacidade da VPS atual. Se o uso crescer ou o portal passar a sofrer, a demonstração sai antes do portal: `sh demo.sh parar`.
+Capacidade: a VPS tem 8 GB e nenhum dado precisa de backup, porque tudo é recriado todo dia. Se o uso crescer além da capacidade desta VPS, pare a demonstração menos procurada: `sh demo.sh parar`.
