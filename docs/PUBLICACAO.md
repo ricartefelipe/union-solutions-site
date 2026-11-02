@@ -101,10 +101,16 @@ Domínio e caixa postal **não são pendências**. A confirmação de que funcio
 
 5. Versão 1.2.1 aplicada com `atualizar`; backup apontado por sftp para a conta de hospedagem do site (a conta de hospedagem (usuário, servidor e porta ficam só no `.env` da VPS), pasta `backup-portal` fora de `public_html`), identidade do servidor fixada, primeiro backup real feito e `backup-status` dentro do limite. A hospedagem tem backup diário próprio ativado, que também copia esse repositório.
 
-### Ainda dependem de decisão ou ação
+6. Primeiro acesso da administração concluído em 01/11/2026: senha definida pelo e-mail recebido em `contato@` e MFA configurado em aplicativo autenticador; login confirmado.
+7. Site publicado com o botão "Área do cliente" em 01/11/2026.
+8. SSH da VPS só por chave; repositório público sem identificadores da hospedagem; aceite dos seis achados de vulnerabilidade registrado, com validade até 01/12/2026.
 
-1. Primeiro acesso da administração pelo e-mail recebido em `contato@`, com definição de senha e MFA.
-2. Conferências com a administração logada: convite de teste, upload com antivírus, aviso por e-mail.
+### Ainda dependem de ação
+
+1. **Conferências com a administração logada**, que exigem a sessão do administrador e por isso não foram feitas pela operação: criar uma organização de teste e convidar um e-mail próprio (confere entrega real do convite pela API e pelo SMTP), enviar um PDF a um projeto dela (confere o antivírus em produção) e publicar uma entrega (confere o aviso por e-mail). Até lá, a fila de e-mails da API em produção nunca enviou uma mensagem; só o provedor de identidade enviou.
+2. **Campos de `portal/docs/PRIVACIDADE.md`** (controlador, contato, operadores, inclusive Hostinger como hospedagem no Brasil) antes de divulgar o portal a clientes.
+3. **SonarCloud:** duas marcações manuais como "Accept" na `main`: o container de testes do ensaio executa como root (precisa do socket do Docker) e o ensaio usa `http://` de propósito para conferir o redirecionamento.
+4. Reavaliar as vulnerabilidades até 01/12/2026 (`.trivyignore.yaml` vence sozinho nessa data).
 
 Itens originais, mantidos para referência do que cada variável exige:
 
