@@ -1,0 +1,55 @@
+# Instalado em portal/deploy/production/sites/ por demo.sh instalar. Mesmas rotas do nginx de piloto do produto, mais o que a
+# exposição pública exige: observabilidade fechada e, por usar contas compartilhadas, sem autocadastro nem troca de senha.
+demo-fluxe.unionsolutions.tech {
+	encode gzip
+	request_body {
+		max_size 2MB
+	}
+	header {
+		>Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+	log {
+		output stdout
+		format filter {
+			wrap json
+			fields {
+				request>uri regexp \?.* ?[removido]
+			}
+		}
+	}
+	@internas path /api/core/actuator* /api/core/v1/dev/* /api/core/docs* /api/core/v3/* /api/core/swagger-ui* /api/orders/metrics* /api/orders/v1/metrics* /api/orders/docs* /api/payments/metrics* /api/payments/docs* /api/payments/openapi.json
+	handle @internas {
+		respond 404
+	}
+	@contas path /api/core/v1/auth/register* /api/core/v1/auth/change-password* /api/core/v1/auth/password-reset/* /api/core/v1/onboarding/*
+	handle @contas {
+		header Content-Type "application/json; charset=utf-8"
+		respond `{"title":"Indisponível na demonstração","detail":"Use as contas de demonstração informadas na página do produto."}` 403
+	}
+	handle_path /api/core/* {
+		reverse_proxy fluxe-core:8080
+	}
+	handle_path /api/orders/* {
+		reverse_proxy fluxe-orders:3000
+	}
+	handle_path /api/payments/* {
+		reverse_proxy fluxe-payments:8000
+	}
+	redir /ops /ops/
+	redir /admin /admin/
+	handle_path /ops/* {
+		reverse_proxy fluxe-ops:80
+	}
+	handle_path /admin/* {
+		reverse_proxy fluxe-admin:80
+	}
+	handle {
+		reverse_proxy fluxe-shop:4000
+	}
+	handle_errors 502 503 504 {
+		header Content-Type "text/plain; charset=utf-8"
+		respond "A demonstração está temporariamente indisponível. Tente novamente em instantes." {err.status_code}
+	}
+}
