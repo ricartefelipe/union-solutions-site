@@ -1,0 +1,37 @@
+# Instalado em portal/deploy/production/sites/ por demo.sh instalar (a saúde de leitura e escrita fica só dentro da rede). Mesmas rotas do Caddyfile do produto.
+demo-hookguard.unionsolutions.tech {
+	encode gzip
+	request_body {
+		max_size 2MB
+	}
+	header {
+		>Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+	log {
+		output stdout
+		format filter {
+			wrap json
+			fields {
+				request>uri regexp \?.* ?[removido]
+			}
+		}
+	}
+	handle /v1/* {
+		reverse_proxy hookguard-api:8080
+	}
+	handle /actuator/health/liveness {
+		reverse_proxy hookguard-api:8080
+	}
+	handle /_next/image* {
+		respond 404
+	}
+	handle {
+		reverse_proxy hookguard-web:3000
+	}
+	handle_errors 502 503 504 {
+		header Content-Type "text/plain; charset=utf-8"
+		respond "A demonstração está temporariamente indisponível. Tente novamente em instantes." {err.status_code}
+	}
+}

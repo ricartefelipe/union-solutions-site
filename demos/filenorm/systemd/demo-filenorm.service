@@ -1,0 +1,10 @@
+# Instale em /etc/systemd/system. Reinicia os dados da demonstração do FileNorm uma vez por dia.
+[Unit]
+Description=Reinício diário dos dados da demonstração do FileNorm
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/union-solutions/demos/filenorm
+ExecStart=/bin/sh demo.sh reiniciar-dados
