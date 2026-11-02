@@ -44,6 +44,8 @@ export interface Product {
   availability: string;
   /** O que vale levar para a conversa sobre demonstração. */
   conversationTopics: string[];
+  /** Demonstração pública no ar, quando existir: endereço HTTPS e o que o visitante encontra lá. */
+  liveDemo?: { url: string; note: string };
 }
 
 export const products: Product[] = [
@@ -76,6 +78,10 @@ export const products: Product[] = [
       'Como as falhas de entrega são tratadas hoje',
       'Quem acompanha as entregas na sua operação',
     ],
+    liveDemo: {
+      url: 'https://demo-hookguard.unionsolutions.tech/',
+      note: 'Entre com o seu e-mail, crie um projeto e envie webhooks de teste. Os dados são fictícios e apagados todos os dias.',
+    },
   },
   {
     slug: 'filenorm',
@@ -106,6 +112,10 @@ export const products: Product[] = [
       'Para onde os dados normalizados precisam seguir',
       'Como esse tratamento é feito hoje',
     ],
+    liveDemo: {
+      url: 'https://demo-filenorm.unionsolutions.tech/',
+      note: 'Entre com o seu e-mail, gere uma chave e envie um arquivo de teste (até 2 MB) para ver os eventos padronizados. Não envie dados reais: tudo é apagado todos os dias.',
+    },
   },
   {
     slug: 'assinaflow',
@@ -226,6 +236,10 @@ export const products: Product[] = [
       'Quais regras e exigências do seu segmento precisam ser consideradas',
       'Quais sistemas e processos existentes precisam ser levados em conta',
     ],
+    liveDemo: {
+      url: 'https://demo-comercialcloud.unionsolutions.tech/',
+      note: 'Abra a loja de demonstração com produtos, clientes e vendas fictícios. Os dados são apagados todos os dias, e cobrança e nota fiscal rodam só em modo de teste.',
+    },
   },
 ];
 
