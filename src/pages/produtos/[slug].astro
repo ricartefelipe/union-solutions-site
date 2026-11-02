@@ -26,8 +26,8 @@ const title = `${product.name}: ${product.area.charAt(0).toLowerCase()}${product
     eyebrow={product.area}
     crumbs={[{ label: 'Produtos', href: '/produtos/' }, { label: product.name }]}
   >
-    {product.liveDemo && <a slot="actions" class="btn" href={product.liveDemo.url} rel="noopener">Acessar demonstração<Arrow /></a>}
-    <a slot="actions" class={product.liveDemo ? 'btn btn--ghost' : 'btn'} href={contactUrl}>Solicitar demonstração<Arrow /></a>
+    {product.liveDemo && <a slot="actions" class="btn" href={product.liveDemo.url} rel="noopener">Testar agora<Arrow /></a>}
+    <a slot="actions" class={product.liveDemo ? 'btn btn--ghost' : 'btn'} href={contactUrl}>{product.liveDemo ? 'Falar com a Union' : 'Solicitar demonstração'}<Arrow /></a>
     <div slot="art" class="product-art"><ProductGlyph slug={product.slug} /></div>
   </PageHero>
 
@@ -79,7 +79,7 @@ const title = `${product.name}: ${product.area.charAt(0).toLowerCase()}${product
         {product.liveDemo && (
           <p class="demo-text">{product.liveDemo.note}</p>
           <div class="btn-row">
-            <a class="btn demo-cta" href={product.liveDemo.url} rel="noopener">Acessar demonstração<Arrow /></a>
+            <a class="btn demo-cta" href={product.liveDemo.url} rel="noopener">Testar agora<Arrow /></a>
             <a class="btn btn--ghost demo-cta" href={contactUrl}>Conversar sobre o seu cenário<Arrow /></a>
           </div>
         )}
