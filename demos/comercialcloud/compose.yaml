@@ -1,0 +1,94 @@
+# Demonstração pública do ComercialCloud na mesma VPS do portal, no modo de demonstração do produto: sem Keycloak, só com o
+# locatário fictício da carga inicial. Isolada: rede interna para o banco, rede `demos` só com o proxy, limites de memória e
+# dados descartados por `demo.sh reiniciar-dados`. Nada aqui alcança o portal.
+name: demo-comercialcloud
+
+x-comum: &comum
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  postgres:
+    <<: *comum
+    image: postgres:16-alpine
+    user: "70:70"
+    environment:
+      POSTGRES_DB: comercialcloud
+      POSTGRES_USER: comercialcloud
+      POSTGRES_PASSWORD: ${COMERCIALCLOUD_DB_PASSWORD:?}
+    volumes:
+      - dados:/var/lib/postgresql/data
+    networks: [interna]
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U comercialcloud -d comercialcloud"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    <<: *comum
+    build:
+      context: ${COMERCIALCLOUD_SRC:-./src}/backend
+    environment:
+      JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=70
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://postgres:5432/comercialcloud
+      QUARKUS_DATASOURCE_USERNAME: comercialcloud
+      QUARKUS_DATASOURCE_PASSWORD: ${COMERCIALCLOUD_DB_PASSWORD:?}
+      QUARKUS_HTTP_CORS_ORIGINS: https://${DEMO_HOST:?}
+      COMERCIALCLOUD_UPLOAD_DIR: /data/uploads
+      COMERCIAL_CLOUD_KEYCLOAK_PROVISIONING_ENABLED: "false"
+      COMERCIAL_CLOUD_BILLING_GATEWAY: sandbox
+      COMERCIAL_CLOUD_BILLING_ASAAS_ENABLED: "false"
+      COMERCIAL_CLOUD_FISCAL_PROVIDER: sandbox
+      COMERCIAL_CLOUD_FISCAL_FOCUSNFE_ENABLED: "false"
+      COMERCIAL_CLOUD_MAIL_ENABLED: "false"
+    tmpfs:
+      - /data/uploads:uid=1000,gid=1000,size=64m
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      interna:
+      demos:
+        aliases: [comercialcloud-api]
+    mem_limit: 640m
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://127.0.0.1:8080/q/health/ready || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  frontend:
+    <<: *comum
+    build:
+      context: ${COMERCIALCLOUD_SRC:-./src}/frontend
+      args:
+        NEXT_PUBLIC_API_URL: https://${DEMO_HOST:?}
+        NEXT_PUBLIC_KEYCLOAK_URL: https://${DEMO_HOST:?}/auth
+        NEXT_PUBLIC_KEYCLOAK_REALM: comercialcloud
+        NEXT_PUBLIC_KEYCLOAK_CLIENT_ID: comercial-cloud-web
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      demos:
+        aliases: [comercialcloud-web]
+    mem_limit: 384m
+
+volumes:
+  dados:
+
+networks:
+  interna:
+    internal: true
+  demos:
+    external: true
+    name: ${PORTAL_DEMOS_NETWORK:-union-portal-prod_demos}
