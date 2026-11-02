@@ -26,7 +26,8 @@ const title = `${product.name}: ${product.area.charAt(0).toLowerCase()}${product
     eyebrow={product.area}
     crumbs={[{ label: 'Produtos', href: '/produtos/' }, { label: product.name }]}
   >
-    <a slot="actions" class="btn" href={contactUrl}>Solicitar demonstração<Arrow /></a>
+    {product.liveDemo && <a slot="actions" class="btn" href={product.liveDemo.url} rel="noopener">Acessar demonstração<Arrow /></a>}
+    <a slot="actions" class={product.liveDemo ? 'btn btn--ghost' : 'btn'} href={contactUrl}>Solicitar demonstração<Arrow /></a>
     <div slot="art" class="product-art"><ProductGlyph slug={product.slug} /></div>
   </PageHero>
 
@@ -75,7 +76,14 @@ const title = `${product.name}: ${product.area.charAt(0).toLowerCase()}${product
         <h2>Solicite uma demonstração</h2>
         <p class="demo-availability">{product.availability}</p>
         <p class="muted demo-text">A conversa parte do seu cenário: avaliamos se o produto atende à sua operação e, se não atender, quais outros caminhos fazem sentido.</p>
-        <a class="btn demo-cta" href={contactUrl}>Solicitar demonstração<Arrow /></a>
+        {product.liveDemo && (
+          <p class="demo-text">{product.liveDemo.note}</p>
+          <div class="btn-row">
+            <a class="btn demo-cta" href={product.liveDemo.url} rel="noopener">Acessar demonstração<Arrow /></a>
+            <a class="btn btn--ghost demo-cta" href={contactUrl}>Conversar sobre o seu cenário<Arrow /></a>
+          </div>
+        )}
+        {!product.liveDemo && <a class="btn demo-cta" href={contactUrl}>Solicitar demonstração<Arrow /></a>}
       </div>
       <div>
         <h3 class="topics-title">O que vale levar para a conversa</h3>
