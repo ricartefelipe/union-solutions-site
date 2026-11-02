@@ -1,6 +1,6 @@
 # Privacidade: inventário e campos a preencher
 
-**Este documento não é uma política de privacidade e não afirma conformidade com a LGPD.** Ele registra o que o portal trata e o que a empresa precisa decidir, com orientação jurídica, antes de abrir o portal a clientes.
+**Este documento não é uma política de privacidade e não afirma conformidade com a LGPD.** Ele registra o que o portal trata e o que a empresa decidiu ou ainda precisa decidir. A política pública está em `https://unionsolutions.tech/privacidade/`, escrita em 02/11/2026 e ainda sem revisão jurídica.
 
 As afirmações sobre o site institucional não valem aqui: **o site não usa cookies, e o portal usa**.
 
@@ -39,7 +39,7 @@ Todos são técnicos, HttpOnly e, em produção, Secure com prefixo `__Host-`. N
 
 | Operador | Situação (01/11/2026) |
 | --- | --- |
-| Hostinger International Ltd., VPS em Campinas, SP, Brasil | Contratada: hospeda o portal e todos os dados do inventário acima, em território brasileiro |
+| Hostinger International Ltd., VPS em Campinas, SP, Brasil | Contratada: hospeda o portal e todos os dados do inventário acima, em território brasileiro. Outra VPS, também em Campinas, hospeda as demonstrações, sem dados do portal |
 | Hostinger, serviço de e-mail (`smtp.hostinger.com`, caixa `contato@unionsolutions.tech`) | Contratado: envia convites, avisos e mensagens de acesso do portal |
 | Hostinger, hospedagem do site institucional | Contratada: também recebe o backup cifrado do portal (banco, identidade e documentos), que a Hostinger não consegue ler sem a chave guardada fora dela |
 | Let's Encrypt | Emite o certificado HTTPS do portal; recebe só o nome do domínio |
@@ -48,17 +48,17 @@ Os dados não saem do Brasil nem passam por outros operadores. Não há analytic
 
 ## Campos a preencher
 
-Nenhum destes dados foi inventado. Eles precisam existir antes de o portal ser aberto a clientes:
+Nenhum destes dados foi inventado. Os itens marcados como "A DEFINIR" precisam existir antes de o portal ser aberto a clientes:
 
 | Campo | Valor |
 | --- | --- |
-| Razão social do controlador | A DEFINIR |
-| CNPJ | A DEFINIR |
-| Endereço | A DEFINIR |
-| Canal para o titular | A DEFINIR. `contato@unionsolutions.tech` existe, mas a designação é decisão da empresa |
+| Nome do controlador | Union Solutions (nome fantasia). A razão social não é publicada, por decisão de 02/11/2026, e pode ser consultada pelo CNPJ |
+| CNPJ | 22.009.992/0001-50 |
+| Endereço | Não publicado, por decisão de 02/11/2026 |
+| Canal para o titular | `contato@unionsolutions.tech`, designado em 02/11/2026 |
 | Encarregado (DPO), se aplicável | A DEFINIR |
-| Papéis de controlador e operador perante cada cliente | A DEFINIR |
-| Bases legais por finalidade | A DEFINIR |
+| Papéis de controlador e operador perante cada cliente | Controladora das contas do portal; pode atuar como operadora nos conteúdos do cliente. Cada contrato confirma |
+| Bases legais por finalidade | As da política pública, a revisar com orientação jurídica |
 | Prazo de retenção: contas desativadas | A DEFINIR |
 | Prazo de retenção: documentos e anexos | A DEFINIR |
 | Prazo de retenção: solicitações e comentários | A DEFINIR |
@@ -66,11 +66,10 @@ Nenhum destes dados foi inventado. Eles precisam existir antes de o portal ser a
 | Prazo de retenção: registros técnicos | Hoje limitado por tamanho, não por data |
 | Prazo de retenção: backups | Configurado em 01/11/2026: 7 diários, 4 semanais e 6 mensais (`PORTAL_BACKUP_KEEP_*`); a hospedagem mantém cópia diária própria por prazo definido pela Hostinger |
 | Procedimento de atendimento a titulares | A DEFINIR |
-| Texto final da política e endereço de publicação | A DEFINIR |
+| Texto final da política e endereço de publicação | `/privacidade/` no site, a revisar com orientação jurídica |
 
 ## O que o software ainda não faz
 
 - Não apaga dados automaticamente enquanto a retenção estiver desligada (estado inicial). Com a política aprovada e configurada, remove só as categorias de `OPERACAO.md`, "Retenção". Contas e auditoria não são removidas pela aplicação.
 - Não exporta os dados de um titular por uma tela própria.
-- Não publica política de privacidade: o texto e o endereço dependem dos campos acima.
 - A cifragem em repouso dos volumes depende do disco da VPS. O backup é cifrado pelo restic.

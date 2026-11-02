@@ -171,7 +171,6 @@ if (blockers.length) {
 
 const mode = endpoint ? 'formulário' : 'contato direto';
 console.log(`Configuração e build válidos. Modo de contato: ${mode}. Confirme que domínio e canais são reais antes de publicar.`);
-console.log('Atenção: não há política de privacidade publicada. Veja "Privacidade" no README antes de abrir o site ao público.');
 if (endpoint) {
   console.log('Atenção: no modo formulário, revise o aviso em src/components/ContactForm.astro com o serviço de recebimento escolhido.');
 }

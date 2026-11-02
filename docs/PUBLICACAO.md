@@ -109,11 +109,21 @@ Domínio e caixa postal **não são pendências**. A confirmação de que funcio
 
 9. Demonstrações públicas em 02/11/2026, em VPS própria, separada do portal (`demos/README.md`): `demo-hookguard`, `demo-filenorm` e `demo-comercialcloud` em `unionsolutions.tech`, cada uma com certificado próprio, dados apagados todo dia e rotas internas fechadas. O portal está na 1.4.0, com 2 GB de swap criados na VPS.
 
+### Modelo comercial
+
+Decidido em 02/11/2026:
+
+- Escolher um produto no site não gera adesão nem cobrança. "Testar agora" abre a demonstração pública, e "Falar com a Union" inicia a conversa.
+- A contratação acontece por proposta, fora do site. Depois dela, a Union cria a organização do cliente no portal e convida as pessoas.
+- O cliente acompanha projeto, entregas, documentos e suporte pelo portal. O produto contratado roda numa instalação própria, definida na proposta, nunca numa demonstração, e o link fica em "Produtos contratados".
+- As demonstrações servem só para avaliação: dados fictícios, compartilhados e apagados todo dia.
+- `PORTAL_PRODUCT_LINK_HOSTS` começa com os endereços das demonstrações dos produtos do catálogo. O endereço de cada instalação de cliente entra nessa lista quando for contratada.
+
 ### Ainda dependem de ação
 
 1. **Conferências com a administração logada**, que exigem a sessão do administrador e por isso não foram feitas pela operação: criar uma organização de teste e convidar um e-mail próprio (confere entrega real do convite pela API e pelo SMTP), enviar um PDF a um projeto dela (confere o antivírus em produção) e publicar uma entrega (confere o aviso por e-mail). Até lá, a fila de e-mails da API em produção nunca enviou uma mensagem; só o provedor de identidade enviou.
-2. **Campos de `portal/docs/PRIVACIDADE.md`** (controlador, contato, operadores, inclusive Hostinger como hospedagem no Brasil) antes de divulgar o portal a clientes.
-3. **SonarCloud:** duas marcações manuais como "Accept" na `main`: o container de testes do ensaio executa como root (precisa do socket do Docker) e o ensaio usa `http://` de propósito para conferir o redirecionamento.
+2. **Campos "A DEFINIR" de `portal/docs/PRIVACIDADE.md`** (prazos de retenção, entre outros) e revisão jurídica da política antes de divulgar o portal a clientes.
+3. **SonarCloud:** resolvido; em 02/11/2026 não havia pontos de segurança a revisar e o quality gate estava aprovado. Registro anterior: duas marcações manuais como "Accept" na `main`: o container de testes do ensaio executa como root (precisa do socket do Docker) e o ensaio usa `http://` de propósito para conferir o redirecionamento.
 4. Reavaliar as vulnerabilidades até 01/12/2026 (`.trivyignore.yaml` vence sozinho nessa data).
 
 Itens originais, mantidos para referência do que cada variável exige:
