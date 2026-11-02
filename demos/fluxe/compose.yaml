@@ -20,7 +20,7 @@ x-frontend: &frontend
   PAYMENTS_API_BASE_URL: /api/payments
   AUTH_MODE: hs256
   LOG_LEVEL: warn
-  APP_VERSION: ${FLUXE_TAG:-v1.5.2}
+  APP_VERSION: ${FLUXE_TAG:-v1.5.4}
 
 services:
   postgres:
