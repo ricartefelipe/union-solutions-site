@@ -37,12 +37,14 @@ Todos são técnicos, HttpOnly e, em produção, Secure com prefixo `__Host-`. N
 
 ## Operadores a informar
 
-| Operador | Situação |
+| Operador | Situação (01/11/2026) |
 | --- | --- |
-| Provedor da VPS | A contratar |
-| Provedor de SMTP | A definir |
-| Destino externo de backup | A definir |
-| Hostinger (site institucional, não o portal) | Contratado |
+| Hostinger International Ltd., VPS em Campinas, SP, Brasil | Contratada: hospeda o portal e todos os dados do inventário acima, em território brasileiro |
+| Hostinger, serviço de e-mail (`smtp.hostinger.com`, caixa `contato@unionsolutions.tech`) | Contratado: envia convites, avisos e mensagens de acesso do portal |
+| Hostinger, hospedagem do site institucional | Contratada: também recebe o backup cifrado do portal (banco, identidade e documentos), que a Hostinger não consegue ler sem a chave guardada fora dela |
+| Let's Encrypt | Emite o certificado HTTPS do portal; recebe só o nome do domínio |
+
+Os dados não saem do Brasil nem passam por outros operadores. Não há analytics, rastreadores nem serviços de terceiros embutidos nas telas.
 
 ## Campos a preencher
 
@@ -62,7 +64,7 @@ Nenhum destes dados foi inventado. Eles precisam existir antes de o portal ser a
 | Prazo de retenção: solicitações e comentários | A DEFINIR |
 | Prazo de retenção: auditoria | A DEFINIR |
 | Prazo de retenção: registros técnicos | Hoje limitado por tamanho, não por data |
-| Prazo de retenção: backups | `PORTAL_BACKUP_KEEP_*` |
+| Prazo de retenção: backups | Configurado em 01/11/2026: 7 diários, 4 semanais e 6 mensais (`PORTAL_BACKUP_KEEP_*`); a hospedagem mantém cópia diária própria por prazo definido pela Hostinger |
 | Procedimento de atendimento a titulares | A DEFINIR |
 | Texto final da política e endereço de publicação | A DEFINIR |
 
