@@ -53,7 +53,7 @@ for (const page of pages) {
     }
     if (!reference.startsWith('/') || reference.startsWith('//')) continue;
     checked += 1;
-    const { pathname } = new URL(reference, 'http://site.local');
+    const { pathname } = new URL(reference, 'https://site.local');
     if (!resolves(pathname)) problems.push(`${name}: ${reference} não encontrado`);
   }
 }

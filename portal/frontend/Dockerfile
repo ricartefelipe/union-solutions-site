@@ -1,7 +1,7 @@
 FROM node:24-alpine@sha256:8a32c8cf649a49915a66e81e7a609223c708d0adabf288ee3f4077d765542f85 AS build
 WORKDIR /app
 COPY package.json package-lock.json .npmrc ./
-RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund
+RUN --mount=type=cache,target=/root/.npm npm ci --ignore-scripts --no-audit --no-fund
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN node node_modules/next/dist/bin/next build

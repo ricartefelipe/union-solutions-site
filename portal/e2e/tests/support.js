@@ -28,8 +28,11 @@ export const STORAGE_SERVICE = process.env.E2E_STORAGE_SERVICE ?? 'seaweedfs';
 const PG_SUPERUSER = process.env.E2E_PG_SUPERUSER ?? 'portal';
 const container = (service) => `${PROJECT}-${service}-1`;
 
+// Caminho absoluto do docker, sem depender do PATH: runner da prova (/usr/local/bin) ou máquina de desenvolvimento.
+const DOCKER_BIN = process.env.E2E_DOCKER_BIN ?? ['/usr/local/bin/docker', '/usr/bin/docker'].find((p) => existsSync(p)) ?? '/usr/bin/docker';
+
 export function docker(...args) {
-  return execFileSync('docker', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 180_000 });
+  return execFileSync(DOCKER_BIN, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 180_000 });
 }
 
 export async function waitHealthy(service, timeoutMs = 300_000) {
@@ -64,7 +67,7 @@ export const sessionSql = (sql) => execIn('postgres', 'psql', '-U', PG_SUPERUSER
 export const cookieHash = (value) => createHash('sha256').update(value).digest('hex');
 
 export function compose(...args) {
-  return execFileSync('docker', ['compose', '--env-file', '.env', '-f', 'compose.yaml', ...args], { cwd: COMPOSE_DIR, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 300_000 });
+  return execFileSync(DOCKER_BIN, ['compose', '--env-file', '.env', '-f', 'compose.yaml', ...args], { cwd: COMPOSE_DIR, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 300_000 });
 }
 
 export async function shot(page, name, options = {}) {
