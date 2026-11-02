@@ -1,4 +1,4 @@
-# Instalado em portal/deploy/production/sites/ por demo.sh instalar. Modo de demonstração do produto: a API aceita o locatário
+# Instalado em demos/proxy/sites/ por demo.sh instalar. Modo de demonstração do produto: a API aceita o locatário
 # fictício da carga inicial, por isso só as rotas de uso entram e o cadastro público de novos locatários fica fechado.
 demo-comercialcloud.unionsolutions.tech {
 	encode gzip

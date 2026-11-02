@@ -1,4 +1,4 @@
-# Instalado em portal/deploy/production/sites/ por demo.sh instalar. O frontend (nginx) já encaminha /api, /v3, /internal e
+# Instalado em demos/proxy/sites/ por demo.sh instalar. O frontend (nginx) já encaminha /api, /v3, /internal e
 # /actuator para o backend internamente; aqui só liberamos o necessário ao público e bloqueamos o resto antes de chegar lá.
 demo-assinaflow.unionsolutions.tech {
 	encode gzip

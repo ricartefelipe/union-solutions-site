@@ -1,10 +1,10 @@
 #!/bin/sh
-# Demonstração do ArchLens na VPS do portal. Uso: sh demo.sh <segredos|instalar|subir|parar|reiniciar-dados|status|logs>
+# Demonstração do ArchLens na VPS das demonstrações. Uso: sh demo.sh <segredos|instalar|subir|parar|reiniciar-dados|status|logs>
 # Roda em /opt/union-solutions/demos/archlens, com .env preenchido a partir de .env.example.
 set -eu
 DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 cd "$DIR"
-PORTAL=$DIR/../../portal/deploy/production
+PROXY=$DIR/../proxy
 COMPOSE="docker compose --env-file .env -f compose.yaml"
 value() { grep "^$1=" .env | head -n 1 | cut -d= -f2-; }
 random() { od -An -N24 -tx1 /dev/urandom | tr -d ' \n'; }
@@ -28,10 +28,10 @@ case "${1:-ajuda}" in
     commit=$(value ARCHLENS_COMMIT); src=$(value ARCHLENS_SRC)
     if [ -d "$src/.git" ]; then git -C "$src" fetch -q origin; else git clone -q https://github.com/ricartefelipe/archlens.git "$src"; fi
     git -C "$src" checkout -q "$commit" && echo "ArchLens $(git -C "$src" rev-parse --short HEAD) em $src."
-    cp demo-archlens.caddy "$PORTAL/sites/demo-archlens.caddy"
-    mkdir -p "$PORTAL/sites/archlens-amostra"
-    cp amostra/analysis.json "$PORTAL/sites/archlens-amostra/analysis.json"
-    echo "Site e amostra instalados no proxy do portal. Reinicie o proxy: (cd $PORTAL && docker compose --env-file .env restart proxy)"
+    cp demo-archlens.caddy "$PROXY/sites/demo-archlens.caddy"
+    mkdir -p "$PROXY/sites/archlens-amostra"
+    cp amostra/analysis.json "$PROXY/sites/archlens-amostra/analysis.json"
+    echo "Site e amostra instalados no proxy das demonstrações. Reinicie o proxy: (cd $PROXY && docker compose --env-file .env restart proxy)"
     ;;
   subir)
     require_env

@@ -1,4 +1,4 @@
-# Instalado em portal/deploy/production/sites/ por demo.sh instalar (a saúde de leitura e escrita fica só dentro da rede). Mesmas rotas do Caddyfile do produto.
+# Instalado em demos/proxy/sites/ por demo.sh instalar (a saúde de leitura e escrita fica só dentro da rede). Mesmas rotas do Caddyfile do produto.
 demo-hookguard.unionsolutions.tech {
 	encode gzip
 	request_body {

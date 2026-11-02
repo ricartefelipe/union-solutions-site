@@ -1,0 +1,157 @@
+# Demonstração pública do Skillforge na VPS das demonstrações, com contas fictícias de aluno, docente e administração. A API e
+# o front validam o emissor pela URL pública do Keycloak: alcançam o proxy pela rede `union-demos`, com o alias do host, sem saída
+# para a internet. O console administrativo do Keycloak fica fechado no proxy.
+name: demo-skillforge
+
+x-comum: &comum
+  restart: unless-stopped
+  oom_score_adj: 500
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  postgres:
+    <<: *comum
+    image: postgres:16-alpine@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36
+    user: "70:70"
+    environment:
+      POSTGRES_DB: skillforge
+      POSTGRES_USER: skillforge
+      POSTGRES_PASSWORD: ${SKILLFORGE_DB_PASSWORD:?}
+    volumes:
+      - dados:/var/lib/postgresql/data
+      - ${SKILLFORGE_SRC:-./src}/skillforge/docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    networks: [interna]
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U skillforge -d skillforge"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  keycloak:
+    <<: *comum
+    image: quay.io/keycloak/keycloak:26.4@sha256:9409c59bdfb65dbffa20b11e6f18b8abb9281d480c7ca402f51ed3d5977e6007
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${SKILLFORGE_KEYCLOAK_ADMIN_PASSWORD:?}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: skillforge
+      KC_DB_PASSWORD: ${SKILLFORGE_DB_PASSWORD:?}
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME: https://${DEMO_HOST:?}
+      KC_PROXY_HEADERS: xforwarded
+      KC_HEALTH_ENABLED: "true"
+      JAVA_OPTS_KC_HEAP: -Xms128m -Xmx384m
+    volumes:
+      - ${SKILLFORGE_SRC:-./src}/skillforge/keycloak/skillforge-realm.json:/opt/keycloak/data/import/skillforge-realm.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      interna:
+      demos:
+        aliases: [demo-skillforge-keycloak]
+    mem_limit: 768m
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000; printf 'GET /health/ready HTTP/1.0\\r\\n\\r\\n' >&3; grep -q UP <&3"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  api:
+    <<: *comum
+    image: demo-skillforge-api:latest
+    build:
+      context: ${SKILLFORGE_SRC:-./src}/skillforge
+      dockerfile_inline: |
+        FROM maven:3.9.9-eclipse-temurin-21 AS build
+        WORKDIR /b
+        COPY api/ .
+        RUN mvn -B -q -DskipTests -Dcheckstyle.skip package
+        FROM eclipse-temurin:21-jre
+        RUN groupadd --system --gid 10001 app && useradd --system --uid 10001 --gid app --home-dir /app app
+        WORKDIR /app
+        COPY --from=build /b/target/*.jar /app/app.jar
+        USER app
+        ENV JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=70
+        ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+    environment:
+      SERVER_PORT: "8080"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/skillforge
+      SPRING_DATASOURCE_USERNAME: skillforge
+      SPRING_DATASOURCE_PASSWORD: ${SKILLFORGE_DB_PASSWORD:?}
+      KEYCLOAK_ISSUER: https://${DEMO_HOST:?}/realms/skillforge
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    networks:
+      interna:
+      demos:
+        aliases: [demo-skillforge-api]
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/actuator/health/liveness || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 24
+      start_period: 30s
+
+  web:
+    <<: *comum
+    image: demo-skillforge-web:latest
+    build:
+      context: ${SKILLFORGE_SRC:-./src}/skillforge/web
+      dockerfile_inline: |
+        FROM node:22-alpine AS build
+        WORKDIR /b
+        COPY package.json package-lock.json ./
+        RUN npm ci --ignore-scripts
+        COPY . .
+        ENV NEXT_TELEMETRY_DISABLED=1
+        ENV API_URL=http://demo-skillforge-api:8080
+        RUN npm run build && npm prune --omit=dev
+        FROM node:22-alpine
+        WORKDIR /app
+        ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 HOSTNAME=0.0.0.0
+        COPY --from=build --chown=node:node /b /app
+        USER node
+        CMD ["node_modules/.bin/next", "start", "-p", "3000"]
+    environment:
+      API_URL: http://demo-skillforge-api:8080
+      WEB_URL: https://${DEMO_HOST:?}
+      KEYCLOAK_ISSUER: https://${DEMO_HOST:?}/realms/skillforge
+      KEYCLOAK_CLIENT_ID: skillforge
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      demos:
+        aliases: [demo-skillforge-web]
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/health/liveness"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 15s
+
+volumes:
+  dados:
+
+networks:
+  interna:
+    internal: true
+  demos:
+    external: true
+    name: ${DEMOS_NETWORK:-union-demos}
