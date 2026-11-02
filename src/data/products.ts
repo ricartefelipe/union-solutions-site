@@ -219,7 +219,7 @@ export const products: Product[] = [
     liveDemo: {
       url: 'https://demo-fluxe.unionsolutions.tech/',
       note: 'Compre na loja e acompanhe o pedido na operação e na administração de uma empresa fictícia. O pagamento também é fictício. O ambiente é compartilhado e apagado todos os dias: use dados inventados, inclusive no checkout.',
-      access: ['E-mail: ops@demo.example.com', 'Senha: ops123'],
+      access: ['E-mail: visitante@demo-fluxe.unionsolutions.tech', 'Senha: ops123'],
       links: [
         { label: 'Operação', url: 'https://demo-fluxe.unionsolutions.tech/ops/' },
         { label: 'Administração', url: 'https://demo-fluxe.unionsolutions.tech/admin/' },

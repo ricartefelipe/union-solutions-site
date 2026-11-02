@@ -37,7 +37,7 @@ UPDATE users SET password_hash = 'desativada' WHERE tenant_id = '00000000-0000-0
 UPDATE users SET email = 'plataforma@demo.example.com', name = 'Plataforma' WHERE email NOT LIKE '%@local' AND tenant_id = '00000000-0000-0000-0000-000000000001';
 UPDATE audit_log SET actor_sub = 'plataforma@demo.example.com' WHERE actor_sub NOT LIKE '%@local' AND tenant_id = '00000000-0000-0000-0000-000000000001' OR actor_sub LIKE '%@gmail.com';
 UPDATE tenants SET region = 'region-a';
-UPDATE users SET roles = 'admin', name = 'Demonstração' WHERE email = 'ops@demo.example.com';
+UPDATE users SET roles = 'admin', name = 'Demonstração', email = 'visitante@demo-fluxe.unionsolutions.tech' WHERE email = 'ops@demo.example.com';
 SQL
 }
 
