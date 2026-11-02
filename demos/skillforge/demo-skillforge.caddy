@@ -1,0 +1,36 @@
+# Instalado em demos/proxy/sites/ por demo.sh instalar. Só a interface e o login; console administrativo, contas e outros realms do Keycloak ficam fechados. Uploads limitados a 8 MB.
+demo-skillforge.unionsolutions.tech {
+	encode gzip
+	request_body {
+		max_size 8MB
+	}
+	header {
+		>Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+	log {
+		output stdout
+		format filter {
+			wrap json
+			fields {
+				request>uri regexp \?.* ?[removido]
+			}
+		}
+	}
+	@keycloak path /realms/skillforge/protocol/openid-connect/* /realms/skillforge/login-actions/* /realms/skillforge/.well-known/* /resources/*
+	handle @keycloak {
+		reverse_proxy demo-skillforge-keycloak:8080
+	}
+	@fechado path /admin* /realms* /actuator*
+	handle @fechado {
+		respond 404
+	}
+	handle {
+		reverse_proxy demo-skillforge-web:3000
+	}
+	handle_errors 502 503 504 {
+		header Content-Type "text/plain; charset=utf-8"
+		respond "A demonstração está temporariamente indisponível. Tente novamente em instantes." {err.status_code}
+	}
+}

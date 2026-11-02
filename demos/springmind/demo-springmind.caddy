@@ -1,0 +1,37 @@
+# Instalado em demos/proxy/sites/ por demo.sh instalar. Só o front e a API da carteira.
+demo-springmind.unionsolutions.tech {
+	encode gzip
+	request_body {
+		max_size 1MB
+	}
+	header {
+		>Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+	log {
+		output stdout
+		format filter {
+			wrap json
+			fields {
+				request>uri regexp \?.* ?[removido]
+			}
+		}
+	}
+	handle /api/v1/* {
+		reverse_proxy demo-springmind-api:8080
+	}
+	handle /api/* {
+		respond 404
+	}
+	handle /malha/* {
+		respond 404
+	}
+	handle {
+		reverse_proxy demo-springmind-web:8080
+	}
+	handle_errors 502 503 504 {
+		header Content-Type "text/plain; charset=utf-8"
+		respond "A demonstração está temporariamente indisponível. Tente novamente em instantes." {err.status_code}
+	}
+}

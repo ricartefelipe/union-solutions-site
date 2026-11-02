@@ -29,7 +29,11 @@ services:
       - config:/config
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ./sites:/etc/caddy/sites:ro
-    networks: [publica, demos]
+    networks:
+      publica:
+      demos:
+        # A API e o front do Skillforge validam o emissor pela URL pública e chegam nela por aqui, sem sair para a internet.
+        aliases: [demo-skillforge.unionsolutions.tech]
     mem_limit: 256m
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8081/"]
