@@ -1,6 +1,6 @@
-# Demonstração pública do ComercialCloud na mesma VPS do portal, no modo de demonstração do produto: sem Keycloak, só com o
+# Demonstração pública do ComercialCloud na VPS das demonstrações, no modo de demonstração do produto: sem Keycloak, só com o
 # locatário fictício da carga inicial. Isolada: rede interna para o banco, rede `demos` só com o proxy, limites de memória e
-# dados descartados por `demo.sh reiniciar-dados`. Nada aqui alcança o portal.
+# dados descartados por `demo.sh reiniciar-dados`.
 name: demo-comercialcloud
 
 x-comum: &comum
@@ -92,4 +92,4 @@ networks:
     internal: true
   demos:
     external: true
-    name: ${PORTAL_DEMOS_NETWORK:-union-portal-prod_demos}
+    name: ${DEMOS_NETWORK:-union-demos}

@@ -1,4 +1,4 @@
-# Demonstração pública da Fluxe B2B Suite na mesma VPS do portal, isolada: rede própria para banco, cache, fila e workers,
+# Demonstração pública da Fluxe B2B Suite na VPS das demonstrações, isolada: rede própria para banco, cache, fila e workers,
 # rede `demos` só com o proxy, sem saída para a internet. Segue o perfil de piloto do produto (HS256, sem Keycloak e sem
 # observabilidade), com gateway de pagamento fictício. O roteamento do nginx do produto fica no site Caddy.
 name: demo-fluxe
@@ -269,4 +269,4 @@ networks:
     internal: true
   demos:
     external: true
-    name: ${PORTAL_DEMOS_NETWORK:-union-portal-prod_demos}
+    name: ${DEMOS_NETWORK:-union-demos}

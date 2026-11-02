@@ -1,11 +1,11 @@
 #!/bin/sh
-# Demonstração da Fluxe B2B Suite na VPS do portal. Uso: sh demo.sh <segredos|instalar|construir|subir|parar|reiniciar-dados|status|logs>
+# Demonstração da Fluxe B2B Suite na VPS das demonstrações. Uso: sh demo.sh <segredos|instalar|construir|subir|parar|reiniciar-dados|status|logs>
 # Roda em /opt/union-solutions/demos/fluxe, com .env preenchido a partir de .env.example. As imagens são construídas em outra
-# máquina (`construir`) e carregadas na VPS: a compilação dos três frontends não cabe ao lado do portal em produção.
+# máquina (`construir`) e carregadas na VPS: a compilação dos três frontends é pesada para a VPS em uso.
 set -eu
 DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 cd "$DIR"
-PORTAL=$DIR/../../portal/deploy/production
+PROXY=$DIR/../proxy
 COMPOSE="docker compose --env-file .env -f compose.yaml"
 value() { grep "^$1=" .env | head -n 1 | cut -d= -f2-; }
 random() { od -An -N24 -tx1 /dev/urandom | tr -d ' \n'; }
@@ -48,8 +48,8 @@ case "${1:-ajuda}" in
     checkout spring-saas-core "$(value SAAS_CORE_TAG)"
     checkout node-b2b-orders "$(value ORDERS_TAG)"
     checkout py-payments-ledger "$(value PAYMENTS_TAG)"
-    cp demo-fluxe.caddy "$PORTAL/sites/demo-fluxe.caddy"
-    echo "Site instalado no proxy do portal. Reinicie o proxy: (cd $PORTAL && docker compose --env-file .env restart proxy)"
+    cp demo-fluxe.caddy "$PROXY/sites/demo-fluxe.caddy"
+    echo "Site instalado no proxy das demonstrações. Reinicie o proxy: (cd $PROXY && docker compose --env-file .env restart proxy)"
     ;;
   construir)
     require_env

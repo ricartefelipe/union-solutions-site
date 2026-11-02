@@ -1,4 +1,4 @@
-# Demonstração pública do AssinaFlow na mesma VPS do portal, isolada: rede própria para banco/cache/fila, rede `demos` só
+# Demonstração pública do AssinaFlow na VPS das demonstrações, isolada: rede própria para banco/cache/fila, rede `demos` só
 # com o proxy e o frontend. Cobrança real segue bloqueada (modo "demo" + gateway "simulated"), sem chave do Stripe e sem
 # saída para a internet: o produto não faz nenhuma chamada externa nesse modo.
 name: demo-assinaflow
@@ -129,4 +129,4 @@ networks:
     internal: true
   demos:
     external: true
-    name: ${PORTAL_DEMOS_NETWORK:-union-portal-prod_demos}
+    name: ${DEMOS_NETWORK:-union-demos}

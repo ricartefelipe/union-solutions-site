@@ -110,7 +110,10 @@ jobs:
           cd portal/deploy/production
           sed 's/SUBSTITUIR/valor/g; s/GERADO/0123456789abcdef0123456789abcdef/g' .env.example > "$RUNNER_TEMP/env"
           docker compose --env-file "$RUNNER_TEMP/env" -f compose.yaml config -q
-          cd ../../../demos/hookguard
+          cd ../../../demos/proxy
+          cp .env.example "$RUNNER_TEMP/proxy.env"
+          docker compose --env-file "$RUNNER_TEMP/proxy.env" -f compose.yaml config -q
+          cd ../hookguard
           printf 'DEMO_HOST=demo.example\nHOOKGUARD_DB_PASSWORD=x\nDEMO_SMTP_HOST=h\nDEMO_SMTP_USER=u\nDEMO_SMTP_PASSWORD=p\nDEMO_MAIL_FROM=m@e.test\n' > "$RUNNER_TEMP/demo.env"
           docker compose --env-file "$RUNNER_TEMP/demo.env" -f compose.yaml config -q
           cd ../filenorm

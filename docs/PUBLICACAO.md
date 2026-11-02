@@ -107,7 +107,7 @@ Domínio e caixa postal **não são pendências**. A confirmação de que funcio
 7. Site publicado com o botão "Área do cliente" em 01/11/2026.
 8. SSH da VPS só por chave; repositório público sem identificadores da hospedagem; aceite dos seis achados de vulnerabilidade registrado, com validade até 01/12/2026.
 
-9. Demonstrações públicas em 02/11/2026, na mesma VPS, isoladas do portal (`demos/README.md`): `demo-hookguard`, `demo-filenorm` e `demo-comercialcloud` em `unionsolutions.tech`, cada uma com certificado próprio, dados apagados todo dia e rotas internas fechadas. O portal está na 1.4.0, com 2 GB de swap criados na VPS.
+9. Demonstrações públicas em 02/11/2026, em VPS própria, separada do portal (`demos/README.md`): `demo-hookguard`, `demo-filenorm` e `demo-comercialcloud` em `unionsolutions.tech`, cada uma com certificado próprio, dados apagados todo dia e rotas internas fechadas. O portal está na 1.4.0, com 2 GB de swap criados na VPS.
 
 ### Ainda dependem de ação
 
