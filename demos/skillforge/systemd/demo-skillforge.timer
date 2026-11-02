@@ -1,0 +1,10 @@
+[Unit]
+Description=Reinício diário da demonstração do Skillforge
+
+[Timer]
+OnCalendar=*-*-* 06:25:00
+RandomizedDelaySec=5m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

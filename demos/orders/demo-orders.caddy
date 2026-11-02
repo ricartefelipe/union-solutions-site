@@ -1,0 +1,46 @@
+# Instalado em demos/proxy/sites/ por demo.sh instalar. Só o console, a API de pedidos e a entrada da demonstração.
+demo-orders.unionsolutions.tech {
+	encode gzip
+	request_body {
+		max_size 1MB
+	}
+	header {
+		>Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+	log {
+		output stdout
+		format filter {
+			wrap json
+			fields {
+				request>uri regexp \?.* ?[removido]
+			}
+		}
+	}
+	@raiz {
+		path /
+		not query entrou=1
+	}
+	redir @raiz /entrar 302
+	handle /entrar {
+		header Cache-Control "no-store"
+		root * /etc/caddy/sites/orders-entrada
+		rewrite * /index.html
+		file_server
+	}
+	handle /api/actuator/health {
+		reverse_proxy demo-orders-web:80
+	}
+	@internas path /api/actuator* /api/swagger-ui* /api/v3/*
+	handle @internas {
+		respond 404
+	}
+	handle {
+		reverse_proxy demo-orders-web:80
+	}
+	handle_errors 502 503 504 {
+		header Content-Type "text/plain; charset=utf-8"
+		respond "A demonstração está temporariamente indisponível. Tente novamente em instantes." {err.status_code}
+	}
+}
