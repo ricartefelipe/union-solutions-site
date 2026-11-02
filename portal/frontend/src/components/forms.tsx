@@ -223,8 +223,8 @@ export function ApiButton({ path, method = 'POST', body, label, confirm, tone = 
         <dialog ref={dialogRef} className="dialog" aria-label="Confirmação">
           <p>{confirm}</p>
           <form method="dialog" className="dialog__actions">
-            <button className="btn btn--ghost" value="cancel">Cancelar</button>
-            <button className={`btn ${tone === 'danger' ? 'btn--danger' : ''}`} value="ok" onClick={() => run()}>Confirmar</button>
+            <button className="btn btn--ghost" type="submit" value="cancel">Cancelar</button>
+            <button className={`btn ${tone === 'danger' ? 'btn--danger' : ''}`} type="submit" value="ok" onClick={() => run()}>Confirmar</button>
           </form>
         </dialog>
       )}
