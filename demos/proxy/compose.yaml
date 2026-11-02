@@ -1,0 +1,49 @@
+# Proxy da VPS das demonstrações, separado do portal: termina TLS e alcança os containers de cada demonstração pela rede
+# `union-demos`. Usa a mesma imagem do proxy do portal, com configuração própria.
+name: demos-proxy
+
+services:
+  proxy:
+    image: union-demos-proxy:latest
+    build: ../../portal/deploy/production/proxy
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL:?}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - data:/data
+      - config:/config
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./sites:/etc/caddy/sites:ro
+    networks: [publica, demos]
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8081/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+volumes:
+  data:
+  config:
+
+networks:
+  publica:
+  demos:
+    internal: true
+    name: union-demos

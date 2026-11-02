@@ -1,4 +1,4 @@
-# Instalado em portal/deploy/production/sites/ por demo.sh instalar. Só as rotas públicas do produto.
+# Instalado em demos/proxy/sites/ por demo.sh instalar. Só as rotas públicas do produto.
 demo-filenorm.unionsolutions.tech {
 	encode gzip
 	request_body {

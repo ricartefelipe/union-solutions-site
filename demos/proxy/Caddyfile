@@ -1,0 +1,12 @@
+{
+	admin off
+	email {$ACME_EMAIL}
+}
+
+# Saúde do proxy: só dentro do container.
+http://127.0.0.1:8081 {
+	respond "ok" 200
+}
+
+# Cada demonstração instala aqui o seu site, com `demo.sh instalar`. Só o arquivo vazio é versionado.
+import /etc/caddy/sites/*.caddy

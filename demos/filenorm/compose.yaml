@@ -1,5 +1,5 @@
-# Demonstração pública do FileNorm na mesma VPS do portal, isolada: rede própria para o banco, rede `demos` só com o proxy,
-# limites de memória e dados descartados por `demo.sh reiniciar-dados`. Nada aqui alcança o portal.
+# Demonstração pública do FileNorm na VPS das demonstrações, isolada: rede própria para o banco, rede `demos` só com o proxy,
+# limites de memória e dados descartados por `demo.sh reiniciar-dados`.
 name: demo-filenorm
 
 x-comum: &comum
@@ -67,7 +67,7 @@ services:
       interna:
       demos:
         aliases: [filenorm-api]
-      # Saída para a internet só para o e-mail do link de acesso; rede própria da demonstração, sem ligação com o portal.
+      # Saída para a internet só para o e-mail do link de acesso; rede própria da demonstração, sem ligação com as demais redes.
       saida:
     mem_limit: 768m
     healthcheck:
@@ -101,4 +101,4 @@ networks:
     internal: true
   demos:
     external: true
-    name: ${PORTAL_DEMOS_NETWORK:-union-portal-prod_demos}
+    name: ${DEMOS_NETWORK:-union-demos}

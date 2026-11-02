@@ -1,10 +1,10 @@
 #!/bin/sh
-# Demonstração do HookGuard na VPS do portal. Uso: sh demo.sh <instalar|subir|parar|reiniciar-dados|status|logs>
+# Demonstração do HookGuard na VPS das demonstrações. Uso: sh demo.sh <instalar|subir|parar|reiniciar-dados|status|logs>
 # Roda em /opt/union-solutions/demos/hookguard, com .env preenchido a partir de .env.example.
 set -eu
 DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 cd "$DIR"
-PORTAL=$DIR/../../portal/deploy/production
+PROXY=$DIR/../proxy
 COMPOSE="docker compose --env-file .env -f compose.yaml"
 value() { grep "^$1=" .env | head -n 1 | cut -d= -f2-; }
 
@@ -25,8 +25,8 @@ case "${1:-ajuda}" in
     tag=$(value HOOKGUARD_TAG); src=$(value HOOKGUARD_SRC)
     if [ -d "$src/.git" ]; then git -C "$src" fetch -q --tags origin; else git clone -q https://github.com/ricartefelipe/hookguard.git "$src"; fi
     git -C "$src" checkout -q "$tag" && echo "HookGuard $tag em $src ($(git -C "$src" rev-parse --short HEAD))."
-    cp demo-hookguard.caddy "$PORTAL/sites/demo-hookguard.caddy"
-    echo "Site instalado no proxy do portal. Reinicie o proxy: (cd $PORTAL && docker compose --env-file .env restart proxy)"
+    cp demo-hookguard.caddy "$PROXY/sites/demo-hookguard.caddy"
+    echo "Site instalado no proxy das demonstrações. Reinicie o proxy: (cd $PROXY && docker compose --env-file .env restart proxy)"
     ;;
   subir)
     require_env
