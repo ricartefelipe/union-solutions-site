@@ -1,0 +1,184 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import { contact, site } from '../config/site';
+
+const email = contact.email ?? 'contato@unionsolutions.tech';
+
+const dados = [
+  {
+    onde: 'Formulário de contato',
+    quais: 'Nome, e-mail, assunto e mensagem; empresa e telefone, se informados.',
+    para: 'Responder à sua solicitação e avaliar uma possível contratação.',
+    base: 'Procedimentos preliminares a um contrato, a seu pedido (art. 7º, V, da LGPD).',
+  },
+  {
+    onde: 'Portal do cliente',
+    quais: 'Nome, e-mail, papel e organização; projetos, documentos, solicitações e decisões registradas; eventos de auditoria.',
+    para: 'Prestar o serviço contratado, controlar o acesso e manter o histórico do que foi feito.',
+    base: 'Execução de contrato (art. 7º, V) e legítimo interesse na segurança e na rastreabilidade (art. 7º, IX).',
+  },
+  {
+    onde: 'Demonstrações de produtos',
+    quais: 'O que você digitar. Em algumas, o e-mail usado para receber o link de acesso.',
+    para: 'Permitir que você experimente o produto.',
+    base: 'Procedimentos preliminares a um contrato, a seu pedido (art. 7º, V).',
+  },
+  {
+    onde: 'Registros técnicos',
+    quais: 'Endereço IP, página acessada, data e resultado da requisição.',
+    para: 'Operar os serviços, limitar abusos e investigar falhas e incidentes.',
+    base: 'Legítimo interesse (art. 7º, IX).',
+  },
+];
+
+const direitos = [
+  'confirmar se tratamos dados seus e ter acesso a eles;',
+  'corrigir dados incompletos, inexatos ou desatualizados;',
+  'pedir a anonimização, o bloqueio ou a eliminação de dados desnecessários ou tratados em desconformidade;',
+  'pedir a portabilidade e saber com quem compartilhamos seus dados;',
+  'revogar um consentimento, quando ele for a base do tratamento, e se opor a um tratamento;',
+  'apresentar reclamação à Autoridade Nacional de Proteção de Dados (ANPD).',
+];
+---
+
+<BaseLayout
+  title="Política de privacidade"
+  description="Quais dados a Union Solutions trata no site, no portal do cliente e nas demonstrações de produtos, para quê e como exercer seus direitos."
+>
+  <PageHero
+    title="Política de privacidade"
+    intro="Quais dados tratamos no site, no portal do cliente e nas demonstrações, para quê, por quanto tempo e como você exerce seus direitos."
+  />
+
+  <section class="section">
+    <div class="wrap politica">
+      <p class="muted">Atualizada em 2 de novembro de 2026.</p>
+
+      <h2>Quem é responsável</h2>
+      <p>
+        A {site.name}{contact.cnpj && <>, CNPJ {contact.cnpj}</>}{contact.address && <>, {contact.address}</>}{(contact.cnpj || contact.address) && ','} é a controladora dos dados tratados neste site e nas contas do portal.
+        Para qualquer assunto de privacidade, fale pelo e-mail <a href={`mailto:${email}`}>{email}</a>.
+      </p>
+      <p>
+        Nos documentos e conteúdos que um cliente coloca no portal, a Union Solutions pode atuar em nome desse cliente. O contrato define os papéis de cada parte.
+      </p>
+
+      <h2>Quais dados tratamos e por quê</h2>
+      <div class="politica__tabela">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Onde</th>
+              <th scope="col">Dados</th>
+              <th scope="col">Finalidade</th>
+              <th scope="col">Base legal</th>
+            </tr>
+          </thead>
+          <tbody>
+            {dados.map((item) => (
+              <tr>
+                <th scope="row">{item.onde}</th>
+                <td>{item.quais}</td>
+                <td>{item.para}</td>
+                <td>{item.base}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p>Não envie senhas, dados de cartão ou dados pessoais de terceiros pelo formulário ou nas demonstrações.</p>
+
+      <h2>Cookies e rastreamento</h2>
+      <p>
+        Este site não usa cookies, analytics, pixels nem publicidade, e fontes e imagens vêm do próprio domínio. O portal e as demonstrações usam apenas cookies técnicos, necessários para manter o login. No portal, a sessão dura até 12 horas e expira antes depois de 1 hora sem uso.
+      </p>
+
+      <h2>Demonstrações de produtos</h2>
+      <p>
+        As demonstrações usam dados fictícios e, em geral, contas compartilhadas: outros visitantes podem ver o que você digitar. Por isso, use apenas dados inventados. Os dados são apagados uma vez por dia. Os produtos em demonstração não fazem cobranças reais. No HookGuard, os webhooks vão para os endereços públicos que você cadastrar.
+      </p>
+
+      <h2>Com quem compartilhamos</h2>
+      <ul class="node-list">
+        <li><strong>Hostinger:</strong> hospeda o site, o portal e as demonstrações, envia e-mails e guarda o backup do portal, que é cifrado. Os servidores do portal e das demonstrações ficam em Campinas, SP.</li>
+        <li><strong>Let's Encrypt:</strong> emite os certificados HTTPS e recebe apenas o nome dos domínios.</li>
+        <li><strong>WhatsApp:</strong> somente se você escolher esse canal, e a conversa segue as regras do aplicativo.</li>
+      </ul>
+      <p>Não vendemos dados pessoais. Podemos fornecê-los a autoridades quando a lei ou uma ordem judicial exigir.</p>
+
+      <h2>Por quanto tempo guardamos</h2>
+      <ul class="node-list">
+        <li><strong>Mensagens de contato:</strong> ficam na nossa caixa de e-mail enquanto forem necessárias para o atendimento ou para uma eventual contratação. O formulário não grava o conteúdo em arquivo.</li>
+        <li><strong>Limite de envios do formulário:</strong> guardamos temporariamente um resumo criptográfico (hash) do IP, para conter abusos.</li>
+        <li><strong>Dados do portal:</strong> durante o contrato e depois pelo tempo necessário para cumprir obrigações legais e exercer direitos. A auditoria é mantida para rastreabilidade.</li>
+        <li><strong>Backups do portal:</strong> 7 cópias diárias, 4 semanais e 6 mensais. Um dado apagado pode continuar numa cópia até ela expirar.</li>
+        <li><strong>Registros técnicos:</strong> são substituídos automaticamente, conforme o limite de tamanho de cada serviço.</li>
+        <li><strong>Demonstrações:</strong> apagadas uma vez por dia.</li>
+      </ul>
+
+      <h2>Como protegemos</h2>
+      <p>
+        Usamos conexão HTTPS, acesso por perfil, verificação em duas etapas para a administração do portal, verificação de antivírus nos arquivos enviados, backup cifrado e registro de auditoria. Nenhum sistema é totalmente imune; em caso de incidente com risco relevante, avisaremos os afetados e a ANPD conforme a lei.
+      </p>
+
+      <h2>Seus direitos</h2>
+      <p>Pela Lei Geral de Proteção de Dados (Lei nº 13.709/2018), você pode:</p>
+      <ul class="node-list">
+        {direitos.map((item) => <li>{item}</li>)}
+      </ul>
+      <p>Para exercê-los, escreva para <a href={`mailto:${email}`}>{email}</a>. Podemos pedir uma confirmação de identidade antes de atender.</p>
+
+      <h2>Mudanças nesta política</h2>
+      <p>Quando houver mudança, publicaremos a nova versão nesta página, com a data de atualização.</p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .politica {
+    max-width: 52rem;
+  }
+
+  .politica h2 {
+    margin-top: var(--space-6);
+    margin-bottom: var(--space-2);
+    font-size: var(--text-xl);
+  }
+
+  .politica p + p,
+  .politica ul + p,
+  .politica__tabela + p {
+    margin-top: var(--space-3);
+  }
+
+  .politica a {
+    color: var(--brand);
+    text-decoration: underline;
+    overflow-wrap: anywhere;
+  }
+
+  .politica__tabela {
+    overflow-x: auto;
+    margin-block: var(--space-3);
+  }
+
+  .politica table {
+    width: 100%;
+    min-width: 40rem;
+    border-collapse: collapse;
+    font-size: var(--text-sm);
+  }
+
+  .politica th,
+  .politica td {
+    padding: var(--space-2);
+    border-bottom: 1px solid var(--line);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .politica tbody th {
+    font-weight: 600;
+  }
+</style>
