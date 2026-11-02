@@ -1,0 +1,107 @@
+# Demonstração pública do ArchLens na mesma VPS do portal, isolada: rede interna para o banco, rede `demos` só com o proxy,
+# limites de memória e dados descartados por `demo.sh reiniciar-dados`. Nada aqui alcança o portal.
+# Sem Keycloak: o backend sobe com ARCHLENS_OIDC_ENABLED=false e autenticação local (AUTH_LOCAL_ENABLED), o mesmo modo
+# documentado pelo próprio produto para demonstração, com as contas fictícias admin/architect/viewer.
+# Sem rede de saída: o produto não envia e-mail nem faz chamadas externas (ARCHLENS_LLM_ENABLED=false).
+name: demo-archlens
+
+x-comum: &comum
+  restart: unless-stopped
+  oom_score_adj: 500
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  postgres:
+    <<: *comum
+    image: postgres:16.6-alpine@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab
+    user: "70:70"
+    environment:
+      POSTGRES_DB: archlens
+      POSTGRES_USER: archlens
+      POSTGRES_PASSWORD: ${ARCHLENS_DB_PASSWORD:?}
+    volumes:
+      - dados:/var/lib/postgresql/data
+    networks: [interna]
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U archlens -d archlens"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    <<: *comum
+    build:
+      context: ${ARCHLENS_SRC:-./src}
+      dockerfile: backend/Dockerfile
+    environment:
+      JAVA_OPTS: -Dquarkus.http.host=0.0.0.0 -XX:MaxRAMPercentage=70
+      QUARKUS_PROFILE: demo
+      ARCHLENS_PROFILE_LABEL: demo
+      ARCHLENS_DB_URL: jdbc:postgresql://postgres:5432/archlens
+      ARCHLENS_DB_USER: archlens
+      ARCHLENS_DB_PASSWORD: ${ARCHLENS_DB_PASSWORD:?}
+      ARCHLENS_OIDC_ENABLED: "false"
+      ARCHLENS_LOCAL_HEADER_AUTH: "true"
+      ARCHLENS_CORS_ORIGINS: https://${DEMO_HOST:?}
+      ARCHLENS_LLM_ENABLED: "false"
+      ARCHLENS_HSTS_ENABLED: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      interna:
+      demos:
+        aliases: [archlens-api]
+    mem_limit: 640m
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/q/health/ready || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  frontend:
+    <<: *comum
+    build:
+      context: ${ARCHLENS_SRC:-./src}/frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: https://${DEMO_HOST:?}/api/v1
+    environment:
+      HOSTNAME: "0.0.0.0"
+      AUTH_URL: https://${DEMO_HOST:?}
+      NEXTAUTH_URL: https://${DEMO_HOST:?}
+      AUTH_SECRET: ${ARCHLENS_AUTH_SECRET:?}
+      NEXTAUTH_SECRET: ${ARCHLENS_AUTH_SECRET:?}
+      NEXT_PUBLIC_API_BASE_URL: https://${DEMO_HOST:?}/api/v1
+      # Alias único: na rede `demos`, o nome curto `backend` também responde pela demonstração do ComercialCloud.
+      ARCHLENS_API_INTERNAL_URL: http://archlens-api:8080/api/v1
+      AUTH_LOCAL_ENABLED: "true"
+      # Contas fictícias documentadas pelo próprio produto para demonstração: sem cadastro, sem dado real.
+      AUTH_LOCAL_ADMIN_PASSWORD: ${ARCHLENS_DEMO_ADMIN_PASSWORD:?}
+      AUTH_LOCAL_ARCHITECT_PASSWORD: ${ARCHLENS_DEMO_ARCHITECT_PASSWORD:?}
+      AUTH_LOCAL_VIEWER_PASSWORD: ${ARCHLENS_DEMO_VIEWER_PASSWORD:?}
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      demos:
+        aliases: [archlens-web]
+    mem_limit: 384m
+
+volumes:
+  dados:
+
+networks:
+  interna:
+    internal: true
+  demos:
+    external: true
+    name: ${PORTAL_DEMOS_NETWORK:-union-portal-prod_demos}

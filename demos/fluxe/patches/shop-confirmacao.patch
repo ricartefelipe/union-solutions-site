@@ -1,0 +1,22 @@
+diff --git a/saas-suite-ui/apps/shop/src/app/checkout/checkout.component.ts b/saas-suite-ui/apps/shop/src/app/checkout/checkout.component.ts
+index 5800987..ac4640c 100644
+--- a/saas-suite-ui/apps/shop/src/app/checkout/checkout.component.ts
++++ b/saas-suite-ui/apps/shop/src/app/checkout/checkout.component.ts
+@@ -55,7 +55,7 @@ import { I18nService } from '@saas-suite/shared/i18n';
+             <mat-stepper #stepper linear class="checkout-stepper">
+ 
+               <!-- Step 1: Cart -->
+-              <mat-step [completed]="cart.items().length > 0" [label]="i18n.messages().shop.cart">
++              <mat-step [completed]="cart.items().length > 0 || !!confirmedOrder()" [label]="i18n.messages().shop.cart">
+                 <div class="step-content">
+                   <h2 class="step-title">{{ i18n.messages().shop.reviewYourCart }}</h2>
+ 
+@@ -863,7 +863,7 @@ export class CheckoutComponent {
+ 
+       this.confirmedOrder.set(finalOrder ?? confirmedOrd);
+       this.cart.clear();
+-      this.stepper()?.next();
++      setTimeout(() => this.stepper()?.next());
+     } catch {
+       this.checkoutError.set(msgs.unexpectedError);
+     } finally {

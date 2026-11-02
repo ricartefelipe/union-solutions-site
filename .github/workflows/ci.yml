@@ -102,6 +102,9 @@ jobs:
           sh -n demos/hookguard/demo.sh
           sh -n demos/filenorm/demo.sh
           sh -n demos/comercialcloud/demo.sh
+          sh -n demos/archlens/demo.sh
+          sh -n demos/assinaflow/demo.sh
+          sh -n demos/fluxe/demo.sh
       - name: Compose de produção válido com o modelo de configuração
         run: |
           cd portal/deploy/production
@@ -116,6 +119,15 @@ jobs:
           cd ../comercialcloud
           printf 'DEMO_HOST=demo.example\nCOMERCIALCLOUD_DB_PASSWORD=x\n' > "$RUNNER_TEMP/cc.env"
           docker compose --env-file "$RUNNER_TEMP/cc.env" -f compose.yaml config -q
+          cd ../archlens
+          sed 's/GERADO/x/g' .env.example > "$RUNNER_TEMP/al.env"
+          docker compose --env-file "$RUNNER_TEMP/al.env" -f compose.yaml config -q
+          cd ../assinaflow
+          sed 's/GERADO/x/g' .env.example > "$RUNNER_TEMP/af.env"
+          docker compose --env-file "$RUNNER_TEMP/af.env" -f compose.yaml config -q
+          cd ../fluxe
+          sed 's/GERADO/x/g' .env.example > "$RUNNER_TEMP/fx.env"
+          docker compose --env-file "$RUNNER_TEMP/fx.env" -f compose.yaml config -q
       - name: Imagens de produção constroem
         run: |
           docker build -q portal/backend
