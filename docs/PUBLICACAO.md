@@ -35,9 +35,11 @@ sh scripts/empacotar-site.sh
 
 O script só gera o ZIP se `check:publish` aprovar. Ele extrai o pacote, compara com `dist/`, recusa arquivos que não deveriam estar nele, como `.env`, código-fonte, dependências, mapas ou endereços locais, e grava o SHA-256 e o inventário.
 
-**Pacote atual (gerado em 01/11/2026 com o botão "Área do cliente"):** `artifacts/pacotes/site-union-solutions-20261101-202817.zip`
+**Pacote atual (02/11/2026, com o botão "Área do cliente" e "Acessar demonstração" em HookGuard, FileNorm e ComercialCloud):** `artifacts/pacotes/site-union-solutions-20261102-015838.zip`
 
-**SHA-256:** `f6d5005ce2bae9bba524cb2dbee5ff5e8b8db8e20b538068cf4a1138fdbfe9a4`
+**SHA-256:** `25ea93c4229fd8e39af7e5241ad5d0d0cae72deabd1b1936cc277a1189c38fab`
+
+**Pacote anterior (01/11/2026, só com o botão "Área do cliente"):** `site-union-solutions-20261101-202817.zip`, SHA-256 `f6d5005c…`.
 
 **Publicado na Hostinger em 31/10/2026 (1.1.0):** `site-union-solutions-20261031-215233.zip`. O pacote atual acrescenta o botão "Área do cliente" para `https://clientes.unionsolutions.tech`, o botão de contato marcado como página atual em Contato e a frase de assunto no formulário ao chegar por um produto ou serviço. O pacote intermediário `site-union-solutions-20261101-150354.zip` (sem o botão) fica como alternativa caso se queira publicar sem a área do cliente.
 
@@ -53,7 +55,7 @@ O pacote foi testado em Apache 2.4 com o `.htaccess` real. A Hostinger pode usar
 
 ### Publicar
 
-1. Confira a soma do pacote: `cd artifacts/pacotes && sha256sum -c site-union-solutions-20261101-202817.zip.sha256`.
+1. Confira a soma do pacote: `cd artifacts/pacotes && sha256sum -c site-union-solutions-20261102-015838.zip.sha256`.
 2. Em `public_html`, envie o ZIP e extraia com o conteúdo na raiz. `index.html` e `.htaccess` precisam ficar diretamente em `public_html`.
 3. Apague o ZIP de `public_html` depois de extrair.
 4. Ative o SSL do domínio no hPanel. Sem certificado, o redirecionamento para HTTPS falha.
@@ -104,6 +106,8 @@ Domínio e caixa postal **não são pendências**. A confirmação de que funcio
 6. Primeiro acesso da administração concluído em 01/11/2026: senha definida pelo e-mail recebido em `contato@` e MFA configurado em aplicativo autenticador; login confirmado.
 7. Site publicado com o botão "Área do cliente" em 01/11/2026.
 8. SSH da VPS só por chave; repositório público sem identificadores da hospedagem; aceite dos seis achados de vulnerabilidade registrado, com validade até 01/12/2026.
+
+9. Demonstrações públicas em 02/11/2026, na mesma VPS, isoladas do portal (`demos/README.md`): `demo-hookguard`, `demo-filenorm` e `demo-comercialcloud` em `unionsolutions.tech`, cada uma com certificado próprio, dados apagados todo dia e rotas internas fechadas. O portal está na 1.4.0, com 2 GB de swap criados na VPS.
 
 ### Ainda dependem de ação
 
