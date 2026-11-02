@@ -8,6 +8,10 @@ http://127.0.0.1:8081 {
 	respond "ok" 200
 }
 
+# Sites adicionais na mesma VPS (demonstrações de produtos), em arquivos próprios e na rede `demos`,
+# separada das redes do portal. A pasta sempre tem ao menos o arquivo vazio versionado.
+import /etc/caddy/sites/*.caddy
+
 {$PORTAL_HOST} {
 	# O ambiente de prova coloca aqui um certificado de teste. Em produção a pasta fica vazia, e o Caddy obtém o certificado por ACME.
 	import /etc/caddy/conf.d/*.caddy

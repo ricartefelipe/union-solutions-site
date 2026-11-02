@@ -1,0 +1,99 @@
+# Demonstração pública do HookGuard na mesma VPS do portal, isolada: rede própria para o banco, rede `demos` só com o proxy,
+# limites de memória e dados descartados pelo `demo.sh reiniciar-dados`. Nada aqui alcança o portal.
+name: demo-hookguard
+
+x-comum: &comum
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  postgres:
+    <<: *comum
+    image: postgres:16-alpine@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36
+    user: "70:70"
+    environment:
+      POSTGRES_DB: hookguard
+      POSTGRES_USER: hookguard
+      POSTGRES_PASSWORD: ${HOOKGUARD_DB_PASSWORD:?}
+    volumes:
+      - dados:/var/lib/postgresql/data
+    networks: [interna]
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hookguard -d hookguard"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    <<: *comum
+    build:
+      context: ${HOOKGUARD_SRC:-./src}/apps/api
+    environment:
+      JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=70
+      HOOKGUARD_DB_URL: jdbc:postgresql://postgres:5432/hookguard
+      HOOKGUARD_DB_USER: hookguard
+      HOOKGUARD_DB_PASSWORD: ${HOOKGUARD_DB_PASSWORD:?}
+      HOOKGUARD_CORS_ORIGINS: https://${DEMO_HOST:?}
+      HOOKGUARD_APP_BASE_URL: https://${DEMO_HOST:?}
+      HOOKGUARD_API_BASE_URL: https://${DEMO_HOST:?}
+      HOOKGUARD_DELIVERY_ALLOW_HTTP: "false"
+      HOOKGUARD_EXPOSE_MAGIC_LINK: "false"
+      HOOKGUARD_TRUST_FORWARDED_HOST: "false"
+      HOOKGUARD_INGEST_RATE_LIMIT: ${HOOKGUARD_INGEST_RATE_LIMIT:-60}
+      HOOKGUARD_MAX_BODY_BYTES: ${HOOKGUARD_MAX_BODY_BYTES:-262144}
+      HOOKGUARD_SMTP_HOST: ${DEMO_SMTP_HOST:?}
+      HOOKGUARD_SMTP_PORT: ${DEMO_SMTP_PORT:-587}
+      HOOKGUARD_SMTP_USER: ${DEMO_SMTP_USER:?}
+      HOOKGUARD_SMTP_PASSWORD: ${DEMO_SMTP_PASSWORD:?}
+      HOOKGUARD_SMTP_AUTH: "true"
+      HOOKGUARD_SMTP_STARTTLS: "true"
+      HOOKGUARD_FROM_EMAIL: ${DEMO_MAIL_FROM:?}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      interna:
+      demos:
+        aliases: [hookguard-api]
+      # Saída para a internet: o produto entrega webhooks a destinos públicos e envia o link de acesso por SMTP. É uma rede
+      # própria da demonstração, sem ligação com as redes do portal; o produto recusa destinos http e de rede privada.
+      saida:
+    mem_limit: 768m
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/actuator/health/readiness || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  web:
+    <<: *comum
+    build:
+      context: ${HOOKGUARD_SRC:-./src}/apps/web
+      args:
+        NEXT_PUBLIC_API_BASE_URL: same-origin
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      demos:
+        aliases: [hookguard-web]
+    mem_limit: 256m
+
+volumes:
+  dados:
+
+networks:
+  saida:
+  interna:
+    internal: true
+  demos:
+    external: true
+    name: ${PORTAL_DEMOS_NETWORK:-union-portal-prod_demos}
