@@ -26,13 +26,7 @@ Medido na VPS em 02/11/2026 com as seis demonstrações no ar e sem visitantes: 
 
 ## Fluxe B2B Suite: o que a demonstração muda em relação ao produto
 
-Código em quatro repositórios, nas tags de `demos/fluxe/.env.example`. Sem alterar os repositórios do produto, a demonstração:
-
-- aplica `patches/orders-total.patch`: o serviço de pedidos não grava `totalAmount`, a loja envia o pagamento sem valor e todo checkout falha na última etapa;
-- aplica `patches/shop-confirmacao.patch`: ao concluir a compra, o carrinho esvaziado invalida a primeira etapa e a loja fica na revisão com total zero, sem mostrar a confirmação;
-- embute o motor de migração do Prisma na imagem (`orders-api.Dockerfile`): a imagem do produto o baixa na subida, o que não funciona sem internet;
-- usa os contextos `staging,seed` do Liquibase: `prod,seed`, do perfil de piloto, falha em banco novo;
-- depois de subir, ajusta a carga inicial (`ajustar_carga` em `demo.sh`): desativa as duas contas da plataforma, uma delas com e-mail real e ambas com senha pública no repositório, troca a região dos locatários pela que as telas de pagamento aceitam e dá à conta pública o papel `admin`, para abrir as três aplicações, e um endereço no domínio da Union.
+Código em quatro repositórios, nas tags de `demos/fluxe/.env.example`. Depois de subir, `ajustar_carga` em `demo.sh` desativa as contas da plataforma, com senha pública no repositório do produto, troca a região dos locatários pela que as telas de pagamento aceitam e dá à conta pública o papel `admin`, para abrir as três aplicações, e um endereço no domínio da Union.
 
 Defeitos do produto vistos no teste e ainda não tratados: uma cobrança recorrente da carga inicial é reprocessada a cada minuto; o pedido gera dois pagamentos, um da loja e um do worker; o preço do item vem do navegador; cinco das imagens da carga (Unsplash) respondem 404; o dono de uma conta `admin` de um locatário lista todos os locatários.
 
