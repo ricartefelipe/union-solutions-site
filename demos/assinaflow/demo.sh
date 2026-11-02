@@ -1,10 +1,10 @@
 #!/bin/sh
-# Demonstração do AssinaFlow na VPS do portal. Uso: sh demo.sh <segredos|instalar|subir|parar|reiniciar-dados|status|logs>
+# Demonstração do AssinaFlow na VPS das demonstrações. Uso: sh demo.sh <segredos|instalar|subir|parar|reiniciar-dados|status|logs>
 # Roda em /opt/union-solutions/demos/assinaflow, com .env preenchido a partir de .env.example.
 set -eu
 DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 cd "$DIR"
-PORTAL=$DIR/../../portal/deploy/production
+PROXY=$DIR/../proxy
 COMPOSE="docker compose --env-file .env -f compose.yaml"
 value() { grep "^$1=" .env | head -n 1 | cut -d= -f2-; }
 random() { od -An -N24 -tx1 /dev/urandom | tr -d ' \n'; }
@@ -28,8 +28,8 @@ case "${1:-ajuda}" in
     tag=$(value ASSINAFLOW_TAG); src=$(value ASSINAFLOW_SRC)
     if [ -d "$src/.git" ]; then git -C "$src" fetch -q --tags origin; else git clone -q https://github.com/ricartefelipe/assinaflow.git "$src"; fi
     git -C "$src" checkout -q "$tag" && echo "AssinaFlow $tag em $src ($(git -C "$src" rev-parse --short HEAD))."
-    cp demo-assinaflow.caddy "$PORTAL/sites/demo-assinaflow.caddy"
-    echo "Site instalado no proxy do portal. Reinicie o proxy: (cd $PORTAL && docker compose --env-file .env restart proxy)"
+    cp demo-assinaflow.caddy "$PROXY/sites/demo-assinaflow.caddy"
+    echo "Site instalado no proxy das demonstrações. Reinicie o proxy: (cd $PROXY && docker compose --env-file .env restart proxy)"
     ;;
   subir)
     require_env

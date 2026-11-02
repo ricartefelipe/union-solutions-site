@@ -1,0 +1,68 @@
+# Demonstração pública da VueMind Wallet na VPS das demonstrações: o front Vue e a API didática, em memória, na mesma origem,
+# sem dados simulados no navegador. Conta única fictícia do produto; reiniciar a API recria os dados. Sem saída para a internet.
+name: demo-vuemind
+
+x-comum: &comum
+  restart: unless-stopped
+  oom_score_adj: 500
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  api:
+    <<: *comum
+    image: demo-vuemind-api:latest
+    build:
+      context: ${VUEMIND_SRC:-./src}/vuemind-api
+    environment:
+      JAVA_OPTS: -XX:MaxRAMPercentage=70
+      # A API só libera CORS para localhost: com os cabeçalhos do proxy, ela reconhece a própria origem.
+      SERVER_FORWARD_HEADERS_STRATEGY: framework
+    networks:
+      demos:
+        aliases: [demo-vuemind-api]
+    mem_limit: 384m
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 20s
+
+  web:
+    <<: *comum
+    image: demo-vuemind-web:latest
+    build:
+      context: ${VUEMIND_SRC:-./src}
+      dockerfile_inline: |
+        FROM node:22-alpine AS build
+        WORKDIR /b
+        COPY mind-shared/ mind-shared/
+        COPY vuemind/ app/
+        RUN cd mind-shared && npm ci --ignore-scripts && npm run build
+        # O build do produto falha neste commit: CSS da tela de arquivo em caminho errado e await no topo sem target compatível.
+        RUN sed -i "s#'./archive.css'#'../archive.css'#" app/src/features/archive/views/ArchiveView.vue
+        RUN cd app && npm ci --ignore-scripts && VITE_BASE=/ VITE_ENABLE_MSW=false VITE_API_BASE_URL=/api/v1 sh -c 'npx vue-tsc -b && npx vite build --target es2022'
+        FROM nginxinc/nginx-unprivileged:1.29-alpine@sha256:0c79d56aee561a1d81c63f00eee5fb5fe29279560cdc55e91425133104c7fbe6
+        COPY --from=build /b/app/dist /usr/share/nginx/html
+
+    networks:
+      demos:
+        aliases: [demo-vuemind-web]
+    mem_limit: 64m
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 5s
+
+networks:
+  demos:
+    external: true
+    name: ${DEMOS_NETWORK:-union-demos}

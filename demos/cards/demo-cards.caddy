@@ -1,0 +1,38 @@
+# Instalado em demos/proxy/sites/ por demo.sh instalar. Só o console, a API e a emissão de token; o Keycloak não é público.
+demo-cards.unionsolutions.tech {
+	encode gzip
+	request_body {
+		max_size 256KB
+	}
+	header {
+		>Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+	log {
+		output stdout
+		format filter {
+			wrap json
+			fields {
+				request>uri regexp \?.* ?[removido]
+			}
+		}
+	}
+	handle /auth/token {
+		reverse_proxy demo-cards-web:80
+	}
+	handle /auth/* {
+		respond 404
+	}
+	@internas path /api/q/* /api/openapi*
+	handle @internas {
+		respond 404
+	}
+	handle {
+		reverse_proxy demo-cards-web:80
+	}
+	handle_errors 502 503 504 {
+		header Content-Type "text/plain; charset=utf-8"
+		respond "A demonstração está temporariamente indisponível. Tente novamente em instantes." {err.status_code}
+	}
+}
