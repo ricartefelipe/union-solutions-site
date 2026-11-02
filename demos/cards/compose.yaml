@@ -1,0 +1,121 @@
+# Demonstração pública do cards-api na VPS das demonstrações, com simuladores de processadora e transportadora (perfil demo
+# do produto). O Keycloak fica só na rede interna: o navegador alcança apenas a emissão de token, pelo console do produto.
+name: demo-cards
+
+x-comum: &comum
+  restart: unless-stopped
+  oom_score_adj: 500
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  mariadb:
+    <<: *comum
+    image: mariadb:10.11@sha256:d769e37960821dfdcf096954f6e7ac89f747e116c1bba98e48edd265dfc7deae
+    environment:
+      MARIADB_DATABASE: cards_api
+      MARIADB_USER: cards
+      MARIADB_PASSWORD: ${CARDS_DB_PASSWORD:?}
+      MARIADB_RANDOM_ROOT_PASSWORD: "1"
+    command:
+      - "--character-set-server=utf8mb4"
+      - "--collation-server=utf8mb4_unicode_ci"
+      - "--innodb-buffer-pool-size=64M"
+      - "--performance-schema=OFF"
+    volumes:
+      - dados:/var/lib/mysql
+    networks: [interna]
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  keycloak:
+    <<: *comum
+    image: quay.io/keycloak/keycloak:26.2@sha256:4883630ef9db14031cde3e60700c9a9a8eaf1b5c24db1589d6a2d43de38ba2a9
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${CARDS_KEYCLOAK_ADMIN_PASSWORD:?}
+      KC_HOSTNAME: http://keycloak:8080
+      KC_HEALTH_ENABLED: "true"
+      JAVA_OPTS_KC_HEAP: -Xms128m -Xmx384m
+    volumes:
+      - ${CARDS_SRC:-./src}/cards-api/src/main/resources/quarkus-realm.json:/opt/keycloak/data/import/quarkus-realm.json:ro
+    networks: [interna]
+    mem_limit: 768m
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000; printf 'GET /health/ready HTTP/1.0\\r\\n\\r\\n' >&3; grep -q UP <&3"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  cards-api:
+    <<: *comum
+    image: demo-cards-api:latest
+    build:
+      context: ${CARDS_SRC:-./src}/cards-api
+    environment:
+      QUARKUS_PROFILE: demo
+      PORT: "8080"
+      JAVA_OPTS: -XX:MaxRAMPercentage=70
+      DB_JDBC_URL: jdbc:mariadb://mariadb:3306/cards_api?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: cards
+      DB_PASSWORD: ${CARDS_DB_PASSWORD:?}
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: quarkus
+      KEYCLOAK_CLIENT_SECRET: ${CARDS_KEYCLOAK_CLIENT_SECRET:?}
+      # Valores que o console do produto já traz preenchidos; só alimentam os simuladores desta demonstração.
+      CARRIER_WEBHOOK_API_KEY: carrier-local-key
+      PROCESSOR_WEBHOOK_API_KEY: processor-local-key
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    networks: [interna]
+    mem_limit: 448m
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080; printf 'GET /q/health/ready HTTP/1.0\\r\\n\\r\\n' >&3; grep -q UP <&3"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 40s
+
+  cards-admin:
+    <<: *comum
+    image: demo-cards-admin:latest
+    build:
+      context: ${CARDS_SRC:-./src}/cards-api/admin
+    depends_on:
+      cards-api:
+        condition: service_healthy
+    networks:
+      interna:
+      demos:
+        aliases: [demo-cards-web]
+    mem_limit: 64m
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:80/"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+volumes:
+  dados:
+
+networks:
+  interna:
+    internal: true
+  demos:
+    external: true
+    name: ${DEMOS_NETWORK:-union-demos}

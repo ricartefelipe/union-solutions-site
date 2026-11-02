@@ -1,0 +1,91 @@
+# Demonstração pública do order-service na VPS das demonstrações, com o console Order Ledger. O visitante recebe um token de
+# cliente com escopo só de pedidos, em /entrar; o segredo de assinatura fica no .env. Sem saída para a internet.
+name: demo-orders
+
+x-comum: &comum
+  restart: unless-stopped
+  oom_score_adj: 500
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  postgres:
+    <<: *comum
+    image: postgres:16-alpine@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36
+    user: "70:70"
+    environment:
+      POSTGRES_DB: orders
+      POSTGRES_USER: orders
+      POSTGRES_PASSWORD: ${ORDERS_DB_PASSWORD:?}
+    volumes:
+      - dados:/var/lib/postgresql/data
+    networks: [interna]
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orders -d orders"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  order-service:
+    <<: *comum
+    image: demo-orders-api:latest
+    build:
+      context: ${ORDERS_SRC:-./src}/order-service
+    environment:
+      PORT: "8080"
+      SERVER_PORT: "8080"
+      JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=70
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/orders
+      SPRING_DATASOURCE_USERNAME: orders
+      SPRING_DATASOURCE_PASSWORD: ${ORDERS_DB_PASSWORD:?}
+      SPRING_DATASOURCE_HIKARI_MAX_POOL_SIZE: "5"
+      ORDERS_AUTH_ISSUER: order-service-demo
+      ORDERS_AUTH_AUDIENCE: order-service
+      ORDERS_AUTH_SECRET: ${ORDERS_AUTH_SECRET:?}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [interna]
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 24
+      start_period: 30s
+
+  order-admin:
+    <<: *comum
+    image: demo-orders-admin:latest
+    build:
+      context: ${ORDERS_SRC:-./src}/order-service/admin
+    depends_on:
+      order-service:
+        condition: service_healthy
+    networks:
+      interna:
+      demos:
+        aliases: [demo-orders-web]
+    mem_limit: 64m
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:80/"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+volumes:
+  dados:
+
+networks:
+  interna:
+    internal: true
+  demos:
+    external: true
+    name: ${DEMOS_NETWORK:-union-demos}
