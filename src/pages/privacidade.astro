@@ -57,7 +57,7 @@ const direitos = [
 
       <h2>Quem é responsável</h2>
       <p>
-        A {site.name}{contact.cnpj && <>, CNPJ {contact.cnpj}</>}{contact.address && <>, {contact.address}</>}, é a controladora dos dados tratados neste site e nas contas do portal.
+        A {site.name}{contact.cnpj && <>, CNPJ {contact.cnpj}</>}{contact.address && <>, {contact.address}</>}{(contact.cnpj || contact.address) && ','} é a controladora dos dados tratados neste site e nas contas do portal.
         Para qualquer assunto de privacidade, fale pelo e-mail <a href={`mailto:${email}`}>{email}</a>.
       </p>
       <p>
