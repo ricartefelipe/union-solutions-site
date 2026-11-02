@@ -122,7 +122,7 @@ Decidido em 02/11/2026:
 ### Ainda dependem de ação
 
 1. **Conferências com a administração logada**, que exigem a sessão do administrador e por isso não foram feitas pela operação: criar uma organização de teste e convidar um e-mail próprio (confere entrega real do convite pela API e pelo SMTP), enviar um PDF a um projeto dela (confere o antivírus em produção) e publicar uma entrega (confere o aviso por e-mail). Até lá, a fila de e-mails da API em produção nunca enviou uma mensagem; só o provedor de identidade enviou.
-2. **Campos "A DEFINIR" de `portal/docs/PRIVACIDADE.md`** (razão social, CNPJ, endereço e prazos de retenção) e revisão jurídica da política antes de divulgar o portal a clientes.
+2. **Campos "A DEFINIR" de `portal/docs/PRIVACIDADE.md`** (prazos de retenção, entre outros) e revisão jurídica da política antes de divulgar o portal a clientes.
 3. **SonarCloud:** resolvido; em 02/11/2026 não havia pontos de segurança a revisar e o quality gate estava aprovado. Registro anterior: duas marcações manuais como "Accept" na `main`: o container de testes do ensaio executa como root (precisa do socket do Docker) e o ensaio usa `http://` de propósito para conferir o redirecionamento.
 4. Reavaliar as vulnerabilidades até 01/12/2026 (`.trivyignore.yaml` vence sozinho nessa data).
 
