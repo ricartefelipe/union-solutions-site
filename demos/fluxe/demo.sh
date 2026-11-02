@@ -23,12 +23,10 @@ checkout() {
 }
 
 # Ajustes na carga de demonstração do produto, feitos só aqui: a senha da conta global é pública no repositório do produto,
-# as regiões fictícias da carga não são as que a política de pagamentos das telas aceita, e a conta pública precisa abrir as
-# três aplicações.
+# e a conta pública precisa abrir as três aplicações.
 ajustar_carga() {
   $COMPOSE exec -T postgres psql -q -v ON_ERROR_STOP=1 -U fluxe -d saascore <<'SQL'
 UPDATE users SET password_hash = 'desativada' WHERE tenant_id = '00000000-0000-0000-0000-000000000001';
-UPDATE tenants SET region = 'region-a';
 UPDATE users SET roles = 'admin', name = 'Demonstração', email = 'visitante@demo-fluxe.unionsolutions.tech' WHERE email = 'ops@demo.example.com';
 SQL
 }

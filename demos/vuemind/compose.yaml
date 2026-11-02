@@ -45,9 +45,7 @@ services:
         COPY mind-shared/ mind-shared/
         COPY vuemind/ app/
         RUN cd mind-shared && npm ci --ignore-scripts && npm run build
-        # O build do produto falha neste commit: CSS da tela de arquivo em caminho errado e await no topo sem target compatível.
-        RUN sed -i "s#'./archive.css'#'../archive.css'#" app/src/features/archive/views/ArchiveView.vue
-        RUN cd app && npm ci --ignore-scripts && VITE_BASE=/ VITE_ENABLE_MSW=false VITE_API_BASE_URL=/api/v1 sh -c 'npx vue-tsc -b && npx vite build --target es2022'
+        RUN cd app && npm ci --ignore-scripts && VITE_BASE=/ VITE_ENABLE_MSW=false VITE_API_BASE_URL=/api/v1 npm run build
         FROM nginxinc/nginx-unprivileged:1.29-alpine@sha256:0c79d56aee561a1d81c63f00eee5fb5fe29279560cdc55e91425133104c7fbe6
         COPY --from=build /b/app/dist /usr/share/nginx/html
 
