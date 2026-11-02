@@ -49,6 +49,7 @@ const year = new Date().getFullYear();
         © {year} {site.name}
         {contact.cnpj && <span> · CNPJ {contact.cnpj}</span>}
         {contact.address && <span> · {contact.address}</span>}
+        <span> · <a href="/privacidade/">Política de privacidade</a></span>
       </p>
       <p class="muted">
         Conteúdo editorial do fundador em <a href={editorial.url} rel="noopener">{editorial.name}</a>
