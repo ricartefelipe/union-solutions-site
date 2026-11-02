@@ -169,7 +169,7 @@ Dados só saem do navegador por ação do visitante:
 
 A hospedagem pode registrar acessos em logs próprios.
 
-**Não há política de privacidade publicada**, porque ela depende de dados que ainda não existem: identificação do controlador, canal para o titular e serviço de recebimento. Avalie isso com quem cuida da conformidade jurídica da empresa antes de abrir o site ao público. Ao escolher o serviço, ajuste os avisos em `src/components/ContactForm.astro` e `src/components/DirectContact.astro`.
+A política de privacidade está em `/privacidade/` (`src/pages/privacidade.astro`). CNPJ e endereço entram por `PUBLIC_COMPANY_CNPJ` e `PUBLIC_COMPANY_ADDRESS`.
 
 ## Publicação
 
