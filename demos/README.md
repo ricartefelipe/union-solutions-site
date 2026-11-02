@@ -23,17 +23,17 @@ Cada pasta (`demos/<produto>/`) é uma demonstração pública de um produto da 
 | Fluxe B2B Suite | `demo-fluxe.unionsolutions.tech` | Conta pública `visitante@demo-fluxe.unionsolutions.tech` (nenhum e-mail é enviado): compra na loja (`/`), acompanha na operação (`/ops/`) e na administração (`/admin/`); perfil de piloto do produto, sem Keycloak e sem observabilidade | cerca de 1 GB | Gateway fictício, e-mail só em log, sem saída para a internet; autocadastro, troca e recuperação de senha fechados no proxy, porque as contas são compartilhadas |
 | cards-api | `demo-cards.unionsolutions.tech` | Conta `visitante@demo-cards.unionsolutions.tech`, senha `union-demo`: cria conta, simula a entrega por webhook, valida o cartão, emite cartão virtual e revela CVV; perfil `demo`, com simuladores | cerca de 730 MB, Keycloak incluso | Keycloak só na rede interna: o navegador alcança apenas a emissão de token. Conta compartilhada: não informe dados reais |
 | order-service | `demo-orders.unionsolutions.tech` | `/entrar` grava no navegador um token público com escopos de pedidos e abre o Order Ledger; cria e consulta pedidos | cerca de 330 MB | O token vale um ano e o segredo que o assina fica no `.env`; todos os visitantes usam a mesma origem de pedidos |
-| VueMind Wallet | `demo-vuemind.unionsolutions.tech` | `demo@vuemind.dev`, senha `demo123`: saldo, extrato, favorecidos e PIX, com o front Vue e a `vuemind-api` na mesma origem | cerca de 125 MB | API em memória. A tela de notificações mostra erro e o progresso inicial fica vazio: a API didática não tem esses recursos, que o front atual pede. Arquivo sem documentos |
+| VueMind Wallet | `demo-vuemind.unionsolutions.tech` | `demo@vuemind.dev`, senha `demo123`: saldo, extrato, favorecidos e PIX, com o front Vue e a `vuemind-api` na mesma origem | cerca de 125 MB | API em memória. Arquivo sem documentos |
 | SpringMind | `demo-springmind.unionsolutions.tech` | `demo@vuemind.dev`, senha `demo123`: carteira completa, com o front ReactMind na mesma origem e dados em PostgreSQL | cerca de 300 MB | Conta compartilhada. Arquivo sem documentos |
 | Skillforge | `demo-skillforge.unionsolutions.tech` | Contas `aluno`, `docente` e `administracao`, senha `union-demo`: a administração cria curso e turma e matricula, o docente publica, o aluno conclui a aula | cerca de 700 MB, Keycloak incluso | Só o login do Keycloak é público; console, contas e outros realms fechados no proxy. Uploads até 8 MB. Contas compartilhadas: não informe dados reais |
 
-Medido na VPS em 02/11/2026 com as onze demonstrações no ar e sem visitantes: cerca de 5 GB em uso e 2 GB disponíveis de 7,9 GB, com 80 MB de swap. Cada um dos dois Keycloak usa cerca de 450 MB. Atenção: no modo de demonstração do ComercialCloud a API aceita o locatário informado pelo navegador; só existem locatários fictícios da carga inicial, e os dados são recriados todo dia. Defeito do produto observado no teste: rotas inexistentes respondem 500 em vez de 404 (`GlobalExceptionMapper`), e duas imagens de produtos da carga inicial não carregam.
+Medido na VPS em 02/11/2026 com as onze demonstrações no ar e sem visitantes: cerca de 4,8 GB em uso pelas demonstrações e 2,3 GB disponíveis de 7,9 GB, com 420 MB de swap. Cada um dos dois Keycloak usa cerca de 450 MB. Atenção: no modo de demonstração do ComercialCloud a API aceita o locatário informado pelo navegador; só existem locatários fictícios da carga inicial, e os dados são recriados todo dia.
 
 ## Fluxe B2B Suite: o que a demonstração muda em relação ao produto
 
-Código em quatro repositórios, nas tags de `demos/fluxe/.env.example`. Depois de subir, `ajustar_carga` em `demo.sh` desativa as contas da plataforma, com senha pública no repositório do produto, troca a região dos locatários pela que as telas de pagamento aceitam e dá à conta pública o papel `admin`, para abrir as três aplicações, e um endereço no domínio da Union.
+Código em quatro repositórios, nas tags de `demos/fluxe/.env.example`. Depois de subir, `ajustar_carga` em `demo.sh` desativa as contas da plataforma, com senha pública no repositório do produto, e dá à conta pública o papel `admin`, para abrir as três aplicações, e um endereço no domínio da Union.
 
-Defeitos do produto vistos no teste e ainda não tratados: uma cobrança recorrente da carga inicial é reprocessada a cada minuto; o pedido gera dois pagamentos, um da loja e um do worker; o preço do item vem do navegador; cinco das imagens da carga (Unsplash) respondem 404; o dono de uma conta `admin` de um locatário lista todos os locatários.
+Defeito do produto visto no teste e ainda não tratado: o dono de uma conta `admin` de um locatário lista todos os locatários.
 
 ## ArchLens e AssinaFlow
 
@@ -53,7 +53,6 @@ Depois de instalar ou alterar um site, reinicie o proxy: as demonstrações fica
 - **Imagens:** `cards`, `orders`, `vuemind`, `springmind` e `skillforge` são construídas numa máquina de trabalho, com `sh demo.sh construir`, e carregadas na VPS. `subir` e `reiniciar-dados` não compilam.
 - **Skillforge:** a API e o front validam o emissor pela URL pública do Keycloak. Eles a alcançam pelo alias do proxy na rede `union-demos`, sem saída para a internet. Ao instalar o site, recrie o proxy com `docker compose --env-file .env -f compose.yaml up -d --no-build proxy`, para o alias valer.
 - **cards-api:** `demo.sh` dá e-mail e senha à conta `admin` do realm, porque o console exige e-mail e a carga do produto não traz nenhum.
-- **VueMind:** o commit fixado não constrói como está. O build da demonstração corrige o caminho do CSS da tela de arquivo e usa `--target es2022`.
 - **VueMind e SpringMind:** `SERVER_FORWARD_HEADERS_STRATEGY=framework` faz a API reconhecer a própria origem atrás do proxy; sem isso, o login responde 403 por CORS.
 
 ## Operação (na VPS, em `/opt/union-solutions/demos/<produto>`)
