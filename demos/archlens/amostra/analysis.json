@@ -1,0 +1,468 @@
+{
+  "analyzerVersion" : "0.1.0-SNAPSHOT",
+  "contentHash" : "sha256:317713a94df111d3924ede08c8871d780e87caa9bdf002b788dbc8c9fc3b1a30",
+  "cycles" : [ {
+    "evidenceIds" : [ "cycle:src/main/java/com/demo/billing/BillingService.java:com.demo.billing", "cycle:src/main/java/com/demo/billing/InvoiceProcessor.java:com.demo.billing", "cycle:src/main/java/com/demo/orders/Order.java:com.demo.orders", "cycle:src/main/java/com/demo/orders/OrderNotifier.java:com.demo.orders", "cycle:src/main/java/com/demo/orders/OrderResource.java:com.demo.orders" ],
+    "packages" : [ "com.demo.billing", "com.demo.orders" ]
+  } ],
+  "dependencies" : [ {
+    "coordinates" : "javax.jms:javax.jms-api:2.0.1",
+    "scope" : "compile",
+    "sourcePath" : "pom.xml"
+  }, {
+    "coordinates" : "javax.persistence:javax.persistence-api:2.2",
+    "scope" : "compile",
+    "sourcePath" : "pom.xml"
+  }, {
+    "coordinates" : "javax.servlet:javax.servlet-api:4.0.1",
+    "scope" : "provided",
+    "sourcePath" : "pom.xml"
+  }, {
+    "coordinates" : "javax.ws.rs:javax.ws.rs-api:2.1.1",
+    "scope" : "compile",
+    "sourcePath" : "pom.xml"
+  }, {
+    "coordinates" : "javax:javaee-api:8.0.1",
+    "scope" : "provided",
+    "sourcePath" : "pom.xml"
+  } ],
+  "durationMs" : 129,
+  "evidences" : [ {
+    "id" : "build:maven",
+    "kind" : "MANIFEST",
+    "locator" : "maven",
+    "path" : "pom.xml"
+  }, {
+    "id" : "cycle:src/main/java/com/demo/billing/BillingService.java:com.demo.billing",
+    "kind" : "FILE",
+    "locator" : "src/main/java/com/demo/billing/BillingService.java",
+    "path" : "src/main/java/com/demo/billing/BillingService.java"
+  }, {
+    "id" : "cycle:src/main/java/com/demo/billing/InvoiceProcessor.java:com.demo.billing",
+    "kind" : "FILE",
+    "locator" : "src/main/java/com/demo/billing/InvoiceProcessor.java",
+    "path" : "src/main/java/com/demo/billing/InvoiceProcessor.java"
+  }, {
+    "id" : "cycle:src/main/java/com/demo/orders/Order.java:com.demo.orders",
+    "kind" : "FILE",
+    "locator" : "src/main/java/com/demo/orders/Order.java",
+    "path" : "src/main/java/com/demo/orders/Order.java"
+  }, {
+    "id" : "cycle:src/main/java/com/demo/orders/OrderNotifier.java:com.demo.orders",
+    "kind" : "FILE",
+    "locator" : "src/main/java/com/demo/orders/OrderNotifier.java",
+    "path" : "src/main/java/com/demo/orders/OrderNotifier.java"
+  }, {
+    "id" : "cycle:src/main/java/com/demo/orders/OrderResource.java:com.demo.orders",
+    "kind" : "FILE",
+    "locator" : "src/main/java/com/demo/orders/OrderResource.java",
+    "path" : "src/main/java/com/demo/orders/OrderResource.java"
+  }, {
+    "id" : "dep:javax.jms:javax.jms-api:2.0.1",
+    "kind" : "PATTERN",
+    "locator" : "pattern:dependency-coordinate",
+    "path" : "pom.xml",
+    "snippetHash" : "sha256:5f44bc735e18484a8b97ba07a72eebc6b26edd9c917d10959c3172ee8c25ea7c"
+  }, {
+    "id" : "dep:javax.persistence:javax.persistence-api:2.2",
+    "kind" : "PATTERN",
+    "locator" : "pattern:dependency-coordinate",
+    "path" : "pom.xml",
+    "snippetHash" : "sha256:001248293f2e9db3fe1489385c2f81fb5955a4abb42f6532ad81bd93700b9049"
+  }, {
+    "id" : "dep:javax.servlet:javax.servlet-api:4.0.1",
+    "kind" : "PATTERN",
+    "locator" : "pattern:dependency-coordinate",
+    "path" : "pom.xml",
+    "snippetHash" : "sha256:5b28dbdf91c3769d57be3c187a6070fff3045766b7d42dcefccde4025bf7316b"
+  }, {
+    "id" : "dep:javax.ws.rs:javax.ws.rs-api:2.1.1",
+    "kind" : "PATTERN",
+    "locator" : "pattern:dependency-coordinate",
+    "path" : "pom.xml",
+    "snippetHash" : "sha256:e664d495fbd7f7ca639e3320632fd694df66e8c27dbaae1248855d5df9b7ba53"
+  }, {
+    "id" : "endpoint:src/main/java/com/demo/integration/LegacySoapService.java:soap",
+    "kind" : "LINE_RANGE",
+    "locator" : "line:1",
+    "path" : "src/main/java/com/demo/integration/LegacySoapService.java",
+    "snippetHash" : "sha256:85cd338fe3bf7b964947122dc6cd3a7c9afec26019197549d982633d895a74fb"
+  }, {
+    "id" : "endpoint:src/main/java/com/demo/orders/OrderResource.java:jaxrs",
+    "kind" : "LINE_RANGE",
+    "locator" : "line:1",
+    "path" : "src/main/java/com/demo/orders/OrderResource.java",
+    "snippetHash" : "sha256:f8d7773185881078c96e8295c4c1f6923a4d0fc5b3f26753172cfe07e7c934fe"
+  }, {
+    "id" : "hotspot:src/main/java/com/demo/billing/InvoiceProcessor.java",
+    "kind" : "FILE",
+    "locator" : "src/main/java/com/demo/billing/InvoiceProcessor.java",
+    "path" : "src/main/java/com/demo/billing/InvoiceProcessor.java"
+  }, {
+    "id" : "manifest:pom.xml:pom.xml",
+    "kind" : "MANIFEST",
+    "locator" : "pom.xml",
+    "path" : "pom.xml"
+  }, {
+    "id" : "messaging:src/main/java/com/demo/messaging/OrderQueueListener.java:jms",
+    "kind" : "LINE_RANGE",
+    "locator" : "line:1",
+    "path" : "src/main/java/com/demo/messaging/OrderQueueListener.java",
+    "snippetHash" : "sha256:d9c41832f41867677dbab855e1f2c10dcf9d5652051fd02cc23d9a3822f0c3c0"
+  }, {
+    "id" : "persistence:src/main/java/com/demo/orders/Order.java:jpa",
+    "kind" : "LINE_RANGE",
+    "locator" : "line:1",
+    "path" : "src/main/java/com/demo/orders/Order.java",
+    "snippetHash" : "sha256:dcbe8fe93b6cd932a57d9712a2246f5242708ab664962a8a0f730f63df409d75"
+  }, {
+    "id" : "quality:insufficient-tests",
+    "kind" : "PATTERN",
+    "locator" : "pattern:test-ratio",
+    "path" : ".",
+    "snippetHash" : "sha256:8e3ef543b0705d23598bcb1059058f53bc7d3565da178e083821d97119bc1ada"
+  }, {
+    "id" : "secret:src/main/java/com/demo/config/LegacyConfig.java:PASSWORD:5",
+    "kind" : "LINE_RANGE",
+    "locator" : "line:5",
+    "path" : "src/main/java/com/demo/config/LegacyConfig.java",
+    "snippetHash" : "sha256:45f322826b089b8a83e17701a93313f44f1072e532f611164cdc87abc93ac531"
+  }, {
+    "id" : "src:src/main/java/com/demo/billing/BillingService.java:ee",
+    "kind" : "PATTERN",
+    "locator" : "pattern:regex-heuristic",
+    "path" : "src/main/java/com/demo/billing/BillingService.java",
+    "snippetHash" : "sha256:2de22a7829a4cbcbab52d49a7ca07f425fc321518360d8e256a0502d565125bb"
+  }, {
+    "id" : "src:src/main/java/com/demo/billing/BillingService.java:ejb",
+    "kind" : "PATTERN",
+    "locator" : "pattern:regex-heuristic",
+    "path" : "src/main/java/com/demo/billing/BillingService.java",
+    "snippetHash" : "sha256:ea183013fae294e3dcfd974fbc5a9da8436e343eb6573a5dba4c026df0dfd434"
+  }, {
+    "id" : "src:src/main/java/com/demo/billing/BillingService.java:javax",
+    "kind" : "PATTERN",
+    "locator" : "pattern:regex-heuristic",
+    "path" : "src/main/java/com/demo/billing/BillingService.java",
+    "snippetHash" : "sha256:6107cb817338d85be5f629c3353ec9456b0d1045cc78df978f4101ef1c1a2fab"
+  }, {
+    "id" : "src:src/main/java/com/demo/billing/InvoiceProcessor.java:ee",
+    "kind" : "PATTERN",
+    "locator" : "pattern:regex-heuristic",
+    "path" : "src/main/java/com/demo/billing/InvoiceProcessor.java",
+    "snippetHash" : "sha256:2de22a7829a4cbcbab52d49a7ca07f425fc321518360d8e256a0502d565125bb"
+  }, {
+    "id" : "src:src/main/java/com/demo/billing/InvoiceProcessor.java:ejb",
+    "kind" : "PATTERN",
+    "locator" : "pattern:regex-heuristic",
+    "path" : "src/main/java/com/demo/billing/InvoiceProcessor.java",
+    "snippetHash" : "sha256:ea183013fae294e3dcfd974fbc5a9da8436e343eb6573a5dba4c026df0dfd434"
+  }, {
+    "id" : "src:src/main/java/com/demo/billing/InvoiceProcessor.java:javax",
+    "kind" : "PATTERN",
+    "locator" : "pattern:regex-heuristic",
+    "path" : "src/main/java/com/demo/billing/InvoiceProcessor.java",
+    "snippetHash" : "sha256:6107cb817338d85be5f629c3353ec9456b0d1045cc78df978f4101ef1c1a2fab"
+  }, {
+    "id" : "src:src/main/java/com/demo/billing/InvoiceProcessor.java:system.out",
+    "kind" : "PATTERN",
+    "locator" : "pattern:regex-heuristic",
+    "path" : "src/main/java/com/demo/billing/InvoiceProcessor.java",
+    "snippetHash" : "sha256:e87bc60c95340fde888172c6ce4a342550d2a4e2d9ec79acf5d8b522947f98bc"
+  }, {
+    "id" : "src:src/main/java/com/demo/config/LegacyConfig.java:system.out",
+    "kind" : "PATTERN",
+    "locator" : "pattern:regex-heuristic",
+    "path" : "src/main/java/com/demo/config/LegacyConfig.java",
+    "snippetHash" : "sha256:e87bc60c95340fde888172c6ce4a342550d2a4e2d9ec79acf5d8b522947f98bc"
+  }, {
+    "id" : "src:src/main/java/com/demo/integration/LegacySoapService.java:javax",
+    "kind" : "PATTERN",
+    "locator" : "pattern:regex-heuristic",
+    "path" : "src/main/java/com/demo/integration/LegacySoapService.java",
+    "snippetHash" : "sha256:6107cb817338d85be5f629c3353ec9456b0d1045cc78df978f4101ef1c1a2fab"
+  }, {
+    "id" : "src:src/main/java/com/demo/integration/LegacySoapService.java:soap",
+    "kind" : "PATTERN",
+    "locator" : "pattern:regex-heuristic",
+    "path" : "src/main/java/com/demo/integration/LegacySoapService.java",
+    "snippetHash" : "sha256:1efe762739bcb917844e5e8d5c3e2ce1331839f856c9ede84e8a7c557e5ebf9d"
+  }, {
+    "id" : "src:src/main/java/com/demo/messaging/OrderQueueListener.java:javax",
+    "kind" : "PATTERN",
+    "locator" : "pattern:regex-heuristic",
+    "path" : "src/main/java/com/demo/messaging/OrderQueueListener.java",
+    "snippetHash" : "sha256:6107cb817338d85be5f629c3353ec9456b0d1045cc78df978f4101ef1c1a2fab"
+  }, {
+    "id" : "src:src/main/java/com/demo/messaging/OrderQueueListener.java:jms",
+    "kind" : "PATTERN",
+    "locator" : "pattern:regex-heuristic",
+    "path" : "src/main/java/com/demo/messaging/OrderQueueListener.java",
+    "snippetHash" : "sha256:5f44bc735e18484a8b97ba07a72eebc6b26edd9c917d10959c3172ee8c25ea7c"
+  }, {
+    "id" : "src:src/main/java/com/demo/messaging/OrderQueueListener.java:system.out",
+    "kind" : "PATTERN",
+    "locator" : "pattern:regex-heuristic",
+    "path" : "src/main/java/com/demo/messaging/OrderQueueListener.java",
+    "snippetHash" : "sha256:e87bc60c95340fde888172c6ce4a342550d2a4e2d9ec79acf5d8b522947f98bc"
+  }, {
+    "id" : "src:src/main/java/com/demo/orders/Order.java:javax",
+    "kind" : "PATTERN",
+    "locator" : "pattern:regex-heuristic",
+    "path" : "src/main/java/com/demo/orders/Order.java",
+    "snippetHash" : "sha256:6107cb817338d85be5f629c3353ec9456b0d1045cc78df978f4101ef1c1a2fab"
+  }, {
+    "id" : "src:src/main/java/com/demo/orders/Order.java:jpa",
+    "kind" : "PATTERN",
+    "locator" : "pattern:regex-heuristic",
+    "path" : "src/main/java/com/demo/orders/Order.java",
+    "snippetHash" : "sha256:001248293f2e9db3fe1489385c2f81fb5955a4abb42f6532ad81bd93700b9049"
+  }, {
+    "id" : "src:src/main/java/com/demo/orders/OrderNotifier.java:cdi",
+    "kind" : "PATTERN",
+    "locator" : "pattern:regex-heuristic",
+    "path" : "src/main/java/com/demo/orders/OrderNotifier.java",
+    "snippetHash" : "sha256:cd1e8da66e70768f6d7b6753192555d3f3255c5c4b73a021be09d072a6f61145"
+  }, {
+    "id" : "src:src/main/java/com/demo/orders/OrderNotifier.java:ee",
+    "kind" : "PATTERN",
+    "locator" : "pattern:regex-heuristic",
+    "path" : "src/main/java/com/demo/orders/OrderNotifier.java",
+    "snippetHash" : "sha256:2de22a7829a4cbcbab52d49a7ca07f425fc321518360d8e256a0502d565125bb"
+  }, {
+    "id" : "src:src/main/java/com/demo/orders/OrderNotifier.java:ejb",
+    "kind" : "PATTERN",
+    "locator" : "pattern:regex-heuristic",
+    "path" : "src/main/java/com/demo/orders/OrderNotifier.java",
+    "snippetHash" : "sha256:ea183013fae294e3dcfd974fbc5a9da8436e343eb6573a5dba4c026df0dfd434"
+  }, {
+    "id" : "src:src/main/java/com/demo/orders/OrderNotifier.java:javax",
+    "kind" : "PATTERN",
+    "locator" : "pattern:regex-heuristic",
+    "path" : "src/main/java/com/demo/orders/OrderNotifier.java",
+    "snippetHash" : "sha256:6107cb817338d85be5f629c3353ec9456b0d1045cc78df978f4101ef1c1a2fab"
+  }, {
+    "id" : "src:src/main/java/com/demo/orders/OrderResource.java:javax",
+    "kind" : "PATTERN",
+    "locator" : "pattern:regex-heuristic",
+    "path" : "src/main/java/com/demo/orders/OrderResource.java",
+    "snippetHash" : "sha256:6107cb817338d85be5f629c3353ec9456b0d1045cc78df978f4101ef1c1a2fab"
+  }, {
+    "id" : "src:src/main/java/com/demo/orders/OrderResource.java:jaxrs",
+    "kind" : "PATTERN",
+    "locator" : "pattern:regex-heuristic",
+    "path" : "src/main/java/com/demo/orders/OrderResource.java",
+    "snippetHash" : "sha256:e664d495fbd7f7ca639e3320632fd694df66e8c27dbaae1248855d5df9b7ba53"
+  } ],
+  "generatedAt" : "2026-11-02T05:45:23.703345846Z",
+  "hotspots" : [ {
+    "evidenceId" : "hotspot:src/main/java/com/demo/billing/InvoiceProcessor.java",
+    "lineCount" : 92,
+    "path" : "src/main/java/com/demo/billing/InvoiceProcessor.java",
+    "reason" : "Large file"
+  } ],
+  "inventory" : {
+    "endpoints" : [ {
+      "evidenceId" : "endpoint:src/main/java/com/demo/integration/LegacySoapService.java:soap",
+      "pathOrName" : "LegacySoapService",
+      "sourcePath" : "src/main/java/com/demo/integration/LegacySoapService.java",
+      "type" : "SOAP"
+    }, {
+      "evidenceId" : "endpoint:src/main/java/com/demo/orders/OrderResource.java:jaxrs",
+      "pathOrName" : "/orders",
+      "sourcePath" : "src/main/java/com/demo/orders/OrderResource.java",
+      "type" : "JAX_RS"
+    } ],
+    "messaging" : [ {
+      "evidenceId" : "messaging:src/main/java/com/demo/messaging/OrderQueueListener.java:jms",
+      "name" : "OrderQueueListener",
+      "sourcePath" : "src/main/java/com/demo/messaging/OrderQueueListener.java",
+      "technology" : "JMS"
+    } ],
+    "modules" : [ {
+      "buildSystem" : "MAVEN",
+      "name" : ".",
+      "path" : "."
+    } ],
+    "packages" : [ {
+      "fileCount" : 2,
+      "lineCount" : 116,
+      "name" : "com.demo.billing"
+    }, {
+      "fileCount" : 1,
+      "lineCount" : 19,
+      "name" : "com.demo.config"
+    }, {
+      "fileCount" : 1,
+      "lineCount" : 14,
+      "name" : "com.demo.integration"
+    }, {
+      "fileCount" : 1,
+      "lineCount" : 18,
+      "name" : "com.demo.messaging"
+    }, {
+      "fileCount" : 3,
+      "lineCount" : 77,
+      "name" : "com.demo.orders"
+    } ],
+    "persistence" : [ {
+      "evidenceId" : "persistence:src/main/java/com/demo/orders/Order.java:jpa",
+      "name" : "Order",
+      "sourcePath" : "src/main/java/com/demo/orders/Order.java",
+      "technology" : "JPA"
+    } ],
+    "types" : [ {
+      "annotations" : [ "Stateless" ],
+      "fqn" : "com.demo.billing.BillingService",
+      "kind" : "CLASS",
+      "lineCount" : 24,
+      "packageName" : "com.demo.billing",
+      "path" : "src/main/java/com/demo/billing/BillingService.java"
+    }, {
+      "annotations" : [ "Stateless" ],
+      "fqn" : "com.demo.billing.InvoiceProcessor",
+      "kind" : "CLASS",
+      "lineCount" : 92,
+      "packageName" : "com.demo.billing",
+      "path" : "src/main/java/com/demo/billing/InvoiceProcessor.java"
+    }, {
+      "annotations" : [ ],
+      "fqn" : "com.demo.config.LegacyConfig",
+      "kind" : "CLASS",
+      "lineCount" : 19,
+      "packageName" : "com.demo.config",
+      "path" : "src/main/java/com/demo/config/LegacyConfig.java"
+    }, {
+      "annotations" : [ "WebMethod", "WebService" ],
+      "fqn" : "com.demo.integration.LegacySoapService",
+      "kind" : "CLASS",
+      "lineCount" : 14,
+      "packageName" : "com.demo.integration",
+      "path" : "src/main/java/com/demo/integration/LegacySoapService.java"
+    }, {
+      "annotations" : [ "Override" ],
+      "fqn" : "com.demo.messaging.OrderQueueListener",
+      "kind" : "CLASS",
+      "lineCount" : 18,
+      "packageName" : "com.demo.messaging",
+      "path" : "src/main/java/com/demo/messaging/OrderQueueListener.java"
+    }, {
+      "annotations" : [ "Entity", "Id", "Table" ],
+      "fqn" : "com.demo.orders.Order",
+      "kind" : "CLASS",
+      "lineCount" : 40,
+      "packageName" : "com.demo.orders",
+      "path" : "src/main/java/com/demo/orders/Order.java"
+    }, {
+      "annotations" : [ "Inject", "Stateless" ],
+      "fqn" : "com.demo.orders.OrderNotifier",
+      "kind" : "CLASS",
+      "lineCount" : 18,
+      "packageName" : "com.demo.orders",
+      "path" : "src/main/java/com/demo/orders/OrderNotifier.java"
+    }, {
+      "annotations" : [ "GET", "Path", "Produces" ],
+      "fqn" : "com.demo.orders.OrderResource",
+      "kind" : "CLASS",
+      "lineCount" : 19,
+      "packageName" : "com.demo.orders",
+      "path" : "src/main/java/com/demo/orders/OrderResource.java"
+    } ]
+  },
+  "metrics" : {
+    "dependencyCount" : 5,
+    "fileCount" : 9,
+    "javaFileCount" : 8,
+    "lineCount" : 244,
+    "testFileCount" : 0,
+    "typeCount" : 8
+  },
+  "project" : {
+    "buildSystems" : [ "MAVEN" ],
+    "javaVersionHint" : "8",
+    "languages" : [ "Java" ],
+    "rootName" : "legacy-java-demo"
+  },
+  "schemaVersion" : "1.0.0",
+  "secrets" : [ {
+    "confidence" : "HIGH",
+    "detector" : "regex.secret-detector",
+    "line" : 5,
+    "path" : "src/main/java/com/demo/config/LegacyConfig.java",
+    "type" : "PASSWORD",
+    "valueHash" : "sha256:2d3c90827dbb4da3515142c756bb78366887b57855f91b23e4b42aaf7132bef4"
+  } ],
+  "signals" : [ {
+    "category" : "API",
+    "confidence" : "HIGH",
+    "evidenceIds" : [ "dep:javax.ws.rs:javax.ws.rs-api:2.1.1", "src:src/main/java/com/demo/orders/OrderResource.java:jaxrs" ],
+    "id" : "api.jax-rs",
+    "name" : "JAX-RS"
+  }, {
+    "category" : "API",
+    "confidence" : "HIGH",
+    "evidenceIds" : [ "dep:javax.servlet:javax.servlet-api:4.0.1" ],
+    "id" : "api.servlet",
+    "name" : "Servlet"
+  }, {
+    "category" : "API",
+    "confidence" : "HIGH",
+    "evidenceIds" : [ "src:src/main/java/com/demo/integration/LegacySoapService.java:soap" ],
+    "id" : "api.soap",
+    "name" : "SOAP WebService"
+  }, {
+    "category" : "BUILD",
+    "confidence" : "HIGH",
+    "evidenceIds" : [ "build:maven" ],
+    "id" : "build.maven",
+    "name" : "Maven"
+  }, {
+    "category" : "EE",
+    "confidence" : "MEDIUM",
+    "evidenceIds" : [ "src:src/main/java/com/demo/orders/OrderNotifier.java:cdi" ],
+    "id" : "ee.cdi",
+    "name" : "CDI"
+  }, {
+    "category" : "EE",
+    "confidence" : "HIGH",
+    "evidenceIds" : [ "src:src/main/java/com/demo/billing/BillingService.java:ejb", "src:src/main/java/com/demo/billing/InvoiceProcessor.java:ejb", "src:src/main/java/com/demo/orders/OrderNotifier.java:ejb" ],
+    "id" : "ee.ejb",
+    "name" : "EJB"
+  }, {
+    "category" : "EE",
+    "confidence" : "HIGH",
+    "evidenceIds" : [ "src:src/main/java/com/demo/billing/BillingService.java:javax", "src:src/main/java/com/demo/billing/InvoiceProcessor.java:javax", "src:src/main/java/com/demo/integration/LegacySoapService.java:javax", "src:src/main/java/com/demo/messaging/OrderQueueListener.java:javax", "src:src/main/java/com/demo/orders/Order.java:javax", "src:src/main/java/com/demo/orders/OrderNotifier.java:javax", "src:src/main/java/com/demo/orders/OrderResource.java:javax" ],
+    "id" : "ee.javax-namespace",
+    "name" : "javax.* namespace"
+  }, {
+    "category" : "EE",
+    "confidence" : "MEDIUM",
+    "evidenceIds" : [ "src:src/main/java/com/demo/billing/BillingService.java:ee", "src:src/main/java/com/demo/billing/InvoiceProcessor.java:ee", "src:src/main/java/com/demo/orders/OrderNotifier.java:ee" ],
+    "id" : "ee.platform",
+    "name" : "Java EE / Jakarta EE"
+  }, {
+    "category" : "MESSAGING",
+    "confidence" : "HIGH",
+    "evidenceIds" : [ "dep:javax.jms:javax.jms-api:2.0.1", "src:src/main/java/com/demo/messaging/OrderQueueListener.java:jms" ],
+    "id" : "messaging.jms",
+    "name" : "JMS"
+  }, {
+    "category" : "PERSISTENCE",
+    "confidence" : "HIGH",
+    "evidenceIds" : [ "dep:javax.persistence:javax.persistence-api:2.2", "src:src/main/java/com/demo/orders/Order.java:jpa" ],
+    "id" : "persistence.jpa",
+    "name" : "JPA"
+  }, {
+    "category" : "QUALITY",
+    "confidence" : "MEDIUM",
+    "evidenceIds" : [ "quality:insufficient-tests" ],
+    "id" : "quality.insufficient-tests",
+    "name" : "Insufficient tests"
+  }, {
+    "category" : "QUALITY",
+    "confidence" : "HIGH",
+    "evidenceIds" : [ "src:src/main/java/com/demo/billing/InvoiceProcessor.java:system.out", "src:src/main/java/com/demo/config/LegacyConfig.java:system.out", "src:src/main/java/com/demo/messaging/OrderQueueListener.java:system.out" ],
+    "id" : "quality.system-out",
+    "name" : "System.out usage"
+  } ]
+}

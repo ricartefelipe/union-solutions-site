@@ -1,0 +1,132 @@
+# Demonstração pública do AssinaFlow na mesma VPS do portal, isolada: rede própria para banco/cache/fila, rede `demos` só
+# com o proxy e o frontend. Cobrança real segue bloqueada (modo "demo" + gateway "simulated"), sem chave do Stripe e sem
+# saída para a internet: o produto não faz nenhuma chamada externa nesse modo.
+name: demo-assinaflow
+
+x-comum: &comum
+  restart: unless-stopped
+  oom_score_adj: 500
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  postgres:
+    <<: *comum
+    build:
+      context: ${ASSINAFLOW_SRC:-./src}/deploy/images
+      dockerfile: postgres.Dockerfile
+    user: "70:70"
+    environment:
+      POSTGRES_DB: subscriptions
+      POSTGRES_USER: subscriptions
+      POSTGRES_PASSWORD: ${ASSINAFLOW_DB_PASSWORD:?}
+    volumes:
+      - dados:/var/lib/postgresql/data
+    networks: [interna]
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U subscriptions -d subscriptions"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    <<: *comum
+    build:
+      context: ${ASSINAFLOW_SRC:-./src}/deploy/images
+      dockerfile: redis.Dockerfile
+    networks: [interna]
+    mem_limit: 128m
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  rabbitmq:
+    <<: *comum
+    build:
+      context: ${ASSINAFLOW_SRC:-./src}/deploy/images
+      dockerfile: rabbitmq.Dockerfile
+    environment:
+      RABBITMQ_DEFAULT_USER: assinaflow
+      RABBITMQ_DEFAULT_PASS: ${ASSINAFLOW_RABBIT_PASSWORD:?}
+    networks: [interna]
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    <<: *comum
+    build:
+      context: ${ASSINAFLOW_SRC:-./src}/backend
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: "8080"
+      DB_URL: jdbc:postgresql://postgres:5432/subscriptions
+      DB_USERNAME: subscriptions
+      DB_PASSWORD: ${ASSINAFLOW_DB_PASSWORD:?}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      RABBIT_HOST: rabbitmq
+      RABBIT_PORT: "5672"
+      RABBIT_USERNAME: assinaflow
+      RABBIT_PASSWORD: ${ASSINAFLOW_RABBIT_PASSWORD:?}
+      APP_SCHEDULER_ENABLED: "true"
+      APP_PAYMENTS_ASYNC_ENABLED: "true"
+      APP_BILLING_MODE: demo
+      APP_PAYMENTS_GATEWAY: simulated
+      JWT_SECRET: ${ASSINAFLOW_JWT_SECRET:?}
+      APP_CORS_ORIGINS: https://${DEMO_HOST:?}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks: [interna]
+    mem_limit: 640m
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/actuator/health/readiness || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  web:
+    <<: *comum
+    build:
+      context: ${ASSINAFLOW_SRC:-./src}/frontend
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      interna:
+      demos:
+        aliases: [assinaflow-web]
+    mem_limit: 128m
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/"]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+volumes:
+  dados:
+
+networks:
+  interna:
+    internal: true
+  demos:
+    external: true
+    name: ${PORTAL_DEMOS_NETWORK:-union-portal-prod_demos}
