@@ -1,0 +1,18 @@
+# Achados aceitos explicitamente por Felipe em 01/11/2026, um a um, com validade. A avaliação de cada um está em
+# portal/docs/VULNERABILIDADES.md. Vencido o prazo, a análise de imagens volta a reprovar até nova decisão.
+vulnerabilities:
+  - id: CVE-2026-116587
+    statement: "go-jose v3 (proxy) sem correção na linha v3 e v4 (SeaweedFS) sem imagem oficial corrigida; caminho de código ausente na configuração: sem tls internal, ACME interno ou JWT no proxy; SeaweedFS só em rede interna e sem JWT. Itens 1 e 2."
+    expired_at: 2026-12-01
+  - id: CVE-2026-102554
+    statement: "Guava no Keycloak 26.8.1, sem versão do Keycloak com a correção; instância única, sem desserialização de dados de cliente. Item 3."
+    expired_at: 2026-12-01
+  - id: CVE-2026-119373
+    statement: "sqlite-libs na base UBI 9 do Keycloak, sem correção da distribuição; nenhum processo usa a biblioteca. Item 4."
+    expired_at: 2026-12-01
+  - id: CVE-2026-119586
+    statement: "sqlite-libs na base UBI 9 do Keycloak, sem correção da distribuição; nenhum processo usa a biblioteca. Item 5."
+    expired_at: 2026-12-01
+  - id: CVE-2026-91403
+    statement: "OpenJDK do Keycloak, will_not_fix; o armazém de confiança da imagem não contém a autoridade em questão. Item 6."
+    expired_at: 2026-12-01

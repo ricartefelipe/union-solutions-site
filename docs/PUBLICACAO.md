@@ -86,7 +86,7 @@ Domínio e caixa postal **não são pendências**. A confirmação de que funcio
 | Atualização | Implantação, seção "Atualização" |
 | Backup e recuperação | [`OPERACAO.md`](../portal/docs/OPERACAO.md) |
 | Segurança e limitações | [`SEGURANCA.md`](../portal/docs/SEGURANCA.md) |
-| Vulnerabilidades e decisão residual (de Felipe) | [`VULNERABILIDADES.md`](../portal/docs/VULNERABILIDADES.md) |
+| Vulnerabilidades e aceite registrado (reavaliar até 01/12/2026) | [`VULNERABILIDADES.md`](../portal/docs/VULNERABILIDADES.md) |
 | Privacidade | [`PRIVACIDADE.md`](../portal/docs/PRIVACIDADE.md) |
 | Resultados | [`EVIDENCIAS.md`](../portal/docs/EVIDENCIAS.md) |
 | Matriz de requisitos, implementação e testes | [`MATRIZ.md`](../portal/docs/MATRIZ.md) |
@@ -111,7 +111,7 @@ Itens originais, mantidos para referência do que cada variável exige:
 3. Preencher em `portal/deploy/production/.env`: `PORTAL_SMTP_HOST`, `PORTAL_SMTP_USER`, `PORTAL_SMTP_PASSWORD`, `PORTAL_BOOTSTRAP_ADMIN_EMAIL`, `PORTAL_PRODUCT_LINK_HOSTS`, `RESTIC_REPOSITORY` (sftp na conta de hospedagem do site, com `chave-backup` e `destino-backup`), `PORTAL_BACKUP_SFTP_PORT`, `PORTAL_BACKUP_KEEP_DAILY`, `PORTAL_BACKUP_KEEP_WEEKLY` e `PORTAL_BACKUP_KEEP_MONTHLY`.
 4. Validar emissão do certificado, entrega de e-mail, backup externo e portas fechadas a partir de fora.
 5. Preencher os campos de `PRIVACIDADE.md` antes de abrir o portal a clientes.
-6. **Decidir sobre os seis achados altos de `VULNERABILIDADES.md`** (aceitar, mitigar antes ou bloquear): nenhum aceite foi registrado, e até a decisão o portal não deve ser aberto a clientes. Repetir a análise com a base do dia antes de implantar.
+6. Seis achados altos de `VULNERABILIDADES.md`: **aceitos por Felipe em 01/11/2026**, com reavaliação até 01/12/2026 e análise semanal automática. Deixou de ser bloqueio.
 7. Na atualização para esta versão, avisar quem estiver logado: todas as sessões anteriores são encerradas (`IMPLANTACAO.md`, "Atualização").
 8. **Aprovar a política de retenção** antes de ligar `PORTAL_RETENTION_ENABLED`: até lá o portal só simula e nada é removido (`portal/docs/OPERACAO.md`, "Retenção"). Nenhum prazo foi definido no código.
 
