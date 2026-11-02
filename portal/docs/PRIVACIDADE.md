@@ -52,9 +52,9 @@ Nenhum destes dados foi inventado. Os itens marcados como "A DEFINIR" precisam e
 
 | Campo | Valor |
 | --- | --- |
-| Razão social do controlador | A DEFINIR |
-| CNPJ | A DEFINIR |
-| Endereço | A DEFINIR |
+| Nome do controlador | Union Solutions (nome fantasia). A razão social não é publicada, por decisão de 02/11/2026, e pode ser consultada pelo CNPJ |
+| CNPJ | 22.009.992/0001-50 |
+| Endereço | Não publicado, por decisão de 02/11/2026 |
 | Canal para o titular | `contato@unionsolutions.tech`, designado em 02/11/2026 |
 | Encarregado (DPO), se aplicável | A DEFINIR |
 | Papéis de controlador e operador perante cada cliente | Controladora das contas do portal; pode atuar como operadora nos conteúdos do cliente. Cada contrato confirma |
