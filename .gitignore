@@ -42,3 +42,11 @@ __pycache__/
 # Chave e identidade do destino de backup: só o README é versionado
 portal/deploy/production/backup-ssh/*
 !portal/deploy/production/backup-ssh/README.md
+
+# Sites adicionais do proxy: instalados por demos/*/demo.sh, não versionados
+portal/deploy/production/sites/*.caddy
+!portal/deploy/production/sites/00-vazio.caddy
+
+# Demonstrações: configuração e código do produto ficam só no servidor
+demos/*/.env
+demos/*/src/
