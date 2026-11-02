@@ -37,7 +37,7 @@ export function InvitationFlow() {
       } else {
         setState(response ? 'invalid' : 'error');
       }
-    })();
+    })().catch(() => setState('error'));
   }, []);
 
   async function requestPassword() {

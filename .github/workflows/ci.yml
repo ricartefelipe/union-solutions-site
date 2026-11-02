@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - run: npm ci
+      - run: npm ci --ignore-scripts
       - name: Tipos, build e links internos
         run: npm run verify
       - name: Build em cada modo de contato, em pasta isolada
@@ -53,7 +53,7 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: portal/frontend/package-lock.json
-      - run: npm ci
+      - run: npm ci --ignore-scripts
       - run: npm run typecheck
       - run: npm run check:brand
       - run: npm audit --omit=dev
@@ -126,7 +126,7 @@ jobs:
           cache-dependency-path: portal/e2e/package-lock.json
       - name: Ambiente local completo (Keycloak, PostgreSQL, SeaweedFS, ClamAV, Mailpit)
         run: sh portal/deploy/local/portal.sh up
-      - run: npm ci
+      - run: npm ci --ignore-scripts
         working-directory: portal/e2e
       - run: node node_modules/@playwright/test/cli.js install --with-deps chromium
         working-directory: portal/e2e
