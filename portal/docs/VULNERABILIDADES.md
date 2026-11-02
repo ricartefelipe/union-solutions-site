@@ -2,7 +2,7 @@
 
 Resumo versionado da análise das imagens finais e das dependências. O relatório completo (JSON por imagem, `ferramenta.txt`, `imagens.txt`, `resumo.txt`) fica em `artifacts/portal-qa/producao/vulnerabilidades/`, pasta local não versionada.
 
-**Decisão pendente.** Os achados altos abaixo não têm atualização suportada disponível na data. Cada um traz uma recomendação individual; **nenhum aceite foi registrado**, e a decisão cabe a Felipe. Até ela existir, a abertura do portal a clientes fica **bloqueada operacionalmente** por este documento (ver "Bloqueio operacional").
+**Decisão registrada em 01/11/2026.** Felipe aceitou explicitamente os seis achados altos abaixo (itens 1 a 6), nas condições anotadas em cada um e com reavaliação obrigatória até **01/12/2026**. O aceite vale para a configuração descrita: instância única do Keycloak, SeaweedFS só em rede interna e sem JWT, Caddyfile sem `tls internal`, ACME interno ou autenticação JWT, SMTP com certificado de provedor conhecido. Qualquer mudança nessas condições, nova versão de imagem com correção ou o vencimento do prazo reabre a decisão. O arquivo `.trivyignore.yaml` na raiz do repositório reproduz o aceite para a análise de imagens da CI, CVE a CVE, com a mesma validade; vencida, a análise volta a reprovar sozinha. Os achados abaixo não têm atualização suportada disponível na data; cada um traz a avaliação individual. Até ela existir, a abertura do portal a clientes fica **bloqueada operacionalmente** por este documento (ver "Bloqueio operacional").
 
 **Reavaliação de 01/11/2026** (base de vulnerabilidades do próprio dia, imagens da configuração de produção reconstruídas com a versão 1.2.1, relatório em `artifacts/portal-qa/producao/vulnerabilidades-2026-11-01/`): os mesmos seis achados altos, nenhum crítico, nenhuma atualização suportada nova. Keycloak 26.8.1 continua sendo a última versão publicada; SeaweedFS 4.51 idem; `go-jose/v3` continua sem correção (a linha v4 está em 4.1.7). Evidência adicional para o item 6: o armazém de confiança do JDK da imagem do Keycloak não contém nenhum certificado da eMudhra (`keytool -list -cacerts`, 0 ocorrências), portanto a desconfiança que o pacote corrigido traria já é o estado efetivo. A imagem do Keycloak é `ubi9-micro`, sem gerenciador de pacotes: o `sqlite-libs` dos itens 4 e 5 não pode ser removido pela imagem derivada, e nenhum processo o carrega.
 
@@ -124,9 +124,9 @@ Por isso nenhuma atualização suportada foi aplicada nesta rodada além das já
 - Keycloak: 38 médias e 28 baixas em pacotes da base UBI 9, sem correção publicada.
 - Proxy: 3 médias em dependências Go indiretas, sem correção publicada.
 
-## Bloqueio operacional
+## Decisão operacional
 
-Enquanto não houver decisão registrada por Felipe sobre os itens 1 a 6 (aceitar, mitigar antes ou bloquear), **o portal não deve ser aberto a clientes**. `docs/PUBLICACAO.md` lista essa decisão entre as pendências. A preparação técnica está concluída; a decisão não é da implementação.
+Itens 1 a 6 aceitos por Felipe em 01/11/2026, com reavaliação até 01/12/2026 (ver o início deste documento). Este item deixou de bloquear a abertura do portal a clientes; `docs/PUBLICACAO.md` mantém as pendências restantes. A análise semanal da CI (`imagens.yml`) e a reavaliação manual a cada implantação continuam, e um achado novo, crítico ou com correção publicada reabre a decisão.
 
 ## Não coberto
 
