@@ -1,0 +1,41 @@
+# Instalado em portal/deploy/production/sites/ por demo.sh instalar. Modo de demonstração do produto: a API aceita o locatário
+# fictício da carga inicial, por isso só as rotas de uso entram e o cadastro público de novos locatários fica fechado.
+demo-comercialcloud.unionsolutions.tech {
+	encode gzip
+	request_body {
+		max_size 3MB
+	}
+	header {
+		>Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+	log {
+		output stdout
+		format filter {
+			wrap json
+			fields {
+				request>uri regexp \?.* ?[removido]
+			}
+		}
+	}
+	@fechado path /cadastro /cadastro/* /auth /auth/* /q /q/* /metrics /api/v1/public/onboarding /api/v1/public/onboarding/*
+	handle @fechado {
+		respond 404
+	}
+	handle /api/* {
+		reverse_proxy comercialcloud-api:8080
+	}
+	# Vivacidade pública: a rota interna de prontidão do produto, sem expor o restante de /q.
+	handle /health {
+		rewrite * /q/health/ready
+		reverse_proxy comercialcloud-api:8080
+	}
+	handle {
+		reverse_proxy comercialcloud-web:3000
+	}
+	handle_errors 502 503 504 {
+		header Content-Type "text/plain; charset=utf-8"
+		respond "A demonstração está temporariamente indisponível. Tente novamente em instantes." {err.status_code}
+	}
+}

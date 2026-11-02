@@ -1,0 +1,10 @@
+# Instale em /etc/systemd/system. Reinicia os dados da demonstração do ComercialCloud uma vez por dia.
+[Unit]
+Description=Reinício diário dos dados da demonstração do ComercialCloud
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/union-solutions/demos/comercialcloud
+ExecStart=/bin/sh demo.sh reiniciar-dados
