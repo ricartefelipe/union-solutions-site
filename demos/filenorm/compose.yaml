@@ -1,0 +1,103 @@
+# Demonstração pública do FileNorm na mesma VPS do portal, isolada: rede própria para o banco, rede `demos` só com o proxy,
+# limites de memória e dados descartados por `demo.sh reiniciar-dados`. Nada aqui alcança o portal.
+name: demo-filenorm
+
+x-comum: &comum
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  postgres:
+    <<: *comum
+    image: postgres:16-alpine@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab
+    user: "70:70"
+    environment:
+      POSTGRES_DB: filenorm
+      POSTGRES_USER: filenorm
+      POSTGRES_PASSWORD: ${FILENORM_DB_PASSWORD:?}
+    volumes:
+      - dados:/var/lib/postgresql/data
+    networks: [interna]
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U filenorm -d filenorm"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    <<: *comum
+    build:
+      context: ${FILENORM_SRC:-./src}/apps/api
+    environment:
+      JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=70
+      FILENORM_DB_URL: jdbc:postgresql://postgres:5432/filenorm
+      FILENORM_DB_USER: filenorm
+      FILENORM_DB_PASSWORD: ${FILENORM_DB_PASSWORD:?}
+      FILENORM_CORS_ORIGINS: https://${DEMO_HOST:?}
+      FILENORM_APP_BASE_URL: https://${DEMO_HOST:?}
+      FILENORM_API_BASE_URL: https://${DEMO_HOST:?}
+      FILENORM_EXPOSE_MAGIC_LINK: "false"
+      FILENORM_TRUST_FORWARDED_HOST: "true"
+      FILENORM_SMTP_HOST: ${DEMO_SMTP_HOST:?}
+      FILENORM_SMTP_PORT: ${DEMO_SMTP_PORT:-587}
+      FILENORM_SMTP_USER: ${DEMO_SMTP_USER:?}
+      FILENORM_SMTP_PASSWORD: ${DEMO_SMTP_PASSWORD:?}
+      FILENORM_SMTP_AUTH: "true"
+      FILENORM_SMTP_STARTTLS: "true"
+      FILENORM_FROM_EMAIL: ${DEMO_MAIL_FROM:?}
+      FILENORM_STORAGE_PATH: /data/uploads
+      FILENORM_MAX_RECORDS: ${FILENORM_MAX_RECORDS:-5000}
+      FILENORM_MAX_PDF_PAGES: ${FILENORM_MAX_PDF_PAGES:-10}
+      SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE: 2MB
+      SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE: 2MB
+    volumes:
+      - uploads:/data/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      interna:
+      demos:
+        aliases: [filenorm-api]
+      # Saída para a internet só para o e-mail do link de acesso; rede própria da demonstração, sem ligação com o portal.
+      saida:
+    mem_limit: 768m
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/actuator/health/readiness || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  web:
+    <<: *comum
+    build:
+      context: ${FILENORM_SRC:-./src}/apps/web
+      args:
+        NEXT_PUBLIC_API_BASE_URL: same-origin
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      demos:
+        aliases: [filenorm-web]
+    mem_limit: 256m
+
+volumes:
+  dados:
+  uploads:
+
+networks:
+  saida:
+  interna:
+    internal: true
+  demos:
+    external: true
+    name: ${PORTAL_DEMOS_NETWORK:-union-portal-prod_demos}

@@ -1,0 +1,10 @@
+[Unit]
+Description=Reinício diário da demonstração do HookGuard
+
+[Timer]
+OnCalendar=*-*-* 04:30:00
+RandomizedDelaySec=10m
+Persistent=true
+
+[Install]
+WantedBy=timers.target
