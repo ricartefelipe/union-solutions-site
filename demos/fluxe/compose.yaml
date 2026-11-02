@@ -20,7 +20,7 @@ x-frontend: &frontend
   PAYMENTS_API_BASE_URL: /api/payments
   AUTH_MODE: hs256
   LOG_LEVEL: warn
-  APP_VERSION: ${FLUXE_TAG:-v1.5.1}
+  APP_VERSION: ${FLUXE_TAG:-v1.5.2}
 
 services:
   postgres:
@@ -75,9 +75,6 @@ services:
       dockerfile: docker/app.Dockerfile
     environment:
       SPRING_PROFILES_ACTIVE: prod,pilot
-      # Em banco novo, os contextos do perfil de piloto (prod,seed) falham: a carga 009 precisa do locatário que só os
-      # de staging criam antes dela.
-      SPRING_LIQUIBASE_CONTEXTS: staging,seed
       AUTH_MODE: hs256
       JAVA_OPTS: -Xmx384m
       JWT_ISSUER: spring-saas-core
@@ -123,10 +120,9 @@ services:
 
   orders-api:
     <<: *comum
-    # Imagem derivada da do produto (demo.sh construir): ver orders-api.Dockerfile.
     build:
-      context: .
-      dockerfile: orders-api.Dockerfile
+      context: ${FLUXE_SRC:-./src}/node-b2b-orders
+      dockerfile: docker/api.Dockerfile
     environment:
       # "staging" é o que aplica a carga inicial fictícia do produto (perfil de piloto).
       NODE_ENV: staging
