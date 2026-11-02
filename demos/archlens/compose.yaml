@@ -1,5 +1,5 @@
-# Demonstração pública do ArchLens na mesma VPS do portal, isolada: rede interna para o banco, rede `demos` só com o proxy,
-# limites de memória e dados descartados por `demo.sh reiniciar-dados`. Nada aqui alcança o portal.
+# Demonstração pública do ArchLens na VPS das demonstrações, isolada: rede interna para o banco, rede `demos` só com o proxy,
+# limites de memória e dados descartados por `demo.sh reiniciar-dados`.
 # Sem Keycloak: o backend sobe com ARCHLENS_OIDC_ENABLED=false e autenticação local (AUTH_LOCAL_ENABLED), o mesmo modo
 # documentado pelo próprio produto para demonstração, com as contas fictícias admin/architect/viewer.
 # Sem rede de saída: o produto não envia e-mail nem faz chamadas externas (ARCHLENS_LLM_ENABLED=false).
@@ -104,4 +104,4 @@ networks:
     internal: true
   demos:
     external: true
-    name: ${PORTAL_DEMOS_NETWORK:-union-portal-prod_demos}
+    name: ${DEMOS_NETWORK:-union-demos}

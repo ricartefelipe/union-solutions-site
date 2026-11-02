@@ -40,9 +40,9 @@ services:
     volumes:
       - proxy-data:/data
       - proxy-config:/config
-      # Sites adicionais (demonstrações): só o arquivo vazio é versionado; os demais são instalados por demos/*/demo.sh.
+      # Sites adicionais: só o arquivo vazio é versionado.
       - ./sites:/etc/caddy/sites:ro
-    networks: [publica, borda, demos]
+    networks: [publica, borda]
     depends_on:
       frontend:
         condition: service_healthy
@@ -325,9 +325,6 @@ services:
 
 networks:
   publica:
-  # Demonstrações de produtos na mesma VPS: o proxy alcança os containers delas por aqui, e elas não alcançam o portal.
-  demos:
-    internal: true
   borda:
     internal: true
     ipam:

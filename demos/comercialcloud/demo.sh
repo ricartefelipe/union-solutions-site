@@ -1,10 +1,10 @@
 #!/bin/sh
-# Demonstração do ComercialCloud na VPS do portal. Uso: sh demo.sh <instalar|subir|parar|reiniciar-dados|status|logs>
+# Demonstração do ComercialCloud na VPS das demonstrações. Uso: sh demo.sh <instalar|subir|parar|reiniciar-dados|status|logs>
 # Roda em /opt/union-solutions/demos/comercialcloud, com .env preenchido a partir de .env.example.
 set -eu
 DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 cd "$DIR"
-PORTAL=$DIR/../../portal/deploy/production
+PROXY=$DIR/../proxy
 COMPOSE="docker compose --env-file .env -f compose.yaml"
 value() { grep "^$1=" .env | head -n 1 | cut -d= -f2-; }
 
@@ -25,8 +25,8 @@ case "${1:-ajuda}" in
     tag=$(value COMERCIALCLOUD_TAG); src=$(value COMERCIALCLOUD_SRC)
     if [ -d "$src/.git" ]; then git -C "$src" fetch -q --tags origin; else git clone -q https://github.com/ricartefelipe/comercial-cloud.git "$src"; fi
     git -C "$src" checkout -q "$tag" && echo "ComercialCloud $tag em $src ($(git -C "$src" rev-parse --short HEAD))."
-    cp demo-comercialcloud.caddy "$PORTAL/sites/demo-comercialcloud.caddy"
-    echo "Site instalado no proxy do portal. Reinicie o proxy: (cd $PORTAL && docker compose --env-file .env restart proxy)"
+    cp demo-comercialcloud.caddy "$PROXY/sites/demo-comercialcloud.caddy"
+    echo "Site instalado no proxy das demonstrações. Reinicie o proxy: (cd $PROXY && docker compose --env-file .env restart proxy)"
     ;;
   subir)
     require_env

@@ -1,4 +1,4 @@
-# Instalado em portal/deploy/production/sites/ por demo.sh instalar. Mesmas rotas do nginx de piloto do produto, mais o que a
+# Instalado em demos/proxy/sites/ por demo.sh instalar. Mesmas rotas do nginx de piloto do produto, mais o que a
 # exposição pública exige: observabilidade fechada e, por usar contas compartilhadas, sem autocadastro nem troca de senha.
 demo-fluxe.unionsolutions.tech {
 	encode gzip
