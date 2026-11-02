@@ -15,6 +15,7 @@ interface Props {
 
 const { product } = Astro.props;
 const contactUrl = productContactUrl(product.slug);
+const testUrl = product.liveDemo?.access ? '#demonstracao' : product.liveDemo?.url;
 const others = products.filter((item) => item.slug !== product.slug);
 const title = `${product.name}: ${product.area.charAt(0).toLowerCase()}${product.area.slice(1)}`;
 ---
@@ -26,8 +27,8 @@ const title = `${product.name}: ${product.area.charAt(0).toLowerCase()}${product
     eyebrow={product.area}
     crumbs={[{ label: 'Produtos', href: '/produtos/' }, { label: product.name }]}
   >
-    {product.liveDemo && <a slot="actions" class="btn" href={product.liveDemo.url} rel="noopener">Acessar demonstração<Arrow /></a>}
-    <a slot="actions" class={product.liveDemo ? 'btn btn--ghost' : 'btn'} href={contactUrl}>Solicitar demonstração<Arrow /></a>
+    {product.liveDemo && <a slot="actions" class="btn" href={testUrl} rel="noopener">Testar agora<Arrow /></a>}
+    <a slot="actions" class={product.liveDemo ? 'btn btn--ghost' : 'btn'} href={contactUrl}>{product.liveDemo ? 'Falar com a Union' : 'Solicitar demonstração'}<Arrow /></a>
     <div slot="art" class="product-art"><ProductGlyph slug={product.slug} /></div>
   </PageHero>
 
@@ -70,18 +71,30 @@ const title = `${product.name}: ${product.area.charAt(0).toLowerCase()}${product
     </div>
   </section>
 
-  <section class="section surface-deep">
+  <section class="section surface-deep" id="demonstracao">
     <div class="wrap split">
       <div>
         <h2>Solicite uma demonstração</h2>
         <p class="demo-availability">{product.availability}</p>
         <p class="muted demo-text">A conversa parte do seu cenário: avaliamos se o produto atende à sua operação e, se não atender, quais outros caminhos fazem sentido.</p>
         {product.liveDemo && (
-          <p class="demo-text">{product.liveDemo.note}</p>
-          <div class="btn-row">
-            <a class="btn demo-cta" href={product.liveDemo.url} rel="noopener">Acessar demonstração<Arrow /></a>
-            <a class="btn btn--ghost demo-cta" href={contactUrl}>Conversar sobre o seu cenário<Arrow /></a>
-          </div>
+          <>
+            <p class="demo-text">{product.liveDemo.note}</p>
+            {product.liveDemo.access && (
+              <ul class="demo-access">
+                {product.liveDemo.access.map((item) => <li>{item}</li>)}
+              </ul>
+            )}
+            <div class="btn-row">
+              <a class="btn demo-cta" href={product.liveDemo.url} rel="noopener">Testar agora<Arrow /></a>
+              <a class="btn btn--ghost demo-cta" href={contactUrl}>Conversar sobre o seu cenário<Arrow /></a>
+            </div>
+            {product.liveDemo.links && (
+              <ul class="demo-links">
+                {product.liveDemo.links.map((link) => <li><a href={link.url} rel="noopener">{link.label}</a></li>)}
+              </ul>
+            )}
+          </>
         )}
         {!product.liveDemo && <a class="btn demo-cta" href={contactUrl}>Solicitar demonstração<Arrow /></a>}
       </div>
@@ -186,6 +199,27 @@ const title = `${product.name}: ${product.area.charAt(0).toLowerCase()}${product
   .demo-text {
     max-width: 48ch;
     margin-block: var(--space-2) var(--space-5);
+  }
+
+  .demo-access {
+    margin-bottom: var(--space-4);
+    font-weight: 500;
+    overflow-wrap: anywhere;
+  }
+
+  .demo-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--space-5);
+    margin-top: var(--space-2);
+  }
+
+  .demo-links a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    color: var(--on-dark);
+    text-decoration: underline;
   }
 
   .topics-title {

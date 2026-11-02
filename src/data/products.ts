@@ -45,7 +45,7 @@ export interface Product {
   /** O que vale levar para a conversa sobre demonstração. */
   conversationTopics: string[];
   /** Demonstração pública no ar, quando existir: endereço HTTPS e o que o visitante encontra lá. */
-  liveDemo?: { url: string; note: string };
+  liveDemo?: { url: string; note: string; access?: string[]; links?: { label: string; url: string }[] };
 }
 
 export const products: Product[] = [
@@ -146,6 +146,10 @@ export const products: Product[] = [
       'Qual provedor de pagamento sua empresa utiliza ou pretende utilizar',
       'Quais regras do seu negócio os ciclos precisam respeitar',
     ],
+    liveDemo: {
+      url: 'https://demo-assinaflow.unionsolutions.tech/',
+      note: 'Crie uma conta com um e-mail de teste, contrate um plano, troque de plano e cancele. Os pagamentos são simulados, nada é cobrado, nenhum e-mail é enviado e tudo é apagado todos os dias.',
+    },
   },
   {
     slug: 'archlens',
@@ -176,6 +180,12 @@ export const products: Product[] = [
       'Que decisão de arquitetura ou evolução está em pauta',
       'Quem participa dessa decisão na sua empresa',
     ],
+    liveDemo: {
+      url: 'https://demo-archlens.unionsolutions.tech/',
+      note: 'Entre com a conta abaixo, crie uma avaliação e importe o arquivo de exemplo para ver inventário, achados, pontuações e roteiro. O ambiente é compartilhado e apagado todos os dias: não envie dados reais.',
+      access: ['Usuário: architect', 'Senha: union-demo'],
+      links: [{ label: 'Baixar o arquivo de exemplo', url: 'https://demo-archlens.unionsolutions.tech/amostra/analysis.json' }],
+    },
   },
   {
     slug: 'fluxe-b2b-suite',
@@ -206,6 +216,15 @@ export const products: Product[] = [
       'Quais partes da suíte fazem sentido para o seu caso',
       'Quais sistemas já existem e precisam ser considerados',
     ],
+    liveDemo: {
+      url: 'https://demo-fluxe.unionsolutions.tech/',
+      note: 'Compre na loja e acompanhe o pedido na operação e na administração de uma empresa fictícia. O pagamento também é fictício. O ambiente é compartilhado e apagado todos os dias: use dados inventados, inclusive no checkout.',
+      access: ['E-mail: visitante@demo-fluxe.unionsolutions.tech', 'Senha: ops123'],
+      links: [
+        { label: 'Operação', url: 'https://demo-fluxe.unionsolutions.tech/ops/' },
+        { label: 'Administração', url: 'https://demo-fluxe.unionsolutions.tech/admin/' },
+      ],
+    },
   },
   {
     slug: 'comercialcloud',
