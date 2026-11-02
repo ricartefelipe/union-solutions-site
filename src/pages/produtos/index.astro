@@ -34,7 +34,7 @@ import { productContactUrl, products } from '../../data/products';
             {product.capabilities.slice(0, 3).map((capability) => <li>{capability}</li>)}
           </ul>
           <div class="btn-row">
-            {product.liveDemo && <a class="btn" href={product.liveDemo.url} rel="noopener">Testar agora<span class="sr-only"> o {product.name}</span></a>}
+            {product.liveDemo && <a class="btn" href={product.liveDemo.access ? `/produtos/${product.slug}/#demonstracao` : product.liveDemo.url} rel="noopener">Testar agora<span class="sr-only"> o {product.name}</span></a>}
             <a class={product.liveDemo ? 'btn btn--ghost' : 'btn'} href={productContactUrl(product.slug)}>{product.liveDemo ? 'Falar com a Union' : 'Solicitar demonstração'}<span class="sr-only"> sobre o {product.name}</span></a>
             <a class="text-link" href={`/produtos/${product.slug}/`}>Conhecer o produto<span class="sr-only"> {product.name}</span><Arrow /></a>
           </div>

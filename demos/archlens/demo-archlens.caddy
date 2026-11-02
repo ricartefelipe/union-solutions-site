@@ -1,0 +1,43 @@
+# Instalado em portal/deploy/production/sites/ por demo.sh instalar. Só as rotas públicas do produto.
+demo-archlens.unionsolutions.tech {
+	encode gzip
+	request_body {
+		max_size 1MB
+	}
+	header {
+		>Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+	log {
+		output stdout
+		format filter {
+			wrap json
+			fields {
+				request>uri regexp \?.* ?[removido]
+			}
+		}
+	}
+	# Amostra para o visitante seguir o passo de importação sem precisar rodar a CLI localmente.
+	handle_path /amostra/* {
+		header Content-Disposition `attachment; filename="archlens-exemplo.json"`
+		root * /etc/caddy/sites/archlens-amostra
+		file_server
+	}
+	handle /api/* {
+		reverse_proxy archlens-api:8080
+	}
+	handle /q/health/ready {
+		reverse_proxy archlens-api:8080
+	}
+	handle /q/* {
+		respond 404
+	}
+	handle {
+		reverse_proxy archlens-web:3000
+	}
+	handle_errors 502 503 504 {
+		header Content-Type "text/plain; charset=utf-8"
+		respond "A demonstração está temporariamente indisponível. Tente novamente em instantes." {err.status_code}
+	}
+}

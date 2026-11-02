@@ -1,0 +1,276 @@
+# Demonstração pública da Fluxe B2B Suite na mesma VPS do portal, isolada: rede própria para banco, cache, fila e workers,
+# rede `demos` só com o proxy, sem saída para a internet. Segue o perfil de piloto do produto (HS256, sem Keycloak e sem
+# observabilidade), com gateway de pagamento fictício. O roteamento do nginx do produto fica no site Caddy.
+name: demo-fluxe
+
+x-comum: &comum
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+  oom_score_adj: 500
+
+x-frontend: &frontend
+  CORE_API_BASE_URL: /api/core
+  ORDERS_API_BASE_URL: /api/orders
+  PAYMENTS_API_BASE_URL: /api/payments
+  AUTH_MODE: hs256
+  LOG_LEVEL: warn
+  APP_VERSION: ${FLUXE_TAG:-v1.5.1}
+
+services:
+  postgres:
+    <<: *comum
+    image: postgres:16-alpine@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36
+    environment:
+      POSTGRES_USER: fluxe
+      POSTGRES_PASSWORD: ${FLUXE_DB_PASSWORD:?}
+    volumes:
+      - dados:/var/lib/postgresql/data
+      - ${FLUXE_SRC:-./src}/fluxe-b2b-suite/scripts/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh:ro
+    networks: [interna]
+    mem_limit: 384m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fluxe -d saascore"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  redis:
+    <<: *comum
+    image: redis:7-alpine@sha256:8da19c7399dca900c6822a1cf30f9d2285585e2c4b457ff4095b0f4500054d3f
+    command: ["redis-server", "--requirepass", "${FLUXE_REDIS_PASSWORD:?}", "--save", "", "--appendonly", "no"]
+    networks: [interna]
+    mem_limit: 128m
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" --no-auth-warning ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    environment:
+      REDIS_PASSWORD: ${FLUXE_REDIS_PASSWORD:?}
+
+  rabbitmq:
+    <<: *comum
+    image: rabbitmq:3-management-alpine@sha256:606d8c0d6b3c18d1da9afc53bc7cdb2a8d5486df91b5a9830e9e07626c9ae281
+    environment:
+      RABBITMQ_DEFAULT_USER: fluxe
+      RABBITMQ_DEFAULT_PASS: ${FLUXE_RABBIT_PASSWORD:?}
+    networks: [interna]
+    mem_limit: 384m
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+
+  saas-core:
+    <<: *comum
+    build:
+      context: ${FLUXE_SRC:-./src}/spring-saas-core
+      dockerfile: docker/app.Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: prod,pilot
+      # Em banco novo, os contextos do perfil de piloto (prod,seed) falham: a carga 009 precisa do locatário que só os
+      # de staging criam antes dela.
+      SPRING_LIQUIBASE_CONTEXTS: staging,seed
+      AUTH_MODE: hs256
+      JAVA_OPTS: -Xmx384m
+      JWT_ISSUER: spring-saas-core
+      JWT_SECRET: ${FLUXE_JWT_SECRET:?}
+      JWT_HS256_SECRET: ${FLUXE_JWT_SECRET:?}
+      APP_DEV_TOKEN_ENDPOINT_ENABLED: "false"
+      AI_ENABLED: "false"
+      BILLING_PROVIDER: noop
+      EMAIL_PROVIDER: log
+      FRONTEND_URL: https://${DEMO_HOST:?}
+      DB_URL: jdbc:postgresql://postgres:5432/saascore
+      DB_USER: fluxe
+      DB_PASS: ${FLUXE_DB_PASSWORD:?}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: ${FLUXE_REDIS_PASSWORD:?}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USER: fluxe
+      RABBITMQ_PASS: ${FLUXE_RABBIT_PASSWORD:?}
+      OUTBOX_PUBLISH_ENABLED: "true"
+      CORS_ALLOWED_ORIGINS: https://${DEMO_HOST:?}
+      SERVER_PORT: "8080"
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ""
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      interna:
+      demos:
+        aliases: [fluxe-core]
+    mem_limit: 768m
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/actuator/health/liveness"]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+      start_period: 90s
+
+  orders-api:
+    <<: *comum
+    # Imagem derivada da do produto (demo.sh construir): ver orders-api.Dockerfile.
+    build:
+      context: .
+      dockerfile: orders-api.Dockerfile
+    environment:
+      # "staging" é o que aplica a carga inicial fictícia do produto (perfil de piloto).
+      NODE_ENV: staging
+      DATABASE_URL: postgresql://fluxe:${FLUXE_DB_PASSWORD:?}@postgres:5432/orders
+      REDIS_URL: redis://:${FLUXE_REDIS_PASSWORD:?}@redis:6379
+      RABBITMQ_URL: amqp://fluxe:${FLUXE_RABBIT_PASSWORD:?}@rabbitmq:5672
+      JWT_SECRET: ${FLUXE_JWT_SECRET:?}
+      JWT_ISSUER: spring-saas-core
+      CORS_ORIGINS: https://${DEMO_HOST:?}
+      PORT: "3000"
+      OTEL_EXPORTER_OTLP_ENDPOINT: ""
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      interna:
+      demos:
+        aliases: [fluxe-orders]
+    mem_limit: 384m
+
+  orders-worker:
+    <<: *comum
+    build:
+      context: ${FLUXE_SRC:-./src}/node-b2b-orders
+      dockerfile: docker/worker.Dockerfile
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://fluxe:${FLUXE_DB_PASSWORD:?}@postgres:5432/orders
+      REDIS_URL: redis://:${FLUXE_REDIS_PASSWORD:?}@redis:6379
+      RABBITMQ_URL: amqp://fluxe:${FLUXE_RABBIT_PASSWORD:?}@rabbitmq:5672
+      JWT_SECRET: ${FLUXE_JWT_SECRET:?}
+    depends_on:
+      orders-api:
+        condition: service_healthy
+    networks: [interna]
+    mem_limit: 192m
+
+  payments-api:
+    <<: *comum
+    build:
+      context: ${FLUXE_SRC:-./src}/py-payments-ledger
+      dockerfile: docker/api.Dockerfile
+    environment:
+      APP_ENV: staging
+      ORDERS_INTEGRATION_ENABLED: "true"
+      DATABASE_URL: postgresql+psycopg://fluxe:${FLUXE_DB_PASSWORD:?}@postgres:5432/payments
+      REDIS_URL: redis://:${FLUXE_REDIS_PASSWORD:?}@redis:6379
+      RABBITMQ_URL: amqp://fluxe:${FLUXE_RABBIT_PASSWORD:?}@rabbitmq:5672
+      JWT_SECRET: ${FLUXE_JWT_SECRET:?}
+      JWT_ISSUER: spring-saas-core
+      GATEWAY_PROVIDER: fake
+      CORS_ORIGINS: https://${DEMO_HOST:?}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ""
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      interna:
+      demos:
+        aliases: [fluxe-payments]
+    mem_limit: 384m
+
+  payments-worker:
+    <<: *comum
+    build:
+      context: ${FLUXE_SRC:-./src}/py-payments-ledger
+      dockerfile: docker/worker.Dockerfile
+    environment:
+      APP_ENV: production
+      ORDERS_INTEGRATION_ENABLED: "true"
+      DATABASE_URL: postgresql+psycopg://fluxe:${FLUXE_DB_PASSWORD:?}@postgres:5432/payments
+      REDIS_URL: redis://:${FLUXE_REDIS_PASSWORD:?}@redis:6379
+      RABBITMQ_URL: amqp://fluxe:${FLUXE_RABBIT_PASSWORD:?}@rabbitmq:5672
+      JWT_SECRET: ${FLUXE_JWT_SECRET:?}
+      GATEWAY_PROVIDER: fake
+    depends_on:
+      payments-api:
+        condition: service_healthy
+    networks: [interna]
+    mem_limit: 192m
+
+  shop:
+    <<: *comum
+    build:
+      context: ${FLUXE_SRC:-./src}/fluxe-b2b-suite/saas-suite-ui
+      dockerfile: apps/shop/Dockerfile
+    environment: *frontend
+    networks:
+      demos:
+        aliases: [fluxe-shop]
+    mem_limit: 256m
+
+  ops-portal:
+    <<: *comum
+    build:
+      context: ${FLUXE_SRC:-./src}/fluxe-b2b-suite/saas-suite-ui
+      dockerfile: apps/ops-portal/Dockerfile
+      args:
+        NX_BASE_HREF: /ops/
+    environment: *frontend
+    networks:
+      demos:
+        aliases: [fluxe-ops]
+    mem_limit: 64m
+    healthcheck:
+      test: ["CMD", "wget", "-qO", "/dev/null", "http://127.0.0.1:80/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  admin-console:
+    <<: *comum
+    build:
+      context: ${FLUXE_SRC:-./src}/fluxe-b2b-suite/saas-suite-ui
+      dockerfile: apps/admin-console/Dockerfile
+      args:
+        NX_BASE_HREF: /admin/
+    environment: *frontend
+    networks:
+      demos:
+        aliases: [fluxe-admin]
+    mem_limit: 64m
+    healthcheck:
+      test: ["CMD", "wget", "-qO", "/dev/null", "http://127.0.0.1:80/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  dados:
+
+networks:
+  interna:
+    internal: true
+  demos:
+    external: true
+    name: ${PORTAL_DEMOS_NETWORK:-union-portal-prod_demos}

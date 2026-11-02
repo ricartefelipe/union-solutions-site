@@ -5,6 +5,7 @@ name: demo-comercialcloud
 
 x-comum: &comum
   restart: unless-stopped
+  oom_score_adj: 500
   security_opt:
     - no-new-privileges:true
   logging:
