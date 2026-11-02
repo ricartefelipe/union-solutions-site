@@ -105,6 +105,11 @@ jobs:
           sh -n demos/archlens/demo.sh
           sh -n demos/assinaflow/demo.sh
           sh -n demos/fluxe/demo.sh
+          sh -n demos/cards/demo.sh
+          sh -n demos/orders/demo.sh
+          sh -n demos/vuemind/demo.sh
+          sh -n demos/springmind/demo.sh
+          sh -n demos/skillforge/demo.sh
       - name: Compose de produção válido com o modelo de configuração
         run: |
           cd portal/deploy/production
@@ -131,6 +136,11 @@ jobs:
           cd ../fluxe
           sed 's/GERADO/x/g' .env.example > "$RUNNER_TEMP/fx.env"
           docker compose --env-file "$RUNNER_TEMP/fx.env" -f compose.yaml config -q
+          for demo in cards orders vuemind springmind skillforge; do
+            cd ../$demo
+            sed 's/GERADO/x/g' .env.example > "$RUNNER_TEMP/$demo.env"
+            docker compose --env-file "$RUNNER_TEMP/$demo.env" -f compose.yaml config -q
+          done
       - name: Imagens de produção constroem
         run: |
           docker build -q portal/backend

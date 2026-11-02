@@ -1,0 +1,97 @@
+# Demonstração pública da API SpringMind na VPS das demonstrações, com o front ReactMind na mesma origem e dados persistidos em
+# PostgreSQL, sem dados simulados no navegador. Conta única fictícia do produto. Sem saída para a internet.
+name: demo-springmind
+
+x-comum: &comum
+  restart: unless-stopped
+  oom_score_adj: 500
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  postgres:
+    <<: *comum
+    image: postgres:16-alpine@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36
+    user: "70:70"
+    environment:
+      POSTGRES_DB: springmind
+      POSTGRES_USER: springmind
+      POSTGRES_PASSWORD: ${SPRINGMIND_DB_PASSWORD:?}
+    volumes:
+      - dados:/var/lib/postgresql/data
+    networks: [interna]
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U springmind -d springmind"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    <<: *comum
+    image: demo-springmind-api:latest
+    build:
+      context: ${SPRINGMIND_SRC:-./src}/springmind
+    environment:
+      SERVER_PORT: "8080"
+      # A API só libera CORS para localhost: com os cabeçalhos do proxy, ela reconhece a própria origem.
+      SERVER_FORWARD_HEADERS_STRATEGY: framework
+      JAVA_OPTS: -XX:MaxRAMPercentage=70
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/springmind
+      SPRING_DATASOURCE_USERNAME: springmind
+      SPRING_DATASOURCE_PASSWORD: ${SPRINGMIND_DB_PASSWORD:?}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      interna:
+      demos:
+        aliases: [demo-springmind-api]
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://127.0.0.1:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 24
+      start_period: 30s
+
+  web:
+    <<: *comum
+    image: demo-springmind-web:latest
+    build:
+      context: ${SPRINGMIND_SRC:-./src}
+      dockerfile_inline: |
+        FROM node:22-alpine AS build
+        WORKDIR /b
+        COPY mind-shared/ mind-shared/
+        COPY reactmind/ app/
+        RUN cd mind-shared && npm ci --ignore-scripts && npm run build
+        RUN cd app && npm ci --ignore-scripts && VITE_BASE=/ VITE_ENABLE_MSW=false VITE_API_BASE_URL=/api/v1 npm run build
+        FROM nginxinc/nginx-unprivileged:1.29-alpine@sha256:0c79d56aee561a1d81c63f00eee5fb5fe29279560cdc55e91425133104c7fbe6
+        COPY --from=build /b/app/dist /usr/share/nginx/html
+
+    networks:
+      demos:
+        aliases: [demo-springmind-web]
+    mem_limit: 64m
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 5s
+
+volumes:
+  dados:
+
+networks:
+  interna:
+    internal: true
+  demos:
+    external: true
+    name: ${DEMOS_NETWORK:-union-demos}
