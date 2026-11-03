@@ -1,5 +1,6 @@
 ---
 import Logo from './Logo.astro';
+import ThemeToggle from './ThemeToggle.astro';
 import { clientPortal, nav, primaryCta, site } from '../config/site';
 
 const path = Astro.url.pathname;
@@ -12,10 +13,13 @@ const isCurrent = (href: string) => path === href || path.startsWith(href);
       <Logo />
     </a>
 
-    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="menu-principal" data-menu-toggle>
-      <span class="menu-toggle__icon" aria-hidden="true"></span>
-      <span data-menu-label>Abrir menu</span>
-    </button>
+    <div class="site-header__actions">
+      <ThemeToggle />
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="menu-principal" data-menu-toggle>
+        <span class="menu-toggle__icon" aria-hidden="true"></span>
+        <span data-menu-label>Abrir menu</span>
+      </button>
+    </div>
 
     <nav class="site-nav" id="menu-principal" aria-label="Principal" data-menu>
       <ul class="site-nav__list">
@@ -96,6 +100,12 @@ const isCurrent = (href: string) => path === href || path.startsWith(href);
   .site-header__logo {
     display: block;
     flex: none;
+  }
+
+  .site-header__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
   }
 
   .menu-toggle {
@@ -192,6 +202,10 @@ const isCurrent = (href: string) => path === href || path.startsWith(href);
       flex-wrap: nowrap;
     }
 
+    .site-header__actions {
+      order: 3;
+    }
+
     :global(.js) .menu-toggle {
       display: none;
     }
@@ -250,6 +264,35 @@ const isCurrent = (href: string) => path === href || path.startsWith(href);
       margin-top: 0;
       padding-block: var(--space-2);
       font-size: var(--text-sm);
+    }
+
+    .site-nav__list a,
+    .site-nav__cta {
+      white-space: nowrap;
+    }
+  }
+
+  /* Entre 62rem e 80rem cabem menos itens: aperta os espaços para nada quebrar de linha. */
+  @media (min-width: 62rem) and (max-width: 79.99rem) {
+    .site-header__bar {
+      gap: 0 1rem;
+    }
+
+    .site-nav,
+    :global(.js) .site-nav:not(.is-open) {
+      gap: 1.25rem;
+    }
+
+    .site-nav__list {
+      gap: 1.25rem;
+    }
+
+    .site-nav__list a {
+      font-size: 0.9375rem;
+    }
+
+    .site-nav__cta {
+      padding-inline: var(--space-3);
     }
   }
 </style>

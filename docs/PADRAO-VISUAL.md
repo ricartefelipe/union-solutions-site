@@ -13,6 +13,10 @@ O site institucional e o portal do cliente são aplicações separadas, mas usam
 | Espaço | `--space-1` a `--space-7`, `--gutter`, `--section`, `--page-hero` | Margens laterais por `--gutter` (16 px a 32 px), container `--page` (80 rem), medida de leitura `--measure` (65 ch) |
 | Interação | `--control-height` (3 rem), `--focus-width`, `--focus-offset`, `--transition` | Todo controle tem ao menos 2,75 rem de altura; foco visível com anel de 3 px (`:focus-visible`), em `--accent` sobre fundo escuro |
 
+## Tema claro e escuro (site)
+
+O portal continua só no tema claro. No site, `src/styles/tema.css` redefine, sob `:root[data-theme='dark']`, as cores de papel, texto e linhas e cria tokens semânticos que invertem entre os temas: `--brand-ink` (marca usada como texto ou borda), `--btn-bg`/`--btn-fg` (botão principal) e `--white-fixed`. `--brand` continua sendo a cor das superfícies escuras (cabeçalho, rodapé, faixas), igual nos dois temas. Por isso, em texto ou borda sobre o papel use `--brand-ink`, não `--brand`. `tokens.css` não muda, e a cópia do portal segue idêntica. Todo par de cores deve manter contraste AA nos dois temas, e o botão de tema tem estado visível de foco e `aria-pressed`.
+
 ## Componentes e estados
 
 | Elemento | Site | Portal |

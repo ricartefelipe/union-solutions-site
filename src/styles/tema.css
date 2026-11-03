@@ -1,0 +1,44 @@
+/*
+ * Tema do site (claro e escuro). Só o site usa este arquivo: os tokens compartilhados com o portal ficam em tokens.css
+ * e não mudam. O modo claro é o padrão; o escuro vale quando <html data-theme="dark"> (ver o script em BaseLayout).
+ *
+ * --brand continua sendo o fundo das superfícies escuras (cabeçalho, rodapé, faixas) nos dois modos. Cor de texto,
+ * borda e botão sobre o fundo da página usam --brand-ink e os tokens --btn-*, que invertem no modo escuro.
+ */
+:root {
+  color-scheme: light;
+  --brand-ink: var(--brand);
+  --btn-bg: var(--brand);
+  --btn-fg: var(--on-dark);
+  --btn-bg-hover: var(--brand-lift);
+  --btn-fg-hover: var(--on-dark);
+  --white-fixed: #ffffff;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --paper: #0c0930;
+  --mist: #141047;
+  --ink: #ecebf7;
+  --ink-soft: #bcbad6;
+  --line: #2f2b6e;
+  --line-strong: #8b88b5;
+
+  --brand-ink: #d3cfff;
+  --btn-bg: #d3cfff;
+  --btn-fg: #120d47;
+  --btn-bg-hover: var(--accent);
+  --btn-fg-hover: #120d47;
+
+  --danger: #ff9fb0;
+  --danger-bg: #3b1621;
+  --danger-deep: #ffb7c3;
+  --notice-bg: #33260b;
+  --notice-line: #f2b45c;
+  --notice-ink: #fde7bd;
+  --success: #86e0b4;
+  --success-bg: #0f3827;
+  --neutral-bg: #26234f;
+  --neutral-ink: #dcdaf0;
+  --info-bg: #231f63;
+}
