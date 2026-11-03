@@ -9,7 +9,7 @@ import { productContactUrl, products } from '../../data/products';
 
 <BaseLayout
   title="Produtos"
-  description="Conheça o HookGuard, o FileNorm, o AssinaFlow, o ArchLens, a Fluxe B2B Suite e o ComercialCloud, e solicite uma demonstração à Union Solutions."
+  description="Conheça os produtos da Union Solutions para integrações, arquivos, assinaturas, ensino a distância, cartões e operações empresariais. Vários têm demonstração online."
 >
   <PageHero
     title="Conheça os produtos da Union Solutions."
@@ -24,11 +24,12 @@ import { productContactUrl, products } from '../../data/products';
 
   <div class="wrap">
     {products.map((product) => (
-      <section class="product reveal" id={product.slug} aria-labelledby={`${product.slug}-nome`}>
+      <section class="catalog-row product reveal" id={product.slug} aria-labelledby={`${product.slug}-nome`}>
         <div class="product__copy">
-          <span class="product__area muted">{product.area}</span>
+          <span class="catalog-area muted">{product.area}</span>
           <h2 id={`${product.slug}-nome`}>{product.name}</h2>
-          <p class="product__purpose">{product.purpose}</p>
+          {product.liveDemo && <p><span class="badge-demo">Demonstração online</span></p>}
+          <p class="catalog-purpose">{product.purpose}</p>
           <p class="muted">{product.context}</p>
           <ul class="node-list product__capabilities">
             {product.capabilities.slice(0, 3).map((capability) => <li>{capability}</li>)}
@@ -67,38 +68,13 @@ import { productContactUrl, products } from '../../data/products';
     display: inline-flex;
     align-items: center;
     min-height: 2.75rem;
-    color: var(--brand);
+    color: var(--brand-ink);
     font-weight: 600;
   }
 
   .product {
-    display: grid;
-    gap: var(--space-5) clamp(2rem, 6vw, 5rem);
     align-items: center;
     padding-block: 1.75rem;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .product:last-child {
-    border-bottom: 0;
-  }
-
-  .product__area {
-    display: block;
-    margin-bottom: var(--space-1);
-    font-size: var(--text-sm);
-    font-weight: 600;
-  }
-
-  h2 {
-    color: var(--brand);
-  }
-
-  .product__purpose {
-    max-width: var(--measure);
-    margin-block: var(--space-2) var(--space-1);
-    font-size: 1.125rem;
-    line-height: 1.4;
   }
 
   .product__capabilities {
@@ -110,8 +86,8 @@ import { productContactUrl, products } from '../../data/products';
   .product__art {
     width: 100%;
     max-width: 20rem;
-    color: var(--brand);
-    --glyph-node-stroke: var(--brand);
+    color: var(--brand-ink);
+    --glyph-node-stroke: var(--brand-ink);
   }
 
   @media (min-width: 62rem) {
