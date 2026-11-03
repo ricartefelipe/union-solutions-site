@@ -5,7 +5,7 @@ import { Badge, Empty, PageTitle, Pagination, Section } from '@/components/ui';
 
 export const metadata: Metadata = { title: 'Produtos contratados' };
 
-export default async function ProductsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+export default async function ProductsPage({ searchParams }: Readonly<{ searchParams: Promise<Record<string, string | undefined>> }>) {
   const params = await searchParams;
   const me = await getMe();
   const data = await apiGet<Page<ProductView>>(`/v1/products?${pageQuery(params)}`);

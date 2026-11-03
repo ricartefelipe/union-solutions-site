@@ -8,7 +8,7 @@ import { Badge, Disclosure, Empty, PageTitle, Pagination, Section, Truncated } f
 
 export const metadata: Metadata = { title: 'Projetos' };
 
-export default async function ProjectsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+export default async function ProjectsPage({ searchParams }: Readonly<{ searchParams: Promise<Record<string, string | undefined>> }>) {
   const params = await searchParams;
   const me = await getMe();
   const status = params.situacao && options('project').some((o) => o.value === params.situacao) ? params.situacao : undefined;

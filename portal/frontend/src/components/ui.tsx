@@ -9,11 +9,11 @@ const TONES: Record<string, string> = {
   REJECTED: 'bad', FAILED: 'bad', CHANGES_REQUESTED: 'bad', SUSPENDED: 'bad', DISABLED: 'bad', URGENT: 'bad', HIGH: 'warn',
 };
 
-export function Badge({ group, value }: { group: Parameters<typeof label>[0]; value: string }) {
+export function Badge({ group, value }: Readonly<{ group: Parameters<typeof label>[0]; value: string }>) {
   return <span className={`badge badge--${TONES[value] ?? 'neutral'}`}>{label(group, value)}</span>;
 }
 
-export function PageTitle({ title, intro, children, crumbs }: { title: string; intro?: string; children?: ReactNode; crumbs?: { label: string; href: string }[] }) {
+export function PageTitle({ title, intro, children, crumbs }: Readonly<{ title: string; intro?: string; children?: ReactNode; crumbs?: { label: string; href: string }[] }>) {
   return (
     <header className="page-title">
       {crumbs && (
@@ -32,7 +32,7 @@ export function PageTitle({ title, intro, children, crumbs }: { title: string; i
   );
 }
 
-export function Section({ title, children, aside }: { title: string; children: ReactNode; aside?: ReactNode }) {
+export function Section({ title, children, aside }: Readonly<{ title: string; children: ReactNode; aside?: ReactNode }>) {
   return (
     <section className="section">
       <div className="section__head">
@@ -44,12 +44,12 @@ export function Section({ title, children, aside }: { title: string; children: R
   );
 }
 
-export function Empty({ children }: { children: ReactNode }) {
+export function Empty({ children }: Readonly<{ children: ReactNode }>) {
   return <p className="empty">{children}</p>;
 }
 
 /** Bloco recolhível para formulários. Funciona por teclado, sem JavaScript próprio. */
-export function Disclosure({ summary, children, open }: { summary: string; children: ReactNode; open?: boolean }) {
+export function Disclosure({ summary, children, open }: Readonly<{ summary: string; children: ReactNode; open?: boolean }>) {
   return (
     <details className="disclosure" open={open}>
       <summary>{summary}</summary>
@@ -58,7 +58,7 @@ export function Disclosure({ summary, children, open }: { summary: string; child
   );
 }
 
-export function FileLink({ file, href }: { file: FileView; href: string }) {
+export function FileLink({ file, href }: Readonly<{ file: FileView; href: string }>) {
   return (
     <span className="file">
       {file.downloadable ? <a href={href}>{file.name}</a> : <span>{file.name}</span>}
@@ -68,7 +68,7 @@ export function FileLink({ file, href }: { file: FileView; href: string }) {
   );
 }
 
-export function Pagination({ page, basePath, query = {} }: { page: Page<unknown>; basePath: string; query?: Record<string, string | undefined> }) {
+export function Pagination({ page, basePath, query = {} }: Readonly<{ page: Page<unknown>; basePath: string; query?: Record<string, string | undefined> }>) {
   const pages = Math.ceil(page.total / page.size);
   if (pages <= 1) return null;
   const link = (target: number) => {
@@ -87,11 +87,11 @@ export function Pagination({ page, basePath, query = {} }: { page: Page<unknown>
 }
 
 /** Listas carregadas de uma vez: avisa quando há mais registros do que os exibidos. */
-export function Truncated({ page, hint }: { page: Page<unknown>; hint?: string }) {
+export function Truncated({ page, hint }: Readonly<{ page: Page<unknown>; hint?: string }>) {
   if (page.total <= page.items.length) return null;
   return <p className="truncated">Mostrando {page.items.length} de {page.total}. {hint ?? 'Use os filtros para encontrar o restante.'}</p>;
 }
 
-export function When({ value }: { value: string }) {
+export function When({ value }: Readonly<{ value: string }>) {
   return <time dateTime={value}>{formatDateTime(value)}</time>;
 }

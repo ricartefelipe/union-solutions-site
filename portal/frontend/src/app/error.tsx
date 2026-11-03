@@ -1,7 +1,7 @@
 'use client';
 
 /** Erro ao montar a estrutura do portal, como a falha ao identificar o usuário. */
-export default function RootError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function RootError({ error, reset }: Readonly<{ error: Error & { digest?: string }; reset: () => void }>) {
   return (
     <main className="public">
       <div className="public__card" role="alert">
