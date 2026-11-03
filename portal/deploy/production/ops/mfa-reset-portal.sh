@@ -31,7 +31,7 @@ case "$PHASE" in
     audit MFA_RESET_REQUESTED "operador=$OPERATOR; motivo=$REASON; conta=$EMAIL"
     ;;
   encerrar)
-    [ -n "$SUB" ] || { echo "sub ausente" >&2; exit 1; }
+    [[ -n "$SUB" ]] || { echo "sub ausente" >&2; exit 1; }
     psql -Atq -v ON_ERROR_STOP=1 -d portal_sessao -v sub="$SUB" <<'SQL'
 WITH d AS (DELETE FROM portal_session WHERE subject = :'sub' RETURNING 1) SELECT count(*) FROM d;
 SQL
