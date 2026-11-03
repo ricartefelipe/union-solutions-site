@@ -451,3 +451,33 @@ a:hover > .arrow {
   border-radius: 50%;
   background: var(--brand-deep);
 }
+
+/* ---------- Linha de catálogo (produtos e demonstrações) ---------- */
+.catalog-row {
+  display: grid;
+  gap: var(--space-5) clamp(2rem, 6vw, 5rem);
+  padding-block: 1.75rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.catalog-row:last-child {
+  border-bottom: 0;
+}
+
+.catalog-row h2 {
+  color: var(--brand-ink);
+}
+
+.catalog-area {
+  display: block;
+  margin-bottom: var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.catalog-purpose {
+  max-width: var(--measure);
+  margin-block: var(--space-2) var(--space-1);
+  font-size: 1.125rem;
+  line-height: 1.4;
+}
