@@ -44,6 +44,8 @@ services:
       QUARKUS_DATASOURCE_PASSWORD: ${COMERCIALCLOUD_DB_PASSWORD:?}
       QUARKUS_HTTP_CORS_ORIGINS: https://${DEMO_HOST:?}
       COMERCIALCLOUD_UPLOAD_DIR: /data/uploads
+      # Locatário e usuário fixos no servidor: sem isso, a API exige token e responde 401.
+      COMERCIAL_CLOUD_TENANT_RESOLUTION: demo
       COMERCIAL_CLOUD_KEYCLOAK_PROVISIONING_ENABLED: "false"
       COMERCIAL_CLOUD_BILLING_GATEWAY: sandbox
       COMERCIAL_CLOUD_BILLING_ASAAS_ENABLED: "false"
