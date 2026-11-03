@@ -4,7 +4,7 @@ import { apiGet, apiGetOptional, getMe, pageQuery } from '@/lib/api';
 import { formatDate, label, options } from '@/lib/labels';
 import type { OrganizationView, Page, ProjectSummary } from '@/lib/types';
 import { ApiForm } from '@/components/forms';
-import { Badge, Disclosure, Empty, PageTitle, Pagination, Section, Truncated } from '@/components/ui';
+import { Badge, Disclosure, Empty, PageTitle, Pagination, Section } from '@/components/ui';
 
 export const metadata: Metadata = { title: 'Projetos' };
 
