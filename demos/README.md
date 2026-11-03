@@ -43,8 +43,8 @@ Na versão v1.5.6 o dono de uma conta `admin` lista só o próprio locatário e 
 | ComercialCloud | v1.5.0 |
 | Skillforge | v0.16.0 |
 | FileNorm | v0.3.0 |
-| SpringMind | springmind v0.2.0 com ReactMind no commit de `.env.example` |
-| VueMind | vuemind-api v0.2.0 com o front no commit de `.env.example` |
+| SpringMind | springmind v0.3.0, reactmind v0.1.0 e mind-shared v2.1.0 |
+| VueMind | vuemind-api v0.3.0, vuemind v0.1.0 e mind-shared v2.1.0 |
 | cards-api | v1.4.4 |
 | order-service, HookGuard, ArchLens, AssinaFlow | sem mudança de versão |
 
@@ -67,7 +67,7 @@ Achados HIGH e CRITICAL com correção disponível (Trivy 0.70.0, `--ignore-unfi
 | Fluxe, loja | 26 | 0 |
 | Fluxe, operação e administração | 62 e 62 | 0 e 0 |
 | Fluxe, orders e payments (API e workers) | 0 | 0 |
-| PostgreSQL 16 (nove demonstrações) e MariaDB 10.11 (cards) | 26 (1 crítico) cada | 0 e 0 (`demos/imagens`, 03/11/2026) |
+| PostgreSQL 16 (nove demonstrações) e MariaDB 10.11 (cards) | 26 (1 crítico) cada | 0 e 0 (`demos/imagens`, na VPS desde 03/11/2026; 0 também sem `--ignore-unfixed`) |
 | Redis 7 (Fluxe) | 0 | 0 |
 
 Pendências conhecidas, sem correção disponível ou fora do alcance desta mudança:
@@ -76,7 +76,7 @@ Pendências conhecidas, sem correção disponível ou fora do alcance desta muda
 - **RabbitMQ 3 (Fluxe):** a linha 3 não recebe mais correções (69 achados). A troca para a linha 4 é uma mudança de versão maior e fica para uma etapa própria.
 - **Fluxe, saas-core:** 2 achados da `libexpat` 2.9.0 (corrigida na 2.10.0) vêm da imagem base do Dockerfile do próprio produto, que não executa `apk upgrade`; resolve-se no repositório do spring-saas-core.
 - **Keycloak 26.8:** recusa o token com `Origin` fora de `webOrigins` (403 "Invalid origin"). O `demo.sh` do cards ajusta o cliente `cards-admin` para o endereço público.
-- **VueMind:** a `vuemind-api` não gera o código end-to-end do PIX; o comprovante mostra o campo vazio.
+- **VueMind e SpringMind:** desde 03/11/2026 o comprovante do PIX traz o end-to-end no formato do arranjo do Banco Central, com o ISPB fictício `99999999`, e avisa que o PIX é simulado.
 - **FileNorm:** o link de acesso só aparece na resposta com o código de acesso da demonstração; na VPS o modo está desligado e o link vai por e-mail. Destinatário recusado pelo servidor de e-mail responde 500.
 
 ## ArchLens e AssinaFlow
