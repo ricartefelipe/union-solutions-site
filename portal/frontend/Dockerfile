@@ -10,8 +10,10 @@ FROM node:24-alpine@sha256:8a32c8cf649a49915a66e81e7a609223c708d0adabf288ee3f407
 WORKDIR /app
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0
 # npm e corepack não são usados em execução: saem da imagem, junto com as dependências deles.
+# Correções de segurança do Alpine publicadas depois da imagem base entram em cada build.
 RUN rm -rf /usr/local/lib/node_modules /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
     /opt/yarn-* /usr/local/bin/yarn /usr/local/bin/yarnpkg \
+  && apk upgrade --no-cache \
   && addgroup -S portal && adduser -S portal -G portal
 COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
