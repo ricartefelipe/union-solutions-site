@@ -109,6 +109,32 @@ const figures: Record<ProductSlug, Figure> = {
       { x: 320, y: 166, text: 'administração', anchor: 'end' },
     ],
   },
+  // Da primeira aula ao certificado: uma escada, curso, turma e conclusão.
+  skillforge: {
+    lines: ['M0 132H80V100H160V68H240V36H320', 'M0 142H90V110H170V78H250V46H320'],
+    nodes: [{ x: 80, y: 116 }, { x: 160, y: 84 }, { x: 240, y: 52 }],
+    labels: [
+      { x: 0, y: 168, text: 'curso' },
+      { x: 160, y: 168, text: 'turma', anchor: 'middle' },
+      { x: 320, y: 168, text: 'certificado', anchor: 'end' },
+    ],
+  },
+  // O cartão no centro: emissão à esquerda, entrega e validação à direita.
+  'cards-api': {
+    lines: [
+      'M98 24H222A14 14 0 0 1 236 38V98A14 14 0 0 1 222 112H98A14 14 0 0 1 84 98V38A14 14 0 0 1 98 24Z',
+      'M84 56H236',
+      'M104 86H140',
+      'M0 68H84',
+      'M236 68H320',
+    ],
+    nodes: [{ x: 42, y: 68 }, { x: 278, y: 68 }],
+    labels: [
+      { x: 0, y: 150, text: 'emissão' },
+      { x: 160, y: 150, text: 'entrega', anchor: 'middle' },
+      { x: 320, y: 150, text: 'validação', anchor: 'end' },
+    ],
+  },
   // Caixa e retaguarda, dois lados do mesmo sistema.
   comercialcloud: {
     lines: [

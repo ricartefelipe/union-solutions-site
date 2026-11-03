@@ -7,7 +7,7 @@ import { Empty, PageTitle, Pagination, Section } from '@/components/ui';
 
 export const metadata: Metadata = { title: 'Auditoria' };
 
-export default async function AuditPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+export default async function AuditPage({ searchParams }: Readonly<{ searchParams: Promise<Record<string, string | undefined>> }>) {
   const me = await getMe();
   if (me.role !== 'UNION_ADMIN') redirect('/');
   const params = await searchParams;
@@ -33,7 +33,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
           <div><button className="btn btn--ghost" type="submit">Filtrar</button></div>
         </form>
         {data.items.length === 0 ? <Empty>Nenhum evento encontrado.</Empty> : (
-          <div className="table-wrap" tabIndex={0} role="region" aria-label="Eventos de auditoria" style={{ marginTop: '1rem' }}>
+          <section className="table-wrap" tabIndex={0} aria-label="Eventos de auditoria" style={{ marginTop: '1rem' }}>
             <table>
               <thead><tr><th scope="col">Data</th><th scope="col">Ação</th><th scope="col">Quem</th><th scope="col">Cliente</th><th scope="col">Recurso</th><th scope="col">Resumo</th></tr></thead>
               <tbody>
@@ -49,7 +49,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
                 ))}
               </tbody>
             </table>
-          </div>
+          </section>
         )}
         <Pagination page={data} basePath="/admin/auditoria" query={{ acao: params.acao, cliente: organizationId }} />
       </Section>

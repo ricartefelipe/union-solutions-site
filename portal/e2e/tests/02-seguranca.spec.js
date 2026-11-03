@@ -53,6 +53,31 @@ test.describe.serial('Segurança e acessibilidade', () => {
     await context.close();
   });
 
+  test('a política de privacidade é alcançável nas telas públicas, no login e na área logada', async ({ browser }) => {
+    const URL_POLITICA = 'https://unionsolutions.tech/privacidade/';
+    for (const width of [320, 390, 1280]) {
+      const { context, page } = await signedIn(browser, state.clientA);
+      await page.setViewportSize({ width, height: 900 });
+      const naArea = page.getByRole('contentinfo').getByRole('link', { name: 'Política de privacidade' });
+      await expect(naArea).toHaveAttribute('href', URL_POLITICA);
+      await assertNoHorizontalScroll(page);
+      await assertAccessible(page);
+      await context.close();
+
+      const publica = await browser.newContext({ viewport: { width, height: 900 } });
+      const tela = await publica.newPage();
+      await tela.goto('/convite');
+      await expect(tela.getByRole('link', { name: 'Política de privacidade' })).toHaveAttribute('href', URL_POLITICA);
+      await assertNoHorizontalScroll(tela);
+      await assertAccessible(tela);
+      await tela.goto('/auth/login');
+      await expect(tela.locator('#kc-login')).toBeVisible();
+      await expect(tela.getByRole('link', { name: 'Política de privacidade' })).toHaveAttribute('href', URL_POLITICA);
+      await assertNoHorizontalScroll(tela);
+      await publica.close();
+    }
+  });
+
   test('mutação sem token de CSRF ou de outra origem é recusada', async ({ browser }) => {
     const { context, page } = await signedIn(browser, state.clientA);
     const body = { subject: 'CSRF', description: 'x', category: 'OTHER', priority: 'LOW' };

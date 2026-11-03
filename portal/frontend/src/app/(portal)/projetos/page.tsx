@@ -4,11 +4,11 @@ import { apiGet, apiGetOptional, getMe, pageQuery } from '@/lib/api';
 import { formatDate, label, options } from '@/lib/labels';
 import type { OrganizationView, Page, ProjectSummary } from '@/lib/types';
 import { ApiForm } from '@/components/forms';
-import { Badge, Disclosure, Empty, PageTitle, Pagination, Section, Truncated } from '@/components/ui';
+import { Badge, Disclosure, Empty, PageTitle, Pagination, Section } from '@/components/ui';
 
 export const metadata: Metadata = { title: 'Projetos' };
 
-export default async function ProjectsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+export default async function ProjectsPage({ searchParams }: Readonly<{ searchParams: Promise<Record<string, string | undefined>> }>) {
   const params = await searchParams;
   const me = await getMe();
   const status = params.situacao && options('project').some((o) => o.value === params.situacao) ? params.situacao : undefined;

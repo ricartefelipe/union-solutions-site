@@ -8,7 +8,7 @@ import { Empty, PageTitle, Pagination, Section } from '@/components/ui';
 
 export const metadata: Metadata = { title: 'Notificações' };
 
-export default async function NotificationsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+export default async function NotificationsPage({ searchParams }: Readonly<{ searchParams: Promise<Record<string, string | undefined>> }>) {
   await getMe();
   const params = await searchParams;
   const onlyUnread = params.filtro === 'nao-lidas';

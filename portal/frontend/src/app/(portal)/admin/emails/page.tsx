@@ -11,7 +11,12 @@ export const metadata: Metadata = { title: 'Fila de e-mails' };
 
 const FILTERS = [['', 'Todos'], ['PENDING', 'Na fila'], ['SENT', 'Enviados'], ['FAILED', 'Desistiram']];
 
-export default async function OutboxPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+function deliveryNote(e: OutboxView) {
+  if (e.status === 'SENT') return `Enviado em ${formatDateTime(e.sentAt!)}`;
+  return e.status === 'PENDING' && e.nextAttemptAt ? `Próxima tentativa ${formatDateTime(e.nextAttemptAt)}` : '';
+}
+
+export default async function OutboxPage({ searchParams }: Readonly<{ searchParams: Promise<Record<string, string | undefined>> }>) {
   const me = await getMe();
   if (me.role !== 'UNION_ADMIN') redirect('/');
   const params = await searchParams;
@@ -26,7 +31,7 @@ export default async function OutboxPage({ searchParams }: { searchParams: Promi
         </ul></nav>
       }>
         {data.items.length === 0 ? <Empty>Nenhum e-mail nesta situação.</Empty> : (
-          <div className="table-wrap" tabIndex={0} role="region" aria-label="Fila de e-mails">
+          <section className="table-wrap" tabIndex={0} aria-label="Fila de e-mails">
             <table>
               <thead><tr><th scope="col">Criado</th><th scope="col">Destinatário</th><th scope="col">Assunto</th><th scope="col">Situação</th><th scope="col">Tentativas</th><th scope="col">Detalhe</th><th scope="col"><span className="sr-only">Ações</span></th></tr></thead>
               <tbody>
@@ -37,13 +42,13 @@ export default async function OutboxPage({ searchParams }: { searchParams: Promi
                     <td>{e.subject}</td>
                     <td><Badge group="email" value={e.status} /></td>
                     <td>{e.attempts}</td>
-                    <td>{e.status === 'SENT' ? `Enviado em ${formatDateTime(e.sentAt!)}` : e.status === 'PENDING' && e.nextAttemptAt ? `Próxima tentativa ${formatDateTime(e.nextAttemptAt)}` : ''}{e.lastError ? ` · ${e.lastError}` : ''}</td>
+                    <td>{deliveryNote(e)}{e.lastError ? ` · ${e.lastError}` : ''}</td>
                     <td>{e.status === 'FAILED' && <ApiButton path={`/v1/admin/emails/${e.id}/retry`} tone="ghost" label="Voltar à fila" />}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </section>
         )}
         <Pagination page={data} basePath="/admin/emails" query={{ situacao: status }} />
       </Section>

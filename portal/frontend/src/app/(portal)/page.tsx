@@ -11,7 +11,7 @@ export default async function DashboardPage() {
   const [me, data] = await Promise.all([getMe(), apiGet<Dashboard>('/v1/dashboard')]);
   return (
     <>
-      <PageTitle title={`Olá${me.name ? `, ${me.name.split(' ')[0]}` : ''}`} intro="O que precisa da sua atenção agora." />
+      <PageTitle title={me.name ? `Olá, ${me.name.split(' ')[0]}` : 'Olá'} intro="O que precisa da sua atenção agora." />
       <div className="grid-2">
         <Section title="Aprovações pendentes">
           {data.pendingApprovals.length === 0 ? <Empty>Nenhuma entrega aguardando aprovação.</Empty> : (

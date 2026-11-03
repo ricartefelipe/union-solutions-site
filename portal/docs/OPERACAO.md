@@ -189,7 +189,7 @@ A auditoria fica em Auditoria (somente `UNION_ADMIN`) e na tabela `audit_event`.
 
 Use `sh portal-prod.sh reiniciar-banco`. O Compose reinicia também o provedor e a API (`depends_on` com `restart: true`), que voltam com conexões novas.
 
-Em um reinício não planejado, o pool do Keycloak ainda pode ter conexões antigas. O pool é pequeno (`KC_DB_POOL_*`) e as descarta em cerca de 1 a 2 segundos, conforme `EVIDENCIAS.md`. Nessa janela, o BFF repete as chamadas ao provedor, mas uma tela de login aberta diretamente pode mostrar erro até ser recarregada. A versão anterior usava uma propriedade Quarkus crua, que o Keycloak declara não suportada. Ela foi removida.
+Em um reinício não planejado, a API valida cada conexão antes de usar (`validate-on-borrow`) e não sente a queda. O pool do Keycloak ainda pode ter conexões antigas. Ele é pequeno (`KC_DB_POOL_*`) e descarta cada uma no primeiro uso, sem prazo: em 02/11/2026, o primeiro login depois do reinício mostrou "Erro inesperado ao tratar o pedido de autenticação" em 3 de 3 rodadas, e a tentativa seguinte passou. O BFF repete as chamadas ao provedor, mas a tela de login é do próprio Keycloak: quem receber esse erro precisa tentar de novo. Para encerrar a janela de uma vez, reinicie o provedor (`docker compose restart keycloak`). A opção que validaria a conexão no Keycloak é uma propriedade Quarkus crua, que ele declara não suportada, e fica de fora.
 
 | Indisponível | Comportamento |
 | --- | --- |

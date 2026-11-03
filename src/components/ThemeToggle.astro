@@ -1,0 +1,88 @@
+---
+/**
+ * Botão de tema claro/escuro. Só aparece com JavaScript (classe .js); sem ele, o site fica claro.
+ * A escolha fica no localStorage deste navegador, sem cookie e sem envio a terceiros.
+ */
+---
+
+<button class="theme-toggle" type="button" aria-pressed="false" data-theme-toggle>
+  <svg class="theme-toggle__sun" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false">
+    <circle cx="12" cy="12" r="4"></circle>
+    <path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"></path>
+  </svg>
+  <svg class="theme-toggle__moon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+    <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"></path>
+  </svg>
+  <span class="sr-only">Tema escuro</span>
+</button>
+
+<script>
+  const KEY = 'tema';
+  const root = document.documentElement;
+  const button = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
+  const media = window.matchMedia('(prefers-color-scheme: dark)');
+
+  const stored = () => {
+    try {
+      const value = localStorage.getItem(KEY);
+      return value === 'dark' || value === 'light' ? value : null;
+    } catch {
+      return null;
+    }
+  };
+  const apply = (theme: string) => {
+    root.dataset.theme = theme;
+    button?.setAttribute('aria-pressed', String(theme === 'dark'));
+  };
+
+  apply(root.dataset.theme === 'dark' ? 'dark' : 'light');
+
+  button?.addEventListener('click', () => {
+    const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    apply(next);
+    try {
+      localStorage.setItem(KEY, next);
+    } catch {
+      /* sem armazenamento: vale só nesta página */
+    }
+  });
+
+  media.addEventListener('change', (event) => {
+    if (!stored()) apply(event.matches ? 'dark' : 'light');
+  });
+</script>
+
+<style>
+  .theme-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid rgb(255 255 255 / 0.45);
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--on-dark);
+    cursor: pointer;
+  }
+
+  :global(.js) .theme-toggle {
+    display: inline-flex;
+  }
+
+  .theme-toggle:hover {
+    background: rgb(255 255 255 / 0.12);
+  }
+
+  .theme-toggle__moon {
+    display: none;
+  }
+
+  :global(:root[data-theme='dark']) .theme-toggle__sun {
+    display: none;
+  }
+
+  :global(:root[data-theme='dark']) .theme-toggle__moon {
+    display: block;
+  }
+</style>

@@ -1,0 +1,119 @@
+---
+/**
+ * Credenciais públicas de uma demonstração, com botão para copiar o que não tem espaços.
+ * Funciona sobre fundo claro ou escuro: usa só currentColor.
+ */
+import type { DemoAccess } from '../data/products';
+
+interface Props {
+  access: DemoAccess[];
+}
+
+const { access } = Astro.props;
+const copiable = (value: string) => /^\S+$/.test(value);
+---
+
+<div class="access" data-access>
+  <dl class="access__list">
+    {access.map((item) => (
+      <div class="access__row">
+        <dt>{item.label}</dt>
+        <dd>
+          <code>{item.value}</code>
+          {copiable(item.value) && (
+            <button class="access__copy" type="button" data-copy={item.value} data-label={item.label}>
+              <span data-copy-text>Copiar</span><span class="sr-only"> {item.label.toLowerCase()}</span>
+            </button>
+          )}
+        </dd>
+      </div>
+    ))}
+  </dl>
+  <p class="sr-only" role="status" aria-live="polite" data-copy-status></p>
+</div>
+
+<script>
+  const mark = (button: HTMLButtonElement, status: HTMLElement | null, ok: boolean) => {
+    const label = button.dataset.label ?? 'valor';
+    const text = button.querySelector<HTMLElement>('[data-copy-text]');
+    if (text) text.textContent = ok ? 'Copiado' : 'Copie à mão';
+    if (status) status.textContent = ok ? `${label} copiado.` : `Não foi possível copiar. Selecione o ${label.toLowerCase()} e copie à mão.`;
+    window.setTimeout(() => {
+      if (text) text.textContent = 'Copiar';
+      if (status) status.textContent = '';
+    }, 2500);
+  };
+
+  document.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const value = button.dataset.copy ?? '';
+      const status = button.closest('[data-access]')?.querySelector<HTMLElement>('[data-copy-status]') ?? null;
+      let ok = false;
+      try {
+        await navigator.clipboard.writeText(value);
+        ok = true;
+      } catch {
+        ok = false;
+      }
+      mark(button, status, ok);
+    });
+  });
+</script>
+
+<style>
+  .access {
+    margin-bottom: var(--space-4);
+  }
+
+  .access__list {
+    display: grid;
+    gap: var(--space-2);
+    margin: 0;
+  }
+
+  .access__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1) var(--space-3);
+  }
+
+  .access__row dt {
+    min-width: 4.5rem;
+    font-weight: 600;
+  }
+
+  .access__row dd {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0;
+    min-width: 0;
+  }
+
+  .access code {
+    padding: 0.25rem 0.625rem;
+    border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+    border-radius: var(--radius);
+    background: color-mix(in srgb, currentColor 8%, transparent);
+    font: 600 var(--text-sm) / 1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    overflow-wrap: anywhere;
+  }
+
+  .access__copy {
+    min-width: 5.5rem;
+    min-height: 2.75rem;
+    padding: var(--space-1) var(--space-3);
+    border: 1px solid currentColor;
+    border-radius: var(--radius);
+    background: transparent;
+    color: inherit;
+    font: 600 var(--text-sm) / 1 var(--font-body);
+    cursor: pointer;
+  }
+
+  .access__copy:hover {
+    background: color-mix(in srgb, currentColor 14%, transparent);
+  }
+</style>

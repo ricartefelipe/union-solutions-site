@@ -8,7 +8,7 @@ import { Badge, Disclosure, Empty, PageTitle, Pagination, Section } from '@/comp
 
 export const metadata: Metadata = { title: 'Suporte' };
 
-export default async function SupportPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+export default async function SupportPage({ searchParams }: Readonly<{ searchParams: Promise<Record<string, string | undefined>> }>) {
   const params = await searchParams;
   const me = await getMe();
   const status = params.situacao && options('ticket').some((o) => o.value === params.situacao) ? params.situacao : undefined;

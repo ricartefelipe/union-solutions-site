@@ -16,7 +16,7 @@ x-comum: &comum
 services:
   postgres:
     <<: *comum
-    image: postgres:16-alpine@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36
+    image: postgres:16-alpine@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab
     user: "70:70"
     environment:
       POSTGRES_DB: springmind
@@ -72,7 +72,10 @@ services:
         COPY reactmind/ app/
         RUN cd mind-shared && npm ci --ignore-scripts && npm run build
         RUN cd app && npm ci --ignore-scripts && VITE_BASE=/ VITE_ENABLE_MSW=false VITE_API_BASE_URL=/api/v1 npm run build
-        FROM nginxinc/nginx-unprivileged:1.29-alpine@sha256:0c79d56aee561a1d81c63f00eee5fb5fe29279560cdc55e91425133104c7fbe6
+        FROM nginxinc/nginx-unprivileged:1.30-alpine@sha256:f5116ed4606f3eb015dd4a8e28cb9b351476dc0ad4bc6e9f93b19cec130cdf03
+        USER root
+        RUN apk upgrade --no-cache
+        USER nginx
         COPY --from=build /b/app/dist /usr/share/nginx/html
 
     networks:

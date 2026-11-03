@@ -1,11 +1,12 @@
 # Publicação: índice operacional
 
-Este é o ponto de partida para publicar e operar. Estado em 01/11/2026: o site 1.1.0 está no ar na Hostinger desde 31/10/2026, e o portal 1.2.0 foi implantado em 01/11/2026 numa VPS KVM 2 da Hostinger em Campinas (`187.41.111.129`), com DNS, HTTPS público e SMTP configurados. São duas aplicações independentes: o site funciona sem o portal.
+Este é o ponto de partida para publicar e operar. Estado em 02/11/2026: site, portal e demonstrações no ar, em três hospedagens independentes. O portal segue fechado a clientes até os prazos de retenção e a revisão jurídica da política.
 
 | Aplicação | Hospedagem | Endereço | Situação |
 | --- | --- | --- | --- |
-| Site institucional | Hostinger Business | `https://unionsolutions.tech` | No ar (1.1.0). Pacote 1.2.0 pronto, não publicado |
-| Portal do cliente | VPS Hostinger KVM 2, Ubuntu 24.04, Campinas | `https://clientes.unionsolutions.tech` | No ar (1.2.0), em validação pela administração; ainda fechado a clientes |
+| Site institucional | Hostinger Business | `https://unionsolutions.tech` | No ar, com a política de privacidade em `/privacidade/` |
+| Portal do cliente | VPS 1 da Hostinger, KVM 2, Ubuntu 24.04, Campinas (`187.41.111.129`) | `https://clientes.unionsolutions.tech` | No ar (código 1.4.0), em validação pela administração; ainda fechado a clientes |
+| Demonstrações | VPS 2 da Hostinger, Ubuntu 26.04, Campinas (`187.41.112.67`) | `https://demo-<produto>.unionsolutions.tech` | Onze no ar, ver [`demos/README.md`](../demos/README.md) |
 
 ## Site institucional
 
@@ -35,13 +36,7 @@ sh scripts/empacotar-site.sh
 
 O script só gera o ZIP se `check:publish` aprovar. Ele extrai o pacote, compara com `dist/`, recusa arquivos que não deveriam estar nele, como `.env`, código-fonte, dependências, mapas ou endereços locais, e grava o SHA-256 e o inventário.
 
-**Pacote atual (02/11/2026, com o botão "Área do cliente" e "Acessar demonstração" em HookGuard, FileNorm e ComercialCloud):** `artifacts/pacotes/site-union-solutions-20261102-015838.zip`
-
-**SHA-256:** `25ea93c4229fd8e39af7e5241ad5d0d0cae72deabd1b1936cc277a1189c38fab`
-
-**Pacote anterior (01/11/2026, só com o botão "Área do cliente"):** `site-union-solutions-20261101-202817.zip`, SHA-256 `f6d5005c…`.
-
-**Publicado na Hostinger em 31/10/2026 (1.1.0):** `site-union-solutions-20261031-215233.zip`. O pacote atual acrescenta o botão "Área do cliente" para `https://clientes.unionsolutions.tech`, o botão de contato marcado como página atual em Contato e a frase de assunto no formulário ao chegar por um produto ou serviço. O pacote intermediário `site-union-solutions-20261101-150354.zip` (sem o botão) fica como alternativa caso se queira publicar sem a área do cliente.
+**Publicado na Hostinger em 02/11/2026:** `site-union-solutions-20261102-112309.zip`, SHA-256 `047c85859830e1a7c68c8f3c3e5be3b9a7d5008a28a9e7d485f4270aa369f0cf`. Traz a política de privacidade, o CNPJ no rodapé e os botões "Testar agora" e "Falar com a Union". O CNPJ entra por `PUBLIC_COMPANY_CNPJ`, no `.env` de quem gera o pacote.
 
 O pacote foi testado em Apache 2.4 com o `.htaccess` real. A Hostinger pode usar LiteSpeed, então confira o resultado depois de publicar.
 
@@ -105,9 +100,9 @@ Domínio e caixa postal **não são pendências**. A confirmação de que funcio
 
 6. Primeiro acesso da administração concluído em 01/11/2026: senha definida pelo e-mail recebido em `contato@` e MFA configurado em aplicativo autenticador; login confirmado.
 7. Site publicado com o botão "Área do cliente" em 01/11/2026.
-8. SSH da VPS só por chave; repositório público sem identificadores da hospedagem; aceite dos seis achados de vulnerabilidade registrado, com validade até 01/12/2026.
+8. SSH da VPS só por chave; repositório público sem identificadores da hospedagem; aceite dos cinco achados de vulnerabilidade restantes registrado, com validade até 01/12/2026.
 
-9. Demonstrações públicas em 02/11/2026, em VPS própria, separada do portal (`demos/README.md`): `demo-hookguard`, `demo-filenorm` e `demo-comercialcloud` em `unionsolutions.tech`, cada uma com certificado próprio, dados apagados todo dia e rotas internas fechadas. O portal está na 1.4.0, com 2 GB de swap criados na VPS.
+9. Demonstrações públicas em 02/11/2026, em VPS própria, separada do portal (`demos/README.md`): `demo-hookguard`, `demo-filenorm`, `demo-comercialcloud`, `demo-archlens`, `demo-assinaflow`, `demo-fluxe`, `demo-cards`, `demo-orders`, `demo-vuemind`, `demo-springmind` e `demo-skillforge` em `unionsolutions.tech`, cada uma com certificado próprio, dados apagados todo dia e rotas internas fechadas. O portal está na 1.4.0, com 2 GB de swap criados na VPS.
 
 ### Modelo comercial
 
@@ -121,7 +116,7 @@ Decidido em 02/11/2026:
 
 ### Ainda dependem de ação
 
-1. **Conferências com a administração logada**, que exigem a sessão do administrador e por isso não foram feitas pela operação: criar uma organização de teste e convidar um e-mail próprio (confere entrega real do convite pela API e pelo SMTP), enviar um PDF a um projeto dela (confere o antivírus em produção) e publicar uma entrega (confere o aviso por e-mail). Até lá, a fila de e-mails da API em produção nunca enviou uma mensagem; só o provedor de identidade enviou.
+1. **Conferências com a administração logada**, que exigem a sessão do administrador: o upload de arquivo e o aviso por e-mail nunca foram usados em produção. O motor do antivírus e o envio de convite já foram confirmados no ar.
 2. **Campos "A DEFINIR" de `portal/docs/PRIVACIDADE.md`** (prazos de retenção, entre outros) e revisão jurídica da política antes de divulgar o portal a clientes.
 3. **SonarCloud:** resolvido; em 02/11/2026 não havia pontos de segurança a revisar e o quality gate estava aprovado. Registro anterior: duas marcações manuais como "Accept" na `main`: o container de testes do ensaio executa como root (precisa do socket do Docker) e o ensaio usa `http://` de propósito para conferir o redirecionamento.
 4. Reavaliar as vulnerabilidades até 01/12/2026 (`.trivyignore.yaml` vence sozinho nessa data).
@@ -131,7 +126,7 @@ Itens originais, mantidos para referência do que cada variável exige:
 3. Preencher em `portal/deploy/production/.env`: `PORTAL_SMTP_HOST`, `PORTAL_SMTP_USER`, `PORTAL_SMTP_PASSWORD`, `PORTAL_BOOTSTRAP_ADMIN_EMAIL`, `PORTAL_PRODUCT_LINK_HOSTS`, `RESTIC_REPOSITORY` (sftp na conta de hospedagem do site, com `chave-backup` e `destino-backup`), `PORTAL_BACKUP_SFTP_PORT`, `PORTAL_BACKUP_KEEP_DAILY`, `PORTAL_BACKUP_KEEP_WEEKLY` e `PORTAL_BACKUP_KEEP_MONTHLY`.
 4. Validar emissão do certificado, entrega de e-mail, backup externo e portas fechadas a partir de fora.
 5. Preencher os campos de `PRIVACIDADE.md` antes de abrir o portal a clientes.
-6. Seis achados altos de `VULNERABILIDADES.md`: **aceitos por Felipe em 01/11/2026**, com reavaliação até 01/12/2026 e análise semanal automática. Deixou de ser bloqueio.
+6. Achados altos de `VULNERABILIDADES.md`: seis **aceitos por Felipe em 01/11/2026**, um corrigido em 02/11/2026; os cinco restantes, sem imagem corrigida, têm reavaliação até 01/12/2026 e análise semanal automática. Deixou de ser bloqueio.
 7. Na atualização para esta versão, avisar quem estiver logado: todas as sessões anteriores são encerradas (`IMPLANTACAO.md`, "Atualização").
 8. **Aprovar a política de retenção** antes de ligar `PORTAL_RETENTION_ENABLED`: até lá o portal só simula e nada é removido (`portal/docs/OPERACAO.md`, "Retenção"). Nenhum prazo foi definido no código.
 

@@ -14,7 +14,7 @@ rclone lsf -R --files-only "LOCAL:$BUCKET" | LC_ALL=C sort -u > "$WORK/objetos"
 MISSING=$(LC_ALL=C comm -23 "$WORK/registrados" "$WORK/objetos" | wc -l)
 EXTRA=$(LC_ALL=C comm -13 "$WORK/registrados" "$WORK/objetos" | wc -l)
 echo "Reconciliação: $(wc -l < "$WORK/registrados") registrados, $(wc -l < "$WORK/objetos") objetos, $MISSING faltando, $EXTRA sem registro."
-if [ "$MISSING" -gt 0 ]; then
+if [[ "$MISSING" -gt 0 ]]; then
   echo "Há arquivos registrados sem objeto no armazenamento." >&2
   exit 1
 fi

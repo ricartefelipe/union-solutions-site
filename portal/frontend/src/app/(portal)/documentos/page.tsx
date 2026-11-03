@@ -8,7 +8,7 @@ import { Disclosure, Empty, FileLink, PageTitle, Pagination, Section } from '@/c
 
 export const metadata: Metadata = { title: 'Documentos' };
 
-export default async function DocumentsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+export default async function DocumentsPage({ searchParams }: Readonly<{ searchParams: Promise<Record<string, string | undefined>> }>) {
   const params = await searchParams;
   const me = await getMe();
   const category = params.categoria && Object.keys(options('category').reduce((a, o) => ({ ...a, [o.value]: 1 }), {})).includes(params.categoria) ? params.categoria : undefined;
