@@ -87,7 +87,7 @@ Fluxe e AssinaFlow usam o RabbitMQ 4.4.0: a Fluxe na imagem `rabbitmq:4.4.0-alpi
 
 Os dados do RabbitMQ ficam num volume anônimo, que o reinício diário apaga. Para trocar a versão, recrie tudo com `reiniciar-dados`: a 4.4 também arranca sobre dados da 3.13, mas mensagens persistentes dessas filas se perdem em silêncio, e os workers da Fluxe até node-b2b-orders v1.4.6 e py-payments-ledger v2.0.5 não se recuperam de um broker sem filas sem reiniciar.
 
-- **Fluxe:** `sh demo.sh reiniciar-dados`. A imagem do RabbitMQ vem do Docker Hub; as do produto não mudam.
+- **Fluxe:** `sh demo.sh reiniciar-dados`, depois de construir as imagens de banco (ver "Imagens de banco"). A imagem do RabbitMQ vem do Docker Hub; as do produto não mudam.
 - **AssinaFlow:** `ASSINAFLOW_TAG=v1.0.8` no `.env`, depois `sh demo.sh instalar`, `sh demo.sh subir` (reconstrói a imagem do RabbitMQ) e `sh demo.sh reiniciar-dados`. O site do proxy não muda.
 
 Conferido numa máquina de trabalho em 03/11/2026, com as tags de produção da Fluxe e a branch do AssinaFlow que vira a v1.0.8: pedido até `PAID` em 4,2 s (4,3 s no 3.13), um único pagamento, administração vendo só o próprio locatário, cobrança recorrente vencida liquidada uma vez em dois ciclos, `flag.created` do saas-core entregue por `saas.events`; no AssinaFlow, cadastro, assinatura, renovação assíncrona cobrada pelo consumidor da fila `payments.charge`, troca de plano e cancelamento.
