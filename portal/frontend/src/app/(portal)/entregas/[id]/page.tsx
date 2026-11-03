@@ -7,7 +7,7 @@ import { Badge, Disclosure, Empty, PageTitle, Section, When } from '@/components
 
 export const metadata: Metadata = { title: 'Entrega' };
 
-export default async function DeliveryPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function DeliveryPage({ params }: Readonly<{ params: Promise<{ id: string }> }>) {
   const { id } = await params;
   const delivery = await apiGet<DeliveryDetail>(`/v1/deliveries/${id}`);
   const current = delivery.versions.find((v) => v.versionNo === delivery.currentVersion)!;

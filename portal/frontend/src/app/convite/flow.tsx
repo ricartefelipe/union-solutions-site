@@ -19,7 +19,7 @@ export function InvitationFlow() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    const match = window.location.hash.match(/^#t=([A-Za-z0-9_-]+)$/);
+    const match = /^#t=([A-Za-z0-9_-]+)$/.exec(window.location.hash);
     if (!match) {
       setState('invalid');
       return;
@@ -48,7 +48,7 @@ export function InvitationFlow() {
     setState(response?.ok ? 'sent' : 'error');
   }
 
-  if (state === 'loading') return <p role="status" className="muted">Verificando o convite…</p>;
+  if (state === 'loading') return <output className="muted">Verificando o convite…</output>;
   if (state === 'invalid') {
     return <div className="alert alert--error" role="alert">Este convite não é válido ou já expirou. Peça um novo convite a quem enviou.</div>;
   }
@@ -57,9 +57,9 @@ export function InvitationFlow() {
   }
   if (state === 'sent') {
     return (
-      <div className="alert alert--success" role="status">
+      <output className="alert alert--success">
         Enviamos um e-mail para definir sua senha. Siga as instruções e, ao final, entre no portal para concluir o convite.
-      </div>
+      </output>
     );
   }
   return (

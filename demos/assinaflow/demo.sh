@@ -6,7 +6,7 @@ DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 cd "$DIR"
 PROXY=$DIR/../proxy
 COMPOSE="docker compose --env-file .env -f compose.yaml"
-value() { grep "^$1=" .env | head -n 1 | cut -d= -f2-; }
+value() { nome_campo=$1; grep "^$nome_campo=" .env | head -n 1 | cut -d= -f2-; }
 random() { od -An -N24 -tx1 /dev/urandom | tr -d ' \n'; }
 
 require_env() {

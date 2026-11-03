@@ -173,6 +173,12 @@ jobs:
         env:
           E2E_BROWSER: chromium
           E2E_SHOTS_DIR: ${{ runner.temp }}/evidencias
+      - name: Logs dos serviços, em caso de falha
+        if: failure()
+        run: |
+          mkdir -p "${{ runner.temp }}/evidencias"
+          cd portal/deploy/local
+          docker compose --env-file .env -f compose.yaml logs --no-color --tail=2000 keycloak backend frontend postgres > "${{ runner.temp }}/evidencias/servicos.log" 2>&1 || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:

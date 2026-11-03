@@ -6,7 +6,7 @@ import type { UnreadCount } from '@/lib/types';
 import { label } from '@/lib/labels';
 import { NavLinks } from '@/components/nav';
 
-export default async function PortalLayout({ children }: { children: ReactNode }) {
+export default async function PortalLayout({ children }: Readonly<{ children: ReactNode }>) {
   const session = await currentSession();
   if (!session) redirect('/auth/login');
   const me = await getMe();
@@ -22,10 +22,12 @@ export default async function PortalLayout({ children }: { children: ReactNode }
   if (me.role === 'CLIENT_ADMIN') links.push({ href: '/organizacao', label: 'Organização' });
   if (me.canManage) links.push({ href: '/admin/organizacoes', label: 'Clientes' });
   if (me.role === 'UNION_ADMIN') {
-    links.push({ href: '/admin/usuarios', label: 'Equipe' });
-    links.push({ href: '/admin/auditoria', label: 'Auditoria' });
-    links.push({ href: '/admin/emails', label: 'E-mails' });
-    links.push({ href: '/admin/retencao', label: 'Retenção' });
+    links.push(
+      { href: '/admin/usuarios', label: 'Equipe' },
+      { href: '/admin/auditoria', label: 'Auditoria' },
+      { href: '/admin/emails', label: 'E-mails' },
+      { href: '/admin/retencao', label: 'Retenção' },
+    );
   }
 
   return (
@@ -58,6 +60,9 @@ export default async function PortalLayout({ children }: { children: ReactNode }
       <main id="conteudo" tabIndex={-1}>
         <div className="main-wrap">{children}</div>
       </main>
+      <footer className="portal-footer">
+        <div className="main-wrap"><a href="https://unionsolutions.tech/privacidade/">Política de privacidade</a></div>
+      </footer>
     </>
   );
 }

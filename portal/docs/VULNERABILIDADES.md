@@ -6,6 +6,8 @@ Resumo versionado da análise das imagens finais e das dependências. O relatór
 
 **Reavaliação de 01/11/2026** (base de vulnerabilidades do próprio dia, imagens da configuração de produção reconstruídas com a versão 1.2.1, relatório em `artifacts/portal-qa/producao/vulnerabilidades-2026-11-01/`): os mesmos seis achados altos, nenhum crítico, nenhuma atualização suportada nova. Keycloak 26.8.1 continua sendo a última versão publicada; SeaweedFS 4.51 idem; `go-jose/v3` continua sem correção (a linha v4 está em 4.1.7). Evidência adicional para o item 6: o armazém de confiança do JDK da imagem do Keycloak não contém nenhum certificado da eMudhra (`keytool -list -cacerts`, 0 ocorrências), portanto a desconfiança que o pacote corrigido traria já é o estado efetivo. A imagem do Keycloak é `ubi9-micro`, sem gerenciador de pacotes: o `sqlite-libs` dos itens 4 e 5 não pode ser removido pela imagem derivada, e nenhum processo o carrega.
 
+**Reavaliação de 02/11/2026** (Trivy 0.70.0, altos e críticos, imagens reconstruídas). O item 2 saiu com a imagem SeaweedFS 4.52, fixada por digest. Continuam aceitos os itens 1, 3, 4, 5 e 6, no mesmo prazo de **01/12/2026**, que não foi prorrogado. Keycloak 26.8.1 segue como última versão publicada, sem imagem corrigida. Foi medido em ambiente de teste que a Guava 33.7.2 no lugar da 33.6.0 elimina o item 3 sem impedir o `kc.sh build`, mas ela não foi aplicada: trocar um JAR dentro da imagem não tem suporte do Keycloak, e o achado não tem caminho de exploração nesta configuração.
+
 **Critério de reavaliação:** repetir a análise antes de cada implantação e sempre que uma imagem base mudar, ou a cada 30 dias enquanto o portal estiver no ar. Um item volta a exigir ação quando o projeto publicar versão corrigida, ou quando surgir caminho de exploração a partir de dados do cliente.
 
 | Ferramenta | Versão | Base de dados | Escopo |
@@ -17,7 +19,7 @@ Uma execução que falhe é falha explícita (`execucao.txt` registra a saída p
 
 ## Imagens analisadas
 
-Imagens construídas pela configuração de produção no ambiente de prova, em 31/10/2026 (ID local em `imagens.txt`; a base de cada uma está fixada por digest nos Dockerfiles e no compose).
+Posição de 31/10/2026; o SeaweedFS mudou depois, como registra a reavaliação de 02/11/2026. Imagens construídas pela configuração de produção no ambiente de prova, em 31/10/2026 (ID local em `imagens.txt`; a base de cada uma está fixada por digest nos Dockerfiles e no compose).
 
 | Imagem | Base (digest fixado) | Crítica | Alta | Média | Baixa |
 | --- | --- | --- | --- | --- | --- |
@@ -41,7 +43,7 @@ Imagens construídas pela configuração de produção no ambiente de prova, em 
 | Caddy | 2.11.7 | 2.11.7 (03/10/2026) | Em dia |
 | Go (proxy) | 1.27.3 | 1.27.3 | Em dia |
 
-Por isso nenhuma atualização suportada foi aplicada nesta rodada além das já feitas (Caddy recompilado, `gosu` e `npm` removidos).
+Por isso nenhuma atualização suportada foi aplicada naquela rodada além das já feitas (Caddy recompilado, `gosu` e `npm` removidos). Em 02/11/2026 o SeaweedFS 4.52 estava publicado e foi adotado.
 
 ## Corrigido anteriormente
 
@@ -50,6 +52,7 @@ Por isso nenhuma atualização suportada foi aplicada nesta rodada além das já
 | Proxy: `brotli` crítica, `curl` alta, Go e `golang.org/x/net` antigos na imagem `caddy:2.11-alpine` | Caddy 2.11.7 compilado na própria imagem com Go 1.27.3 e dependências fixadas (`go.mod`/`go.sum`), sobre Alpine 3.22 sem `curl` nem `brotli` |
 | PostgreSQL: 61 achados no binário `gosu` | Removido da imagem; o container inicia como `postgres` e nunca o executava |
 | Web: `undici` e `brace-expansion` do `npm` embutido no Node | `npm`, `npx` e `corepack` removidos da imagem final |
+| SeaweedFS: CVE-2026-116587 em `go-jose/v4` 4.1.5 (item 2) | Imagem oficial 4.52, fixada por digest, sem achados altos ou críticos, em 02/11/2026 |
 
 ## Ocorrências altas, uma a uma
 
@@ -66,18 +69,9 @@ Por isso nenhuma atualização suportada foi aplicada nesta rodada além das já
 | Atualização suportada | Nenhuma: nem Caddy nem smallstep publicaram versão sem `go-jose/v3` |
 | Recomendação | **Submeter a aceite explícito**, com a condição acima registrada em `IMPLANTACAO.md` (revisar a cada mudança no Caddyfile). Reavaliar quando o advisory ganhar correção v3 ou o Caddy trocar a dependência |
 
-### 2. CVE-2026-116587 em `github.com/go-jose/go-jose/v4` 4.1.5, imagem do SeaweedFS
+### 2. Corrigido em 02/11/2026
 
-| Item | Registro |
-| --- | --- |
-| Imagem e digest | `chrislusf/seaweedfs:4.51@sha256:f7a49e3f3972ebed5be2ed4befa4a0c68eb7bdddba6e692d42729ceb545134b8` |
-| Componente | `go-jose/v4` 4.1.5 no binário `/usr/bin/weed` |
-| Versão corrigida | **A dependência tem correção (4.1.6)**; **a imagem oficial 4.51 ainda não a incorporou**, e não há versão mais nova em 31/10/2026 |
-| Condições para exploração | Mesmas do item 1: analisar JWS/JWK fornecida pelo atacante. No SeaweedFS, o go-jose atende à autenticação por JWT entre componentes e ao modo de JWT do S3, que não está habilitado aqui (autenticação do S3 por chave e assinatura, `s3.config`) |
-| Presença e alcance aqui | Presente no binário. O serviço não tem porta publicada e fica nas redes internas `dados`; quem fala com ele são a API (chave limitada ao bucket) e as operações. Dados do cliente chegam como corpo de objeto, nunca como JWS. A rede interna reduz quem alcança o serviço, mas **não prova** que não exista caminho a partir de dados do cliente; a prova aqui é a ausência de análise de JWT na configuração usada |
-| Mitigações e limites | Não há como aplicar a correção sem recompilar o SeaweedFS (não suportado). Limite: um atacante com acesso à rede interna poderia tentar o DoS |
-| Atualização suportada | Nenhuma publicada. Reavaliar a cada versão do SeaweedFS |
-| Recomendação | **Submeter a aceite explícito** até sair imagem com go-jose ≥ 4.1.6; ou **mitigar antes da publicação** trocando o armazenamento por um serviço S3 externo (decisão de custo, fora desta rodada) |
+CVE-2026-116587 saiu da imagem do SeaweedFS na versão 4.52; ver "Corrigido anteriormente". O aceite segue só para o item 1, no proxy.
 
 ### 3. CVE-2026-102554 em `com.google.guava:guava` 33.6.0, imagem do Keycloak
 
@@ -126,7 +120,7 @@ Por isso nenhuma atualização suportada foi aplicada nesta rodada além das já
 
 ## Decisão operacional
 
-Itens 1 a 6 aceitos por Felipe em 01/11/2026, com reavaliação até 01/12/2026 (ver o início deste documento). Este item deixou de bloquear a abertura do portal a clientes; `docs/PUBLICACAO.md` mantém as pendências restantes. A análise semanal da CI (`imagens.yml`) e a reavaliação manual a cada implantação continuam, e um achado novo, crítico ou com correção publicada reabre a decisão.
+Itens 1 a 6 aceitos por Felipe em 01/11/2026, com reavaliação até 01/12/2026 (ver o início deste documento); o item 2 foi corrigido em 02/11/2026 e os demais seguem no aceite. Este item deixou de bloquear a abertura do portal a clientes; `docs/PUBLICACAO.md` mantém as pendências restantes. A análise semanal da CI (`imagens.yml`) e a reavaliação manual a cada implantação continuam, e um achado novo, crítico ou com correção publicada reabre a decisão.
 
 ## Não coberto
 

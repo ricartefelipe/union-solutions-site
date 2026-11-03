@@ -53,7 +53,7 @@ const direitos = [
 
   <section class="section">
     <div class="wrap politica">
-      <p class="muted">Atualizada em 2 de novembro de 2026.</p>
+      <p class="muted">Atualizada em 3 de novembro de 2026.</p>
 
       <h2>Quem é responsável</h2>
       <p>
@@ -65,7 +65,7 @@ const direitos = [
       </p>
 
       <h2>Quais dados tratamos e por quê</h2>
-      <div class="politica__tabela">
+      <div class="politica__tabela" role="region" aria-label="Tabela de dados tratados" tabindex="0">
         <table>
           <thead>
             <tr>
@@ -91,12 +91,12 @@ const direitos = [
 
       <h2>Cookies e rastreamento</h2>
       <p>
-        Este site não usa cookies, analytics, pixels nem publicidade, e fontes e imagens vêm do próprio domínio. O portal e as demonstrações usam apenas cookies técnicos, necessários para manter o login. No portal, a sessão dura até 12 horas e expira antes depois de 1 hora sem uso.
+        Este site não usa cookies, analytics, pixels nem publicidade, e fontes e imagens vêm do próprio domínio. Se você escolher o tema claro ou escuro no botão do cabeçalho, guardamos essa preferência no armazenamento local do seu navegador (localStorage), sem cookie. Ela fica só no seu aparelho, não é enviada a nós nem a terceiros, e você a apaga limpando os dados do site no navegador. O portal e as demonstrações usam apenas cookies técnicos, necessários para manter o login. No portal, a sessão dura até 12 horas e expira antes depois de 1 hora sem uso.
       </p>
 
       <h2>Demonstrações de produtos</h2>
       <p>
-        As demonstrações usam dados fictícios e, em geral, contas compartilhadas: outros visitantes podem ver o que você digitar. Por isso, use apenas dados inventados. Os dados são apagados uma vez por dia. Os produtos em demonstração não fazem cobranças reais. No HookGuard, os webhooks vão para os endereços públicos que você cadastrar.
+        As demonstrações usam dados fictícios e, em geral, contas compartilhadas: outros visitantes podem ver o que você digitar. Por isso, use apenas dados inventados. Os dados são apagados uma vez por dia. Os produtos em demonstração não fazem cobranças reais. No Cards API, a demonstração usa simuladores e nenhum cartão real é emitido. No HookGuard, os webhooks vão para os endereços públicos que você cadastrar.
       </p>
 
       <h2>Com quem compartilhamos</h2>
@@ -153,7 +153,7 @@ const direitos = [
   }
 
   .politica a {
-    color: var(--brand);
+    color: var(--brand-ink);
     text-decoration: underline;
     overflow-wrap: anywhere;
   }

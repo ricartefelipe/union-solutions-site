@@ -7,7 +7,7 @@ DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 cd "$DIR"
 PROXY=$DIR/../proxy
 COMPOSE="docker compose --env-file .env -f compose.yaml"
-value() { grep "^$1=" .env | head -n 1 | cut -d= -f2-; }
+value() { nome_campo=$1; grep "^$nome_campo=" .env | head -n 1 | cut -d= -f2-; }
 random() { od -An -N24 -tx1 /dev/urandom | tr -d ' \n'; }
 
 require_env() {
@@ -33,6 +33,9 @@ $K config credentials --config /tmp/kc --server http://127.0.0.1:8080 --realm ma
 ID=$($K get users --config /tmp/kc -r quarkus -q username=admin --fields id --format csv --noquotes)
 $K update users/$ID --config /tmp/kc -r quarkus -s email=visitante@demo-cards.unionsolutions.tech -s emailVerified=true -s firstName=Visitante -s lastName=Demonstracao
 $K set-password --config /tmp/kc -r quarkus --userid "$ID" --new-password union-demo
+# Keycloak 26.8 recusa o token com Origin fora de webOrigins ("Invalid origin", 403); a carga do produto só traz endereços locais.
+CID=$($K get clients --config /tmp/kc -r quarkus -q clientId=cards-admin --fields id --format csv --noquotes)
+$K update clients/$CID --config /tmp/kc -r quarkus -s 'webOrigins=["https://demo-cards.unionsolutions.tech"]'
 rm -f /tmp/kc
 KC
 }

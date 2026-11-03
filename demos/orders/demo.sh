@@ -7,7 +7,7 @@ DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 cd "$DIR"
 PROXY=$DIR/../proxy
 COMPOSE="docker compose --env-file .env -f compose.yaml"
-value() { grep "^$1=" .env | head -n 1 | cut -d= -f2-; }
+value() { nome_campo=$1; grep "^$nome_campo=" .env | head -n 1 | cut -d= -f2-; }
 random() { od -An -N24 -tx1 /dev/urandom | tr -d ' \n'; }
 
 require_env() {
@@ -73,6 +73,8 @@ case "${1:-ajuda}" in
     require_env
     $COMPOSE down -v
     $COMPOSE up -d --no-build --wait --wait-timeout 600
+    # O token público dura um ano; refeito a cada reinício, ele nunca chega perto de vencer.
+    gerar_entrada "$PROXY/sites/orders-entrada"
     echo "Dados da demonstração reiniciados em $(date -u +%FT%TZ)."
     ;;
   status) $COMPOSE ps --format 'table {{.Service}}\t{{.Status}}'; docker stats --no-stream --format 'table {{.Name}}\t{{.MemUsage}}\t{{.CPUPerc}}' $($COMPOSE ps -q) 2>/dev/null ;;

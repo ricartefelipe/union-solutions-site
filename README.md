@@ -4,7 +4,7 @@ Site estático em português do Brasil, feito com [Astro](https://astro.build) e
 
 Para publicar, comece por [`docs/PUBLICACAO.md`](docs/PUBLICACAO.md). O estado desta entrega e as evidências estão em [`docs/FECHAMENTO.md`](docs/FECHAMENTO.md).
 
-O portal do cliente é uma aplicação separada, com servidor e serviços próprios: não é publicado junto com este site. Veja [`portal/README.md`](portal/README.md).
+O portal do cliente é uma aplicação separada, com servidor e serviços próprios: não é publicado junto com este site. Veja [`portal/README.md`](portal/README.md). As demonstrações públicas dos produtos ficam numa segunda VPS, separada da do portal: veja [`demos/README.md`](demos/README.md).
 
 ## Instalação e execução
 
@@ -65,12 +65,12 @@ src/lib/              Envio do formulário, links de contato e opções.
 src/components/       Componentes.
 src/layouts/          Layout base, com SEO e metadados.
 src/pages/            Rotas.
-src/styles/           Variáveis de design (tokens.css) e estilos globais.
+src/styles/           Variáveis de design (tokens.css), tema claro/escuro (tema.css) e estilos globais.
 ```
 
 ## Como editar
 
-**Produtos.** Edite `src/data/products.ts`. Um novo item gera a página, a entrada no catálogo e a opção no formulário. Inclua também o slug no tipo `ProductSlug` e um esquema em `src/components/ProductGlyph.astro`; o `npm run check` aponta o que faltar. O campo `onHome` define a seleção editorial da home, com no máximo três produtos, e `capabilities` aceita até três itens no catálogo.
+**Produtos.** Edite `src/data/products.ts`. Um novo item gera a página, a entrada no catálogo e a opção no formulário. Inclua também o slug no tipo `ProductSlug` e um esquema em `src/components/ProductGlyph.astro`; o `npm run check` aponta o que faltar. Um produto com `liveDemo` ganha o selo "Demonstração online" no catálogo e na home e entra na página `/demonstracoes/`; `liveDemo.access` lista as credenciais públicas como pares `label`/`value` (valores sem espaço ganham botão de copiar). O campo `onHome` define a seleção editorial da home, com no máximo três produtos, e `capabilities` aceita até três itens no catálogo.
 
 Cada afirmação precisa de evidência no repositório do produto. Limites e disponibilidade ficam nos campos `goodToKnow` e `availability`, exibidos uma vez na página do produto. Os esquemas gráficos são fluxos conceituais, não telas, e seus rótulos usam termos do texto da página.
 
@@ -80,7 +80,7 @@ Cada afirmação precisa de evidência no repositório do produto. Limites e dis
 
 **Fundador e links.** Edite `src/config/site.ts`.
 
-**Design.** Cores, tipografia, espaçamento, bordas, larguras e estados de interação estão em `src/styles/tokens.css`.
+**Design.** Cores, tipografia, espaçamento, bordas, larguras e estados de interação estão em `src/styles/tokens.css`. O tema escuro é só do site e fica em `src/styles/tema.css`, aplicado por `data-theme` em `<html>`: segue `prefers-color-scheme`, a escolha do botão do cabeçalho fica no `localStorage` (chave `tema`, sem cookie) e um script no `<head>` evita o lampejo ao carregar.
 
 **Marca.** Os assets são derivados de `brand/originais/` com `npm run assets:brand` (requer Python com Pillow): `Logo-01.png` é a marca completa e `Logo-06.png`, o símbolo. O fundo dos arquivos é `#1A1360`, igual a `--brand`. Se essa variável mudar, a logo passará a mostrar um retângulo de outra cor.
 
@@ -196,7 +196,7 @@ A validação é de formato: um valor fictício bem formado passaria. Confirmar 
 Não há servidor Node em produção: a Hostinger só serve os arquivos de `dist/`. O site espera estar na raiz do domínio.
 
 1. No hPanel, abra o gerenciador de arquivos do site e entre em `public_html`.
-2. Envie o **conteúdo** de `dist/`, não a pasta `dist` em si. Em `public_html` devem ficar `index.html`, `404.html`, `_astro/`, `brand/`, `og/`, `produtos/`, `servicos/`, `contato/`, `sobre/` e os demais arquivos.
+2. Envie o **conteúdo** de `dist/`, não a pasta `dist` em si. Em `public_html` devem ficar `index.html`, `404.html`, `_astro/`, `brand/`, `og/`, `demonstracoes/`, `produtos/`, `servicos/`, `contato/`, `sobre/` e os demais arquivos.
 
    Para enviar um único arquivo e extrair no servidor, gere o pacote validado com `sh scripts/empacotar-site.sh`, descrito em [`docs/PUBLICACAO.md`](docs/PUBLICACAO.md).
 
@@ -210,7 +210,7 @@ Para atualizar o site, gere o build de novo e substitua os arquivos. Apague os a
 
 ```bash
 DOMINIO=https://unionsolutions.tech
-for rota in / /produtos/ /produtos/hookguard/ /produtos/filenorm/ /produtos/assinaflow/ /produtos/archlens/ /produtos/fluxe-b2b-suite/ /produtos/comercialcloud/ /servicos/ /servicos/consultoria/ /servicos/arquitetura/ /servicos/desenvolvimento/ /sobre/ /contato/ /robots.txt /sitemap-index.xml /og/union-solutions.png /nao-existe/; do
+for rota in / /produtos/ /produtos/hookguard/ /produtos/filenorm/ /produtos/assinaflow/ /produtos/archlens/ /produtos/fluxe-b2b-suite/ /produtos/comercialcloud/ /produtos/skillforge/ /produtos/cards-api/ /demonstracoes/ /servicos/ /servicos/consultoria/ /servicos/arquitetura/ /servicos/desenvolvimento/ /sobre/ /contato/ /robots.txt /sitemap-index.xml /og/union-solutions.png /nao-existe/; do
   printf '%s %s\n' "$(curl -s -o /dev/null -w '%{http_code}' "$DOMINIO$rota")" "$rota"
 done
 ```

@@ -8,7 +8,7 @@ import { Badge, Empty, PageTitle, Pagination, Section } from '@/components/ui';
 
 export const metadata: Metadata = { title: 'Clientes' };
 
-export default async function OrganizationsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+export default async function OrganizationsPage({ searchParams }: Readonly<{ searchParams: Promise<Record<string, string | undefined>> }>) {
   const me = await getMe();
   if (!me.canManage) redirect('/');
   const data = await apiGet<Page<OrganizationView>>(`/v1/organizations?${pageQuery(await searchParams)}`);

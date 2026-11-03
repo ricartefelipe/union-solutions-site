@@ -18,7 +18,7 @@ COMPOSE="docker compose -p $PORTAL_PROD_PROJECT --env-file $PORTAL_PROD_ENV -f $
 prod() { sh "$PROD/portal-prod.sh" "$@"; }
 
 criar_env() {
-  [ -f "$PORTAL_PROD_ENV" ] && return
+  [[ -f "$PORTAL_PROD_ENV" ]] && return
   prod segredos >/dev/null
   # Valores só deste ambiente. Os hosts são os da implantação e só existem dentro das redes de teste.
   sed -i \
@@ -131,7 +131,7 @@ vulnerabilidades() {
   T="docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v union-trivy-cache:/root/.cache/trivy aquasec/trivy:0.70.0"
   { $T --version; docker image inspect aquasec/trivy:0.70.0 --format '{{index .RepoDigests 0}}'; date -u +%FT%TZ; } > "$V/ferramenta.txt" 2>&1
   : > "$V/imagens.txt"; : > "$V/execucao.txt"
-  for img in "$PORTAL_PROD_PROJECT"-backend "$PORTAL_PROD_PROJECT"-frontend "$PORTAL_PROD_PROJECT"-keycloak "$PORTAL_PROD_PROJECT"-proxy "$PORTAL_PROD_PROJECT"-ops "$PORTAL_PROD_PROJECT"-postgres chrislusf/seaweedfs:4.51 clamav/clamav:1.5; do
+  for img in "$PORTAL_PROD_PROJECT"-backend "$PORTAL_PROD_PROJECT"-frontend "$PORTAL_PROD_PROJECT"-keycloak "$PORTAL_PROD_PROJECT"-proxy "$PORTAL_PROD_PROJECT"-ops "$PORTAL_PROD_PROJECT"-postgres chrislusf/seaweedfs:4.52 clamav/clamav:1.5; do
     n=$(echo "$img" | tr '/:' '__')
     docker image inspect "$img" --format "$img {{.Id}}" >> "$V/imagens.txt"
     $T image --quiet --format json --scanners vuln --timeout 15m "$img" > "$V/$n.json" 2> "$V/$n.err"
@@ -161,7 +161,7 @@ destruir() {
 }
 
 comando=${1:-ajuda}
-[ "$#" -gt 0 ] && shift
+[[ "$#" -gt 0 ]] && shift
 case "$comando" in
   iniciar) iniciar ;;
   testes) testes "$@" ;;

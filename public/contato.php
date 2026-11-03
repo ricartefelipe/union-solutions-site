@@ -37,7 +37,8 @@ function origensPermitidas(): array
 {
     $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
     $host = $_SERVER['HTTP_HOST'] ?? '';
-    $propria = $host !== '' ? ($https ? 'https' : 'http') . '://' . $host : null;
+    $esquema = $https ? 'https' : 'http';
+    $propria = $host !== '' ? $esquema . '://' . $host : null;
     return array_values(array_unique(array_filter(array_merge(ORIGENS_PERMITIDAS, [$propria]))));
 }
 
@@ -61,38 +62,48 @@ function origemPermitida(): bool
 /** Limite por endereço, em arquivos fora da raiz pública quando possível. Falha do limite não bloqueia o envio. */
 function excedeuLimite(): bool
 {
-    $ip = $_SERVER['REMOTE_ADDR'] ?? 'desconhecido';
-    $pastas = [dirname(__DIR__) . '/contato-limite', sys_get_temp_dir() . '/contato-limite'];
-    foreach ($pastas as $pasta) {
-        if (!is_dir($pasta) && !@mkdir($pasta, 0700, true)) {
-            continue;
-        }
-        if (!is_writable($pasta)) {
-            continue;
-        }
-        $arquivo = $pasta . '/' . hash('sha256', $ip) . '.json';
-        $agora = time();
-        $registros = [];
-        if (is_file($arquivo)) {
-            $registros = json_decode((string) file_get_contents($arquivo), true) ?: [];
-        }
-        $registros = array_values(array_filter($registros, fn ($t) => is_int($t) && $t > $agora - JANELA_SEGUNDOS));
-        if (count($registros) >= LIMITE_ENVIOS) {
-            return true;
-        }
-        $registros[] = $agora;
-        @file_put_contents($arquivo, json_encode($registros), LOCK_EX);
-        // Limpeza ocasional de registros antigos de outros endereços.
-        if (random_int(1, 50) === 1) {
-            foreach (glob($pasta . '/*.json') ?: [] as $antigo) {
-                if (filemtime($antigo) < $agora - JANELA_SEGUNDOS) {
-                    @unlink($antigo);
-                }
-            }
-        }
+    $pasta = pastaDoLimite();
+    if ($pasta === null) {
         return false;
     }
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'desconhecido';
+    $arquivo = $pasta . '/' . hash('sha256', $ip) . '.json';
+    $agora = time();
+    $registros = [];
+    if (is_file($arquivo)) {
+        $registros = json_decode((string) file_get_contents($arquivo), true) ?: [];
+    }
+    $registros = array_values(array_filter($registros, fn ($t) => is_int($t) && $t > $agora - JANELA_SEGUNDOS));
+    if (count($registros) >= LIMITE_ENVIOS) {
+        return true;
+    }
+    $registros[] = $agora;
+    @file_put_contents($arquivo, json_encode($registros), LOCK_EX);
+    // Limpeza ocasional de registros antigos de outros endereços.
+    if (random_int(1, 50) === 1) {
+        apagarRegistrosAntigos($pasta, $agora);
+    }
     return false;
+}
+
+/** A primeira pasta em que o limite pode gravar, ou null se nenhuma estiver disponível. */
+function pastaDoLimite(): ?string
+{
+    foreach ([dirname(__DIR__) . '/contato-limite', sys_get_temp_dir() . '/contato-limite'] as $pasta) {
+        if ((is_dir($pasta) || @mkdir($pasta, 0700, true)) && is_writable($pasta)) {
+            return $pasta;
+        }
+    }
+    return null;
+}
+
+function apagarRegistrosAntigos(string $pasta, int $agora): void
+{
+    foreach (glob($pasta . '/*.json') ?: [] as $antigo) {
+        if (filemtime($antigo) < $agora - JANELA_SEGUNDOS) {
+            @unlink($antigo);
+        }
+    }
 }
 
 /** Campos de uma linha perdem quebras de linha; só a mensagem as mantém. */
