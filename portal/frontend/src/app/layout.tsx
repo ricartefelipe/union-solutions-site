@@ -17,7 +17,7 @@ export const dynamic = 'force-dynamic';
 
 export const viewport: Viewport = { themeColor: '#1a1360' };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="pt-BR">
       <body>{children}</body>

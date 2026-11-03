@@ -12,7 +12,7 @@ const ROLE_SWITCH: Record<Role, { to: Role; label: string }> = {
 };
 
 /** Lista de pessoas com papel e acesso, usada por clientes e pela Union. */
-export function PeopleList({ users, selfId, roles = true }: { users: UserView[]; selfId: string; roles?: boolean }) {
+export function PeopleList({ users, selfId, roles = true }: Readonly<{ users: UserView[]; selfId: string; roles?: boolean }>) {
   if (users.length === 0) return <Empty>Nenhuma pessoa com acesso ainda.</Empty>;
   return (
     <ul className="list">
@@ -42,7 +42,7 @@ export function PeopleList({ users, selfId, roles = true }: { users: UserView[];
   );
 }
 
-export function InvitationList({ invitations }: { invitations: InvitationView[] }) {
+export function InvitationList({ invitations }: Readonly<{ invitations: InvitationView[] }>) {
   if (invitations.length === 0) return <Empty>Nenhum convite enviado.</Empty>;
   return (
     <ul className="list">

@@ -6,7 +6,7 @@ import type { UnreadCount } from '@/lib/types';
 import { label } from '@/lib/labels';
 import { NavLinks } from '@/components/nav';
 
-export default async function PortalLayout({ children }: { children: ReactNode }) {
+export default async function PortalLayout({ children }: Readonly<{ children: ReactNode }>) {
   const session = await currentSession();
   if (!session) redirect('/auth/login');
   const me = await getMe();
@@ -58,6 +58,9 @@ export default async function PortalLayout({ children }: { children: ReactNode }
       <main id="conteudo" tabIndex={-1}>
         <div className="main-wrap">{children}</div>
       </main>
+      <footer className="portal-footer">
+        <div className="main-wrap"><a href="https://unionsolutions.tech/privacidade/">Política de privacidade</a></div>
+      </footer>
     </>
   );
 }

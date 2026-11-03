@@ -9,7 +9,7 @@ import { PageTitle, Pagination, Section, Truncated } from '@/components/ui';
 
 export const metadata: Metadata = { title: 'Equipe' };
 
-export default async function TeamPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+export default async function TeamPage({ searchParams }: Readonly<{ searchParams: Promise<Record<string, string | undefined>> }>) {
   const params = await searchParams;
   const me = await getMe();
   if (me.role !== 'UNION_ADMIN') redirect('/');

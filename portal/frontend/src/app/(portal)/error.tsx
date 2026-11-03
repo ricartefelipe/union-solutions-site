@@ -1,6 +1,6 @@
 'use client';
 
-export default function PortalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function PortalError({ error, reset }: Readonly<{ error: Error & { digest?: string }; reset: () => void }>) {
   return (
     <div className="section" role="alert">
       <h1>Não foi possível carregar esta página</h1>

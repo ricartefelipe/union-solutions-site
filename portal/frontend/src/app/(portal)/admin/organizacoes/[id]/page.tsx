@@ -10,7 +10,7 @@ import { Badge, Disclosure, Empty, PageTitle, Section, Truncated } from '@/compo
 
 export const metadata: Metadata = { title: 'Cliente' };
 
-export default async function OrganizationPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function OrganizationPage({ params }: Readonly<{ params: Promise<{ id: string }> }>) {
   const { id } = await params;
   const me = await getMe();
   if (!me.canManage) redirect('/');

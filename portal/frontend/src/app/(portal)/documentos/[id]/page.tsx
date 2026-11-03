@@ -8,7 +8,7 @@ import { Badge, Disclosure, Empty, FileLink, PageTitle, Section, When } from '@/
 
 export const metadata: Metadata = { title: 'Documento' };
 
-export default async function DocumentPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function DocumentPage({ params }: Readonly<{ params: Promise<{ id: string }> }>) {
   const { id } = await params;
   const me = await getMe();
   const { document: doc, versions } = await apiGet<DocumentDetail>(`/v1/documents/${id}`);
