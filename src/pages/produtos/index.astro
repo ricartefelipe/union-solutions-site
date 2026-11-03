@@ -9,7 +9,7 @@ import { productContactUrl, products } from '../../data/products';
 
 <BaseLayout
   title="Produtos"
-  description="Conheça o HookGuard, o FileNorm, o AssinaFlow, o ArchLens, a Fluxe B2B Suite e o ComercialCloud, e solicite uma demonstração à Union Solutions."
+  description="Conheça os produtos da Union Solutions para integrações, arquivos, assinaturas, ensino a distância, cartões e operações empresariais. Vários têm demonstração online."
 >
   <PageHero
     title="Conheça os produtos da Union Solutions."
@@ -28,6 +28,7 @@ import { productContactUrl, products } from '../../data/products';
         <div class="product__copy">
           <span class="product__area muted">{product.area}</span>
           <h2 id={`${product.slug}-nome`}>{product.name}</h2>
+          {product.liveDemo && <p><span class="badge-demo">Demonstração online</span></p>}
           <p class="product__purpose">{product.purpose}</p>
           <p class="muted">{product.context}</p>
           <ul class="node-list product__capabilities">
@@ -67,7 +68,7 @@ import { productContactUrl, products } from '../../data/products';
     display: inline-flex;
     align-items: center;
     min-height: 2.75rem;
-    color: var(--brand);
+    color: var(--brand-ink);
     font-weight: 600;
   }
 
@@ -91,7 +92,7 @@ import { productContactUrl, products } from '../../data/products';
   }
 
   h2 {
-    color: var(--brand);
+    color: var(--brand-ink);
   }
 
   .product__purpose {
@@ -110,8 +111,8 @@ import { productContactUrl, products } from '../../data/products';
   .product__art {
     width: 100%;
     max-width: 20rem;
-    color: var(--brand);
-    --glyph-node-stroke: var(--brand);
+    color: var(--brand-ink);
+    --glyph-node-stroke: var(--brand-ink);
   }
 
   @media (min-width: 62rem) {

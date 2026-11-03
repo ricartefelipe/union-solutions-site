@@ -107,6 +107,7 @@ export const hasDirectContact = Boolean(contact.email || contact.phone || contac
 
 export const nav = [
   { label: 'Produtos', href: '/produtos/' },
+  { label: 'Demonstrações', href: '/demonstracoes/' },
   { label: 'Serviços', href: '/servicos/' },
   { label: 'Sobre', href: '/sobre/' },
 ] as const;
