@@ -19,7 +19,7 @@ export function InvitationFlow() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    const match = window.location.hash.match(/^#t=([A-Za-z0-9_-]+)$/);
+    const match = /^#t=([A-Za-z0-9_-]+)$/.exec(window.location.hash);
     if (!match) {
       setState('invalid');
       return;

@@ -11,6 +11,11 @@ export const metadata: Metadata = { title: 'Fila de e-mails' };
 
 const FILTERS = [['', 'Todos'], ['PENDING', 'Na fila'], ['SENT', 'Enviados'], ['FAILED', 'Desistiram']];
 
+function deliveryNote(e: OutboxView) {
+  if (e.status === 'SENT') return `Enviado em ${formatDateTime(e.sentAt!)}`;
+  return e.status === 'PENDING' && e.nextAttemptAt ? `Próxima tentativa ${formatDateTime(e.nextAttemptAt)}` : '';
+}
+
 export default async function OutboxPage({ searchParams }: Readonly<{ searchParams: Promise<Record<string, string | undefined>> }>) {
   const me = await getMe();
   if (me.role !== 'UNION_ADMIN') redirect('/');
@@ -37,7 +42,7 @@ export default async function OutboxPage({ searchParams }: Readonly<{ searchPara
                     <td>{e.subject}</td>
                     <td><Badge group="email" value={e.status} /></td>
                     <td>{e.attempts}</td>
-                    <td>{e.status === 'SENT' ? `Enviado em ${formatDateTime(e.sentAt!)}` : e.status === 'PENDING' && e.nextAttemptAt ? `Próxima tentativa ${formatDateTime(e.nextAttemptAt)}` : ''}{e.lastError ? ` · ${e.lastError}` : ''}</td>
+                    <td>{deliveryNote(e)}{e.lastError ? ` · ${e.lastError}` : ''}</td>
                     <td>{e.status === 'FAILED' && <ApiButton path={`/v1/admin/emails/${e.id}/retry`} tone="ghost" label="Voltar à fila" />}</td>
                   </tr>
                 ))}

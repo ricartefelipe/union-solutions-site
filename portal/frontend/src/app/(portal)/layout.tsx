@@ -22,10 +22,12 @@ export default async function PortalLayout({ children }: Readonly<{ children: Re
   if (me.role === 'CLIENT_ADMIN') links.push({ href: '/organizacao', label: 'Organização' });
   if (me.canManage) links.push({ href: '/admin/organizacoes', label: 'Clientes' });
   if (me.role === 'UNION_ADMIN') {
-    links.push({ href: '/admin/usuarios', label: 'Equipe' });
-    links.push({ href: '/admin/auditoria', label: 'Auditoria' });
-    links.push({ href: '/admin/emails', label: 'E-mails' });
-    links.push({ href: '/admin/retencao', label: 'Retenção' });
+    links.push(
+      { href: '/admin/usuarios', label: 'Equipe' },
+      { href: '/admin/auditoria', label: 'Auditoria' },
+      { href: '/admin/emails', label: 'E-mails' },
+      { href: '/admin/retencao', label: 'Retenção' },
+    );
   }
 
   return (
