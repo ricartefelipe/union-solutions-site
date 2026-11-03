@@ -46,7 +46,8 @@ Na versão v1.5.6 o dono de uma conta `admin` lista só o próprio locatário e 
 | SpringMind | springmind v0.2.0 com ReactMind no commit de `.env.example` |
 | VueMind | vuemind-api v0.2.0 com o front no commit de `.env.example` |
 | cards-api | v1.4.4 |
-| order-service, HookGuard, ArchLens, AssinaFlow | sem mudança de versão |
+| AssinaFlow | v1.0.8, com o RabbitMQ 4.4.0 na imagem do produto |
+| order-service, HookGuard, ArchLens | sem mudança de versão |
 
 Achados HIGH e CRITICAL com correção disponível (Trivy 0.70.0, `--ignore-unfixed`), antes e depois:
 
@@ -69,15 +70,27 @@ Achados HIGH e CRITICAL com correção disponível (Trivy 0.70.0, `--ignore-unfi
 | Fluxe, orders e payments (API e workers) | 0 | 0 |
 | PostgreSQL 16 (nove demonstrações) e MariaDB 10.11 (cards) | 26 (1 crítico) cada | 0 e 0 (`demos/imagens`, 03/11/2026) |
 | Redis 7 (Fluxe) | 0 | 0 |
+| RabbitMQ, Fluxe | 71 (3.13.7) | 0 (4.4.0) |
+| RabbitMQ, AssinaFlow (`assinaflow-rabbitmq:4-patched`) | 0 (3.13.7 com `apk upgrade`) | 0 (4.4.0), nenhum achado de nenhuma gravidade |
 
 Pendências conhecidas, sem correção disponível ou fora do alcance desta mudança:
 
 - **Keycloak 26.8.1 (cards e Skillforge):** reanalisado em 03/11/2026, já no digest mais recente (`26.8.1-2`), sem versão nova. 1 achado HIGH com correção na biblioteca, Guava 33.6.0 (corrigida na 33.7.2), que só chega com uma versão do Keycloak que a inclua; 3 sem correção do fabricante na base UBI 9 (`sqlite-libs` 2 e OpenJDK 1). Os quatro estão aceitos em `.trivyignore.yaml` até 01/12/2026 e avaliados em `portal/docs/VULNERABILIDADES.md`.
-- **RabbitMQ 3 (Fluxe):** a linha 3 não recebe mais correções (69 achados). A troca para a linha 4 é uma mudança de versão maior e fica para uma etapa própria.
 - **Fluxe, saas-core:** 2 achados da `libexpat` 2.9.0 (corrigida na 2.10.0) vêm da imagem base do Dockerfile do próprio produto, que não executa `apk upgrade`; resolve-se no repositório do spring-saas-core.
 - **Keycloak 26.8:** recusa o token com `Origin` fora de `webOrigins` (403 "Invalid origin"). O `demo.sh` do cards ajusta o cliente `cards-admin` para o endereço público.
 - **VueMind:** a `vuemind-api` não gera o código end-to-end do PIX; o comprovante mostra o campo vazio.
 - **FileNorm:** o link de acesso só aparece na resposta com o código de acesso da demonstração; na VPS o modo está desligado e o link vai por e-mail. Destinatário recusado pelo servidor de e-mail responde 500.
+
+## RabbitMQ 4
+
+Fluxe e AssinaFlow usam o RabbitMQ 4.4.0: a Fluxe na imagem `rabbitmq:4.4.0-alpine`, sem o painel de administração, que a demonstração não expõe; o AssinaFlow na imagem do próprio produto, a partir da v1.0.8. Medido com o limite da demonstração, em repouso: 94 MB sem painel e 99 MB com painel, contra 133 MB do 3.13 com painel. A verificação de saúde (`rabbitmq-diagnostics ping`) sobe uma máquina Erlang à parte a cada execução e produz picos curtos, de até 178 MB no 4.4 e 197 MB no 3.13, sem estouro dos limites.
+
+Os dados do RabbitMQ ficam num volume anônimo, que o reinício diário apaga. Para trocar a versão, recrie tudo com `reiniciar-dados`: a 4.4 também arranca sobre dados da 3.13, mas mensagens persistentes dessas filas se perdem em silêncio, e os workers da Fluxe até node-b2b-orders v1.4.6 e py-payments-ledger v2.0.5 não se recuperam de um broker sem filas sem reiniciar.
+
+- **Fluxe:** `sh demo.sh reiniciar-dados`, depois de construir as imagens de banco (ver "Imagens de banco"). A imagem do RabbitMQ vem do Docker Hub; as do produto não mudam.
+- **AssinaFlow:** `ASSINAFLOW_TAG=v1.0.8` no `.env`, depois `sh demo.sh instalar`, `sh demo.sh subir` (reconstrói a imagem do RabbitMQ) e `sh demo.sh reiniciar-dados`. O site do proxy não muda.
+
+Conferido numa máquina de trabalho em 03/11/2026, com as tags de produção da Fluxe e a branch do AssinaFlow que vira a v1.0.8: pedido até `PAID` em 4,2 s (4,3 s no 3.13), um único pagamento, administração vendo só o próprio locatário, cobrança recorrente vencida liquidada uma vez em dois ciclos, `flag.created` do saas-core entregue por `saas.events`; no AssinaFlow, cadastro, assinatura, renovação assíncrona cobrada pelo consumidor da fila `payments.charge`, troca de plano e cancelamento.
 
 ## ArchLens e AssinaFlow
 
