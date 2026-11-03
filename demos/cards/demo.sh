@@ -33,6 +33,9 @@ $K config credentials --config /tmp/kc --server http://127.0.0.1:8080 --realm ma
 ID=$($K get users --config /tmp/kc -r quarkus -q username=admin --fields id --format csv --noquotes)
 $K update users/$ID --config /tmp/kc -r quarkus -s email=visitante@demo-cards.unionsolutions.tech -s emailVerified=true -s firstName=Visitante -s lastName=Demonstracao
 $K set-password --config /tmp/kc -r quarkus --userid "$ID" --new-password union-demo
+# Keycloak 26.8 recusa o token com Origin fora de webOrigins ("Invalid origin", 403); a carga do produto só traz endereços locais.
+CID=$($K get clients --config /tmp/kc -r quarkus -q clientId=cards-admin --fields id --format csv --noquotes)
+$K update clients/$CID --config /tmp/kc -r quarkus -s 'webOrigins=["https://demo-cards.unionsolutions.tech"]'
 rm -f /tmp/kc
 KC
 }

@@ -46,7 +46,10 @@ services:
         COPY vuemind/ app/
         RUN cd mind-shared && npm ci --ignore-scripts && npm run build
         RUN cd app && npm ci --ignore-scripts && VITE_BASE=/ VITE_ENABLE_MSW=false VITE_API_BASE_URL=/api/v1 npm run build
-        FROM nginxinc/nginx-unprivileged:1.29-alpine@sha256:0c79d56aee561a1d81c63f00eee5fb5fe29279560cdc55e91425133104c7fbe6
+        FROM nginxinc/nginx-unprivileged:1.30-alpine@sha256:f5116ed4606f3eb015dd4a8e28cb9b351476dc0ad4bc6e9f93b19cec130cdf03
+        USER root
+        RUN apk upgrade --no-cache
+        USER nginx
         COPY --from=build /b/app/dist /usr/share/nginx/html
 
     networks:

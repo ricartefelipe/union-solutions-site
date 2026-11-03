@@ -27,13 +27,56 @@ Cada pasta (`demos/<produto>/`) é uma demonstração pública de um produto da 
 | SpringMind | `demo-springmind.unionsolutions.tech` | `demo@vuemind.dev`, senha `demo123`: carteira completa, com o front ReactMind na mesma origem e dados em PostgreSQL | cerca de 300 MB | Conta compartilhada. Arquivo sem documentos |
 | Skillforge | `demo-skillforge.unionsolutions.tech` | Contas `aluno`, `docente` e `administracao`, senha `union-demo`: a administração cria curso e turma e matricula, o docente publica, o aluno conclui a aula | cerca de 700 MB, Keycloak incluso | Só o login do Keycloak é público; console, contas e outros realms fechados no proxy. Uploads até 8 MB. Contas compartilhadas: não informe dados reais |
 
-Medido na VPS em 02/11/2026 com as onze demonstrações no ar e sem visitantes: cerca de 4,8 GB em uso pelas demonstrações e 2,3 GB disponíveis de 7,9 GB, com 420 MB de swap. Cada um dos dois Keycloak usa cerca de 450 MB. Atenção: no modo de demonstração do ComercialCloud a API aceita o locatário informado pelo navegador; só existem locatários fictícios da carga inicial, e os dados são recriados todo dia.
+Medido na VPS em 03/11/2026, depois das atualizações e do reinício dos dados, com as onze demonstrações no ar e sem visitantes: cerca de 5,9 GB em uso e 2,0 GB disponíveis de 7,9 GB, com 114 MB de swap. Cada um dos dois Keycloak usa cerca de 450 MB. Os dados são recriados todo dia. No modo de demonstração do ComercialCloud, o locatário e o usuário são fixos no servidor (`COMERCIAL_CLOUD_TENANT_RESOLUTION: demo`): o navegador não escolhe o locatário.
 
 ## Fluxe B2B Suite: o que a demonstração muda em relação ao produto
 
 Código em quatro repositórios, nas tags de `demos/fluxe/.env.example`. Depois de subir, `ajustar_carga` em `demo.sh` desativa as contas da plataforma, com senha pública no repositório do produto, e dá à conta pública o papel `admin`, para abrir as três aplicações, e um endereço no domínio da Union.
 
-Defeito do produto visto no teste e ainda não tratado: o dono de uma conta `admin` de um locatário lista todos os locatários.
+Na versão v1.5.6 o dono de uma conta `admin` lista só o próprio locatário e a cobrança recorrente vencida é liquidada uma única vez, sem repetição a cada minuto (conferido na VPS em 03/11/2026).
+
+## Versões e análise de imagens (03/11/2026)
+
+| Sistema | Versão em produção |
+| --- | --- |
+| Fluxe B2B Suite | fluxe-b2b-suite v1.5.6, spring-saas-core v1.4.0, node-b2b-orders v1.4.6, py-payments-ledger v2.0.5 |
+| ComercialCloud | v1.5.0 |
+| Skillforge | v0.16.0 |
+| FileNorm | v0.3.0 |
+| SpringMind | springmind v0.2.0 com ReactMind no commit de `.env.example` |
+| VueMind | vuemind-api v0.2.0 com o front no commit de `.env.example` |
+| cards-api | v1.4.4 |
+| order-service, HookGuard, ArchLens, AssinaFlow | sem mudança de versão |
+
+Achados HIGH e CRITICAL com correção disponível (Trivy 0.70.0, `--ignore-unfixed`), antes e depois:
+
+| Imagem | Antes | Depois |
+| --- | --- | --- |
+| Keycloak (cards e Skillforge) | 96 (26.2) e 91 (26.4) | 1 (26.8.1) |
+| cards-admin | 62 | 0 |
+| cards-api | 0 | 0 |
+| ComercialCloud, API | 38 | 0 |
+| ComercialCloud, front | 43 | 0 |
+| Skillforge, API | 9 | 0 |
+| Skillforge, web | 10 | 0 |
+| FileNorm, API | 2 | 0 |
+| FileNorm, web | 0 | 0 |
+| SpringMind, API e web | 45 e 49 | 0 e 0 |
+| VueMind, API e web | 63 e 49 | 0 e 0 |
+| Fluxe, saas-core | 57 | 2 |
+| Fluxe, loja | 26 | 0 |
+| Fluxe, operação e administração | 62 e 62 | 0 e 0 |
+| Fluxe, orders e payments (API e workers) | 0 | 0 |
+
+Pendências conhecidas, sem correção disponível ou fora do alcance desta mudança:
+
+- **PostgreSQL 16 e MariaDB 10.11:** 26 achados (1 crítico) vêm do binário de inicialização da imagem oficial, compilado com uma versão antiga do Go; não há imagem corrigida. Trocar o resumo (`@sha256`) do PostgreSQL não muda o resultado.
+- **Keycloak 26.8.1:** 1 achado HIGH (Guava) sem versão corrigida, aceito em `.trivyignore.yaml` até 01/12/2026.
+- **RabbitMQ 3 (Fluxe):** a linha 3 não recebe mais correções (69 achados). A troca para a linha 4 é uma mudança de versão maior e fica para uma etapa própria.
+- **Fluxe, saas-core:** 2 achados da `libexpat` 2.9.0 (corrigida na 2.10.0) vêm da imagem base do Dockerfile do próprio produto, que não executa `apk upgrade`; resolve-se no repositório do spring-saas-core.
+- **Keycloak 26.8:** recusa o token com `Origin` fora de `webOrigins` (403 "Invalid origin"). O `demo.sh` do cards ajusta o cliente `cards-admin` para o endereço público.
+- **VueMind:** a `vuemind-api` não gera o código end-to-end do PIX; o comprovante mostra o campo vazio.
+- **FileNorm:** o link de acesso só aparece na resposta com o código de acesso da demonstração; na VPS o modo está desligado e o link vai por e-mail. Destinatário recusado pelo servidor de e-mail responde 500.
 
 ## ArchLens e AssinaFlow
 
