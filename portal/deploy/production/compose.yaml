@@ -145,6 +145,10 @@ services:
     image: clamav/clamav:1.5@sha256:bda39705e291105049c3936e2803ac90b955172af8030f94f05dce1252df6c6d
     cap_drop: [ALL]
     cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    environment:
+      # A recarga diária das assinaturas mantinha duas cópias do banco na memória, perto de 2 GB. Com uma só, o pico fica
+      # em cerca de 1 GB, e a verificação espera a recarga em vez de o clamd ser encerrado por falta de memória.
+      CLAMD_CONF_ConcurrentDatabaseReload: "no"
     volumes:
       - clamav-db:/var/lib/clamav
     networks: [aplicacao, saida]
@@ -196,11 +200,11 @@ services:
         restart: true
       db-init:
         condition: service_completed_successfully
+    # Durante a inicialização o corpo da resposta (503) já traz "status": "UP" em verificações internas; só o código 200 indica pronto.
     healthcheck:
       test:
         - CMD-SHELL
         - >-
-    # Durante a inicialização o corpo da resposta (503) já traz "status": "UP" em verificações internas; só o código 200 indica pronto.
           exec 3<>/dev/tcp/127.0.0.1/9000 &&
           printf 'GET /identidade/health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 &&
           head -n 1 <&3 | grep -q ' 200 '
