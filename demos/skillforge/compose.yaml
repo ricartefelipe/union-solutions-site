@@ -17,7 +17,7 @@ x-comum: &comum
 services:
   postgres:
     <<: *comum
-    image: postgres:16-alpine@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36
+    image: postgres:16-alpine@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab
     user: "70:70"
     environment:
       POSTGRES_DB: skillforge
@@ -36,7 +36,7 @@ services:
 
   keycloak:
     <<: *comum
-    image: quay.io/keycloak/keycloak:26.4@sha256:9409c59bdfb65dbffa20b11e6f18b8abb9281d480c7ca402f51ed3d5977e6007
+    image: quay.io/keycloak/keycloak:26.8.1@sha256:3f3c5f8e03c614774b4bd9173b88391fefa4153bfc010d8012d59ad825377332
     command: ["start-dev", "--import-realm"]
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
@@ -113,7 +113,7 @@ services:
     build:
       context: ${SKILLFORGE_SRC:-./src}/skillforge/web
       dockerfile_inline: |
-        FROM node:22-alpine AS build
+        FROM node:22-alpine@sha256:fe4f6d74e20370acb04ad889077d14d0f64a9c8ea6a42bc60cddf1e844699914 AS build
         WORKDIR /b
         COPY package.json package-lock.json ./
         RUN npm ci --ignore-scripts
@@ -121,7 +121,8 @@ services:
         ENV NEXT_TELEMETRY_DISABLED=1
         ENV API_URL=http://demo-skillforge-api:8080
         RUN npm run build && npm prune --omit=dev
-        FROM node:22-alpine
+        FROM node:22-alpine@sha256:fe4f6d74e20370acb04ad889077d14d0f64a9c8ea6a42bc60cddf1e844699914
+        RUN apk upgrade --no-cache && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /opt/yarn*
         WORKDIR /app
         ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 HOSTNAME=0.0.0.0
         COPY --from=build --chown=node:node /b /app
