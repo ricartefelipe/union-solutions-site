@@ -73,6 +73,8 @@ case "${1:-ajuda}" in
     require_env
     $COMPOSE down -v
     $COMPOSE up -d --no-build --wait --wait-timeout 600
+    # O token público dura um ano; refeito a cada reinício, ele nunca chega perto de vencer.
+    gerar_entrada "$PROXY/sites/orders-entrada"
     echo "Dados da demonstração reiniciados em $(date -u +%FT%TZ)."
     ;;
   status) $COMPOSE ps --format 'table {{.Service}}\t{{.Status}}'; docker stats --no-stream --format 'table {{.Name}}\t{{.MemUsage}}\t{{.CPUPerc}}' $($COMPOSE ps -q) 2>/dev/null ;;
