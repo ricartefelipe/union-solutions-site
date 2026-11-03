@@ -18,7 +18,7 @@ COMPOSE="docker compose -p $PORTAL_PROD_PROJECT --env-file $PORTAL_PROD_ENV -f $
 prod() { sh "$PROD/portal-prod.sh" "$@"; }
 
 criar_env() {
-  [ -f "$PORTAL_PROD_ENV" ] && return
+  [[ -f "$PORTAL_PROD_ENV" ]] && return
   prod segredos >/dev/null
   # Valores só deste ambiente. Os hosts são os da implantação e só existem dentro das redes de teste.
   sed -i \
@@ -161,7 +161,7 @@ destruir() {
 }
 
 comando=${1:-ajuda}
-[ "$#" -gt 0 ] && shift
+[[ "$#" -gt 0 ]] && shift
 case "$comando" in
   iniciar) iniciar ;;
   testes) testes "$@" ;;

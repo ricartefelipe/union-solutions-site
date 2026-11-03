@@ -30,13 +30,17 @@ B="http://127.0.0.1:$PORT/contato.php"
 H='X-Forwarded-Proto: https'
 O='Origin: https://unionsolutions.tech'
 ok=0; falhas=0
-check() { if [ "$1" = "$2" ]; then ok=$((ok+1)); echo "OK     $3 ($1)"; else falhas=$((falhas+1)); echo "FALHA  $3 (esperado $2, obtido $1)"; fi; }
-post() { curl -s -o /tmp/contato-resp.$$ -w '%{http_code}' -H "$H" -H "$O" -H 'Content-Type: application/json' "$@" "$B"; }
+CODIGO_HTTP='%{http_code}'
+check() {
+  obtido=$1; esperado=$2; descricao=$3
+  if [ "$obtido" = "$esperado" ]; then ok=$((ok+1)); echo "OK     $descricao ($obtido)"; else falhas=$((falhas+1)); echo "FALHA  $descricao (esperado $esperado, obtido $obtido)"; fi
+}
+post() { curl -s -o /tmp/contato-resp.$$ -w "$CODIGO_HTTP" -H "$H" -H "$O" -H 'Content-Type: application/json' "$@" "$B"; }
 VALIDO='{"nome":"Ana Teste","empresa":"Empresa Teste","email":"ana@exemplo.com.br","telefone":"(11) 90000-0000","interesse":"produto","produto":"filenorm","mensagem":"Quero conhecer o produto em detalhes."}'
 
-check "$(curl -s -o /dev/null -w '%{http_code}' -H "$H" "$B")" 405 "GET é recusado"
-check "$(curl -s -o /dev/null -w '%{http_code}' -H "$H" -H 'Origin: https://site-malicioso.example' -H 'Content-Type: application/json' -d "$VALIDO" "$B")" 403 "outra origem é recusada"
-check "$(curl -s -o /dev/null -w '%{http_code}' -H "$H" -H "$O" -d 'nome=x' "$B")" 415 "sem JSON é recusado"
+check "$(curl -s -o /dev/null -w "$CODIGO_HTTP" -H "$H" "$B")" 405 "GET é recusado"
+check "$(curl -s -o /dev/null -w "$CODIGO_HTTP" -H "$H" -H 'Origin: https://site-malicioso.example' -H 'Content-Type: application/json' -d "$VALIDO" "$B")" 403 "outra origem é recusada"
+check "$(curl -s -o /dev/null -w "$CODIGO_HTTP" -H "$H" -H "$O" -d 'nome=x' "$B")" 415 "sem JSON é recusado"
 check "$(post -d '{nao e json')" 400 "JSON inválido"
 check "$(post -d '{"nome":"","email":"","interesse":"","mensagem":""}')" 422 "campos obrigatórios vazios"
 check "$(post -d '{"nome":"A","email":"nao-e-email","interesse":"produto","produto":"filenorm","mensagem":"mensagem valida aqui"}')" 422 "e-mail inválido"
@@ -61,7 +65,7 @@ docker exec "$NAME" grep -q '^Bcc:' /tmp/emails.txt && c=1 || c=0; check "$c" 0 
 for i in 1 2 3; do post -d "$VALIDO" >/dev/null; done
 check "$(post -d "$VALIDO")" 429 "sexto envio na hora é recusado"
 check "$(docker exec "$NAME" sh -c 'ls /var/www/contato-limite /tmp/contato-limite 2>/dev/null | grep -c json')" 1 "limite gravado fora da raiz pública (pasta acima de public_html ou temporária)"
-check "$(curl -s -o /dev/null -w '%{http_code}' -H "$H" "http://127.0.0.1:$PORT/contato-limite/")" 404 "pasta do limite não é servida"
+check "$(curl -s -o /dev/null -w "$CODIGO_HTTP" -H "$H" "http://127.0.0.1:$PORT/contato-limite/")" 404 "pasta do limite não é servida"
 check "$(docker logs "$NAME" 2>&1 | grep -c 'Ana Teste\|ana@exemplo\|Quero conhecer')" 0 "conteúdo do formulário não vai para os logs do servidor"
 if [ "${MANTER:-}" = 1 ]; then echo "Container $NAME mantido em http://127.0.0.1:$PORT (remova com: docker rm -f $NAME)"; trap - EXIT INT TERM; rm -rf "$WORK"; fi
 rm -f /tmp/contato-resp.$$
