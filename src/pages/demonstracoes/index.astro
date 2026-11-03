@@ -30,11 +30,11 @@ import { demoProducts, productContactUrl } from '../../data/products';
 
   <div class="wrap">
     {demoProducts.map((product) => (
-      <section class="demo reveal" id={product.slug} aria-labelledby={`${product.slug}-demo`}>
+      <section class="catalog-row demo reveal" id={product.slug} aria-labelledby={`${product.slug}-demo`}>
         <div>
-          <span class="demo__area muted">{product.area}</span>
+          <span class="catalog-area muted">{product.area}</span>
           <h2 id={`${product.slug}-demo`}>{product.name}</h2>
-          <p class="demo__purpose">{product.purpose}</p>
+          <p class="catalog-purpose">{product.purpose}</p>
           <p class="muted">{product.liveDemo!.note}</p>
           <ul class="node-list demo__shows">
             {product.capabilities.slice(0, 3).map((capability) => <li>{capability}</li>)}
@@ -79,32 +79,7 @@ import { demoProducts, productContactUrl } from '../../data/products';
   }
 
   .demo {
-    display: grid;
-    gap: var(--space-5) clamp(2rem, 6vw, 5rem);
     padding-block: 2rem;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .demo:last-child {
-    border-bottom: 0;
-  }
-
-  .demo__area {
-    display: block;
-    margin-bottom: var(--space-1);
-    font-size: var(--text-sm);
-    font-weight: 600;
-  }
-
-  .demo h2 {
-    color: var(--brand-ink);
-  }
-
-  .demo__purpose {
-    max-width: var(--measure);
-    margin-block: var(--space-2) var(--space-1);
-    font-size: 1.125rem;
-    line-height: 1.4;
   }
 
   .demo__shows {

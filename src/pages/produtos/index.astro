@@ -24,12 +24,12 @@ import { productContactUrl, products } from '../../data/products';
 
   <div class="wrap">
     {products.map((product) => (
-      <section class="product reveal" id={product.slug} aria-labelledby={`${product.slug}-nome`}>
+      <section class="catalog-row product reveal" id={product.slug} aria-labelledby={`${product.slug}-nome`}>
         <div class="product__copy">
-          <span class="product__area muted">{product.area}</span>
+          <span class="catalog-area muted">{product.area}</span>
           <h2 id={`${product.slug}-nome`}>{product.name}</h2>
           {product.liveDemo && <p><span class="badge-demo">Demonstração online</span></p>}
-          <p class="product__purpose">{product.purpose}</p>
+          <p class="catalog-purpose">{product.purpose}</p>
           <p class="muted">{product.context}</p>
           <ul class="node-list product__capabilities">
             {product.capabilities.slice(0, 3).map((capability) => <li>{capability}</li>)}
@@ -73,33 +73,8 @@ import { productContactUrl, products } from '../../data/products';
   }
 
   .product {
-    display: grid;
-    gap: var(--space-5) clamp(2rem, 6vw, 5rem);
     align-items: center;
     padding-block: 1.75rem;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .product:last-child {
-    border-bottom: 0;
-  }
-
-  .product__area {
-    display: block;
-    margin-bottom: var(--space-1);
-    font-size: var(--text-sm);
-    font-weight: 600;
-  }
-
-  h2 {
-    color: var(--brand-ink);
-  }
-
-  .product__purpose {
-    max-width: var(--measure);
-    margin-block: var(--space-2) var(--space-1);
-    font-size: 1.125rem;
-    line-height: 1.4;
   }
 
   .product__capabilities {
