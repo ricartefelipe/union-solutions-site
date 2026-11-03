@@ -6,7 +6,9 @@ COPY src src
 RUN --mount=type=cache,target=/root/.m2 mvn -B -q -DskipTests package
 
 FROM eclipse-temurin:21-jre-alpine@sha256:82cf3d9ccbe1ed46252008d51b2f2329e6b9e8a2f4394c4bebefc3ea7f4b1372
-RUN addgroup -S portal && adduser -S portal -G portal \
+# Correções de segurança do Alpine publicadas depois da imagem base entram em cada build.
+RUN apk upgrade --no-cache \
+  && addgroup -S portal && adduser -S portal -G portal \
   && mkdir -p /app /tmp/portal-uploads && chown portal:portal /tmp/portal-uploads
 COPY --from=build /app/target/quarkus-app/ /app/
 USER portal

@@ -115,6 +115,8 @@ Todo arquivo entra em quarentena. Uma tarefa da API o envia ao ClamAV e, se esti
 
 Com o ClamAV fora do ar, os arquivos ficam pendentes e são verificados quando ele voltar. Nos valores padrão, as tentativas se esgotam em cerca de 1h30 de indisponibilidade, e o arquivo passa a `FAILED`, sem ser liberado. Um administrador recoloca o arquivo na fila pelo botão "Verificar novamente", em Documentos ou na página do projeto.
 
+**O ClamAV pode ser encerrado sem o container cair.** O processo `clamd` é filho de um script que fica de pé mesmo sem ele, então um encerramento por falta de memória deixa o container "running", e o healthcheck só o marca como não saudável depois de cerca de 10 minutos, sem reiniciá-lo. Os arquivos ficam pendentes até `docker compose restart clamav`. A recarga diária das assinaturas era o momento de maior risco, porque mantinha duas cópias do banco (perto de 2 GB); `ConcurrentDatabaseReload no` mantém uma só, e a verificação pausa por poucos segundos durante a recarga. Se "Em verificação" persistir, confira `docker compose ps clamav` e `docker exec <clamav> ps`: um `[clamd]` entre colchetes é processo morto.
+
 Limites: `PORTAL_FILE_MAX_BYTES` (25 MiB) por arquivo e `PORTAL_FILE_TENANT_QUOTA_BYTES` (5 GiB) por organização.
 
 **Como a cota é contada.** Envios da mesma organização passam um por vez (advisory lock por organização, sem travar as outras). Contam: objetos presentes de arquivos registrados, em qualquer situação de verificação, e reservas de envios em andamento. Um arquivo bloqueado pelo antivírus só deixa de contar depois que o armazenamento **confirmar** a exclusão (`object_present = false`): apagar com sucesso, inclusive de chave já inexistente, é a confirmação; indisponibilidade, tempo esgotado ou recusa de autorização mantêm o objeto contado e a limpeza periódica tenta de novo. Registros bloqueados anteriores à atualização entram nessa mesma regra (changeset 008). Reconciliação e compensação são repetíveis sem efeito colateral. Se a transação de um envio for revertida depois de o objeto já estar gravado, a API apaga o objeto; se não conseguir, ele fica em `object_ledger` e a limpeza periódica (`PORTAL_LEDGER_INTERVAL`, 5 min) tenta de novo depois da idade mínima (`PORTAL_LEDGER_MIN_AGE`, 10 min), sem tocar objetos de arquivos registrados, pendentes ou em verificação. `object_ledger` com `attempts` crescendo indica que o armazenamento está recusando exclusões.
@@ -153,6 +155,8 @@ O `backup`:
 6. Apaga a área temporária, que não é cifrada, em sucesso, falha ou interrupção (`SIGTERM`). `SIGKILL` e queda de energia não passam por aí: a área fica e é removida no passo 1 da próxima execução.
 
 **Consistência entre banco e objetos.** Pausar a API congela os processos dela, não "drena" o que estava em voo. Um envio interrompido no meio da gravação do objeto não tem registro no banco e o objeto incompleto não é confirmado pelo armazenamento: não entra na cópia. Uma liberação de arquivo interrompida entre copiar para `clean/` e registrar deixa o objeto antigo em `quarantine/` e o novo em `clean/`: a cópia traz os dois, e o registro aponta para o que ainda vale. A reconciliação (`reconciliar`) acusa objeto registrado sem arquivo; objeto sem registro só é relatado.
+
+**Memória do ensaio.** O ensaio de produção (`prova.sh`) sobe o portal inteiro com Keycloak e ClamAV e precisa de cerca de 5 GB livres no Docker. Com menos, o antivírus é encerrado por falta de memória e a jornada para em "arquivo em verificação", o que parece defeito do portal e não é. Feche outras pilhas antes de rodar e confira que `docker ps` não mostra outros containers pesados.
 
 **Testes dos cenários de falha:** `bash deploy/production/teste/testa-operacao.sh` no ambiente de prova cobre backups sobrepostos, backup contra restauração e atualização, erro em cada fase, cancelamento, área abandonada, API pausada por outra atividade, falha de despausa, senha de backup errada e os modos de falha da recuperação de MFA.
 
@@ -207,5 +211,5 @@ Em um reinício não planejado, a API valida cada conexão antes de usar (`valid
 | Convite não chega | Credenciais SMTP e `PORTAL_MAIL_FROM`. `sh portal-prod.sh logs backend keycloak` mostra o erro |
 | "Sua conta não tem acesso" depois do login | A conta existe no Keycloak, mas não aceitou convite ou foi revogada |
 | Convite "não pode ser aceito" | A pessoa entrou com outro e-mail, ou o e-mail ainda não foi verificado |
-| Arquivo fica "Em verificação" | Saúde do serviço `clamav` e logs da API |
+| Arquivo fica "Em verificação" | Saúde do serviço `clamav` e logs da API; `docker exec <clamav> ps` mostrando `[clamd]` indica processo morto, e `docker compose restart clamav` resolve |
 | API não inicia em produção | A mensagem `Configuração inválida para produção` lista cada problema |
