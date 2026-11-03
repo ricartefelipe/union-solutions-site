@@ -109,7 +109,7 @@ export function randomToken(bytes = 32): string {
   return randomBytes(bytes).toString('base64url');
 }
 
-export async function seal(payload: Record<string, unknown>, ttlSeconds: number): Promise<string> {
+export function seal(payload: Record<string, unknown>, ttlSeconds: number): Promise<string> {
   return new EncryptJWT(payload).setProtectedHeader({ alg: 'dir', enc: 'A256GCM' }).setIssuedAt().setExpirationTime(`${ttlSeconds}s`).encrypt(key());
 }
 

@@ -17,7 +17,8 @@ export async function POST(request: NextRequest) {
   // termina do mesmo modo e a tela avisa que o provedor não confirmou.
   await deleteSession(session.id);
   const outcome = await revokeAtProvider(session);
-  const target = outcome === 'rejected' ? endSessionUrl(session.idToken) : new URL(outcome === 'revoked' ? '/sessao-encerrada' : '/sessao-encerrada?provedor=indisponivel', publicUrl);
+  const closedPath = outcome === 'revoked' ? '/sessao-encerrada' : '/sessao-encerrada?provedor=indisponivel';
+  const target = outcome === 'rejected' ? endSessionUrl(session.idToken) : new URL(closedPath, publicUrl);
   const response = NextResponse.redirect(target, 303);
   response.cookies.set(sessionCookieName(), '', cookieOptions(0));
   return response;

@@ -1,3 +1,3 @@
 export default function Loading() {
-  return <p className="muted" role="status">Carregando…</p>;
+  return <output className="muted">Carregando…</output>;
 }

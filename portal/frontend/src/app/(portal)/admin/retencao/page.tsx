@@ -22,7 +22,7 @@ export default async function RetentionPage() {
       }>
         <p className="muted">Contagem feita agora, em {formatDateTime(report.generatedAt)}. Esta consulta não grava nada; a tarefa diária e o botão abaixo registram a simulação no histórico e na auditoria.</p>
         <div style={{ marginBottom: '1rem' }}><ApiButton path="/v1/admin/retention/simulate" tone="ghost" label="Registrar simulação" /></div>
-        <div className="table-wrap" tabIndex={0} role="region" aria-label="Categorias de retenção">
+        <section className="table-wrap" tabIndex={0} aria-label="Categorias de retenção">
           <table>
             <thead><tr><th scope="col">Categoria</th><th scope="col">Prazo</th><th scope="col">Seriam removidos</th><th scope="col">Observação</th></tr></thead>
             <tbody>
@@ -36,11 +36,11 @@ export default async function RetentionPage() {
               ))}
             </tbody>
           </table>
-        </div>
+        </section>
       </Section>
       <Section title="Execuções e simulações recentes">
         {runs.length === 0 ? <Empty>Nenhuma execução registrada.</Empty> : (
-          <div className="table-wrap" tabIndex={0} role="region" aria-label="Histórico de retenção">
+          <section className="table-wrap" tabIndex={0} aria-label="Histórico de retenção">
             <table>
               <thead><tr><th scope="col">Quando</th><th scope="col">Tipo</th><th scope="col">Removidos</th><th scope="col">Resumo</th></tr></thead>
               <tbody>
@@ -54,7 +54,7 @@ export default async function RetentionPage() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </section>
         )}
       </Section>
     </>

@@ -16,10 +16,16 @@ export interface PortalConfig {
   trustForwardedFor: boolean;
 }
 
+function withoutTrailingSlashes(value: string): string {
+  let end = value.length;
+  while (end > 0 && value[end - 1] === '/') end -= 1;
+  return value.slice(0, end);
+}
+
 function required(name: string): string {
   const value = process.env[name]?.trim();
   if (!value) throw new Error(`Configuração ausente: ${name}`);
-  return value.replace(/\/+$/, '');
+  return withoutTrailingSlashes(value);
 }
 
 const LOCAL_HOST = /\/\/(localhost|127\.0\.0\.1|keycloak|host\.docker\.internal)(:|\/|$)/i;
@@ -37,7 +43,7 @@ export function getConfig(): PortalConfig {
     publicUrl: required('PORTAL_PUBLIC_URL'),
     apiUrl: required('PORTAL_API_URL'),
     issuer: required('PORTAL_OIDC_ISSUER'),
-    oidcInternalUrl: process.env.PORTAL_OIDC_INTERNAL_URL?.trim().replace(/\/+$/, '') || required('PORTAL_OIDC_ISSUER'),
+    oidcInternalUrl: withoutTrailingSlashes(process.env.PORTAL_OIDC_INTERNAL_URL?.trim() ?? '') || required('PORTAL_OIDC_ISSUER'),
     clientId: required('PORTAL_OIDC_CLIENT_ID'),
     clientSecret: required('PORTAL_OIDC_CLIENT_SECRET'),
     sessionSecret: required('PORTAL_SESSION_SECRET'),

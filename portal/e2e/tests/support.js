@@ -80,7 +80,8 @@ export async function shot(page, name, options = {}) {
 export async function latestMailFor(email, subjectPart, { after = 0, timeoutMs = 60_000 } = {}) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    const list = await (await fetch(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:"${email}"`)}&limit=20`)).json();
+    const query = encodeURIComponent(`to:"${email}"`);
+    const list = await (await fetch(`${MAILPIT}/api/v1/search?query=${query}&limit=20`)).json();
     const match = (list.messages ?? []).find((m) => (!subjectPart || m.Subject.includes(subjectPart)) && Date.parse(m.Created) >= after);
     if (match) return (await fetch(`${MAILPIT}/api/v1/message/${match.ID}`)).json();
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -97,7 +98,7 @@ export function inviteLink(mail) {
 export function actionLink(mail) {
   const match = (mail.Text ?? '').match(/https?:\/\/\S+\/login-actions\/action-token\S+/) ?? (mail.HTML ?? '').match(/https?:\/\/[^"\s]+\/login-actions\/action-token[^"\s]+/);
   if (!match) throw new Error('Link de definição de senha ausente');
-  return match[0].replace(/&amp;/g, '&');
+  return match[0].replaceAll('&amp;', '&');
 }
 
 // ---------- Identidade ----------
@@ -142,7 +143,7 @@ export async function completeMfa(page, email) {
     if (!page.url().includes('/realms/')) return;
     if (await page.locator('#totpSecret').count()) {
       const secret = await page.locator('#totpSecret').inputValue();
-      saveState({ totp: { ...(loadState().totp ?? {}), [email]: secret } });
+      saveState({ totp: { ...loadState().totp, [email]: secret } });
       await page.fill('#totp', await nextTotp(secret));
       if (await page.locator('#userLabel').count()) await page.fill('#userLabel', 'teste');
       await page.locator('input[type=submit], button[type=submit]').first().click();

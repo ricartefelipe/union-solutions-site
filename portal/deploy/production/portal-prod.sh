@@ -89,7 +89,7 @@ require_env() {
   [ -f "$ENV_FILE" ] || { echo "Arquivo de configuração ausente. Rode: sh portal-prod.sh segredos"; exit 1; }
 }
 
-value() { grep "^$1=" "$ENV_FILE" | head -n 1 | cut -d= -f2-; }
+value() { nome_campo=$1; grep "^$nome_campo=" "$ENV_FILE" | head -n 1 | cut -d= -f2-; }
 
 check_config() {
   require_env
@@ -116,6 +116,7 @@ check_config() {
         || { echo "Backup por sftp sem identidade do servidor: rode sh portal-prod.sh destino-backup <servidor> <porta>."; problems=1; }
       ;;
     /repositorio-local) echo "Aviso: backup provisório na própria VPS. Defina um destino externo antes de receber dados reais." ;;
+    *) ;;
   esac
   $COMPOSE config -q || problems=1
   return "$problems"
