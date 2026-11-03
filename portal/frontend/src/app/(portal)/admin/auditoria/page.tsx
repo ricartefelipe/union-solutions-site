@@ -7,7 +7,7 @@ import { Empty, PageTitle, Pagination, Section } from '@/components/ui';
 
 export const metadata: Metadata = { title: 'Auditoria' };
 
-export default async function AuditPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+export default async function AuditPage({ searchParams }: Readonly<{ searchParams: Promise<Record<string, string | undefined>> }>) {
   const me = await getMe();
   if (me.role !== 'UNION_ADMIN') redirect('/');
   const params = await searchParams;

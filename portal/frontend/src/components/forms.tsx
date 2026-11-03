@@ -32,7 +32,7 @@ export async function send(path: string, method: string, body?: BodyInit, conten
   return fetch(`/bff${path}`, { method, headers, body });
 }
 
-function ErrorMessage({ failure, innerRef }: { failure: ApiFailure; innerRef: React.RefObject<HTMLDivElement | null> }) {
+function ErrorMessage({ failure, innerRef }: Readonly<{ failure: ApiFailure; innerRef: React.RefObject<HTMLDivElement | null> }>) {
   return (
     <div ref={innerRef} className="alert alert--error" role="alert" tabIndex={-1}>
       <p>{failure.message}</p>
@@ -42,12 +42,18 @@ function ErrorMessage({ failure, innerRef }: { failure: ApiFailure; innerRef: Re
   );
 }
 
+/** Texto de um valor do formulário ou da resposta: objetos viram JSON, nunca "[object Object]". */
+function asText(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  return typeof value === 'object' ? JSON.stringify(value) : String(value);
+}
+
 function fillTemplate(template: string, values: Record<string, unknown>) {
-  return template.replace(/\{([\w.]+)\}/g, (_, path: string) => String(path.split('.').reduce<unknown>((current, key) => (current as Record<string, unknown>)?.[key], values) ?? ''));
+  return template.replace(/\{([\w.]+)\}/g, (_, path: string) => asText(path.split('.').reduce<unknown>((current, key) => (current as Record<string, unknown>)?.[key], values)));
 }
 
 /** Formulário ligado à API. Valores fixos entram por `values`; campos vazios não são enviados. */
-export function ApiForm({ path, method = 'POST', fields, values = {}, submitLabel, successMessage, confirm, redirectTo, className }: {
+export function ApiForm({ path, method = 'POST', fields, values = {}, submitLabel, successMessage, confirm, redirectTo, className }: Readonly<{
   path: string;
   method?: string;
   fields: Field[];
@@ -58,7 +64,7 @@ export function ApiForm({ path, method = 'POST', fields, values = {}, submitLabe
   /** Destino após o sucesso. Trechos como {id} ou {ticket.id} são preenchidos com a resposta da API. */
   redirectTo?: string;
   className?: string;
-}) {
+}>) {
   const router = useRouter();
   const formId = useId();
   const [busy, setBusy] = useState(false);
@@ -84,7 +90,7 @@ export function ApiForm({ path, method = 'POST', fields, values = {}, submitLabe
     try {
       if (hasFile) {
         const multipart = new FormData();
-        for (const [key, value] of Object.entries(values)) if (value !== null && value !== undefined) multipart.set(key, String(value));
+        for (const [key, value] of Object.entries(values)) if (value !== null && value !== undefined) multipart.set(key, asText(value));
         for (const [key, value] of data.entries()) if (value !== '' && !(value instanceof File && value.size === 0)) multipart.set(key, value);
         response = await send(path, method, multipart);
       } else {
@@ -93,7 +99,8 @@ export function ApiForm({ path, method = 'POST', fields, values = {}, submitLabe
           if (field.type === 'checkbox') body[field.name] = data.get(field.name) === 'on';
           else if (field.type === 'checkboxes') body[field.name] = data.getAll(field.name);
           else {
-            const value = String(data.get(field.name) ?? '').trim();
+            const entry = data.get(field.name);
+            const value = typeof entry === 'string' ? entry.trim() : '';
             if (value !== '') body[field.name] = field.type === 'datetime-local' ? new Date(value).toISOString() : value;
           }
         }
@@ -181,7 +188,7 @@ export function ApiForm({ path, method = 'POST', fields, values = {}, submitLabe
 }
 
 /** Ação de um clique. Ações sensíveis pedem confirmação em diálogo acessível por teclado. */
-export function ApiButton({ path, method = 'POST', body, label, confirm, tone = 'primary', redirectTo }: {
+export function ApiButton({ path, method = 'POST', body, label, confirm, tone = 'primary', redirectTo }: Readonly<{
   path: string;
   method?: string;
   body?: Record<string, unknown>;
@@ -189,7 +196,7 @@ export function ApiButton({ path, method = 'POST', body, label, confirm, tone = 
   confirm?: string;
   tone?: 'primary' | 'ghost' | 'danger';
   redirectTo?: string;
-}) {
+}>) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<ApiFailure | null>(null);
@@ -234,7 +241,7 @@ export function ApiButton({ path, method = 'POST', body, label, confirm, tone = 
 }
 
 /** Atualiza a página enquanto houver arquivo em verificação. */
-export function RefreshWhilePending({ pending, children }: { pending: boolean; children?: ReactNode }) {
+export function RefreshWhilePending({ pending, children }: Readonly<{ pending: boolean; children?: ReactNode }>) {
   const router = useRouter();
   useEffect(() => {
     if (!pending) return undefined;

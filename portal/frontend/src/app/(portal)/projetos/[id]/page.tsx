@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: 'Projeto' };
 
 const EMPTY_USERS: Page<UserView> = { items: [], page: 0, size: 100, total: 0 };
 
-export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ProjectPage({ params }: Readonly<{ params: Promise<{ id: string }> }>) {
   const { id } = await params;
   const me = await getMe();
   const project = await apiGet<ProjectDetail>(`/v1/projects/${id}`);
@@ -205,7 +205,7 @@ const DOCUMENT_FIELDS = [
   { name: 'visibility', label: 'Quem pode ver', type: 'select' as const, required: true, defaultValue: 'PARTICIPANTS', options: options('visibility') },
 ];
 
-function AssignForm({ projectId, candidates }: { projectId: string; candidates: UserView[] }) {
+function AssignForm({ projectId, candidates }: Readonly<{ projectId: string; candidates: UserView[] }>) {
   if (candidates.length === 0) return <Empty>Não há outras pessoas para associar.</Empty>;
   return (
     <ul className="list">

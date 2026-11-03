@@ -19,7 +19,7 @@ Internet ── 80/443 ── proxy (Caddy, TLS)
 | --- | --- | --- |
 | Endereço | Só `clientes.unionsolutions.tech`, com o provedor em `/identidade` | Um registro DNS e um certificado. Um segundo host não é necessário |
 | Banco | Uma instância PostgreSQL com três bancos e três usuários sem privilégios administrativos | `portal`, `keycloak` e `portal_sessao`, criados por `db-init` |
-| Armazenamento | SeaweedFS 4.51 no próprio Compose, com volume persistente | Licença Apache 2.0, já usado nos testes, sem custo adicional. A API usa uma credencial limitada ao bucket |
+| Armazenamento | SeaweedFS 4.52 no próprio Compose, com volume persistente | Licença Apache 2.0, já usado nos testes, sem custo adicional. A API usa uma credencial limitada ao bucket |
 | Backup | restic, com destino configurável e cifragem própria | Pode sair da VPS para SFTP ou S3 sem alterar scripts |
 | Segredos | Arquivo `.env` com permissão 600 | **Não é um cofre cifrado:** quem administra o Docker no servidor consegue ler as variáveis dos containers |
 
@@ -38,7 +38,7 @@ Serviços externos equivalentes, como banco gerenciado ou S3 contratado, podem s
 | Links de produtos | `PORTAL_PRODUCT_LINK_HOSTS` |
 | Backup externo | `RESTIC_REPOSITORY`. Por sftp (por exemplo, a conta de hospedagem do site, fora de `public_html`): `PORTAL_BACKUP_SFTP_PORT`, `sh portal-prod.sh chave-backup` e `sh portal-prod.sh destino-backup <servidor> <porta>`. Por S3: `PORTAL_BACKUP_S3_ACCESS_KEY` e `PORTAL_BACKUP_S3_SECRET_KEY` |
 | Retenção de backup | `PORTAL_BACKUP_KEEP_DAILY`, `PORTAL_BACKUP_KEEP_WEEKLY`, `PORTAL_BACKUP_KEEP_MONTHLY` |
-| Privacidade | Campos de `PRIVACIDADE.md`. Pendência para abrir o portal a clientes |
+| Privacidade | Política publicada em `https://unionsolutions.tech/privacidade/`. Faltam os prazos de retenção e a revisão jurídica de `PRIVACIDADE.md` para abrir o portal a clientes |
 | Retenção | Nasce desligada. Só ligue com `PORTAL_RETENTION_ENABLED=true` e `PORTAL_RETENTION_POLICY` depois de a empresa aprovar os prazos (ver `OPERACAO.md`) |
 
 ## Procedimento

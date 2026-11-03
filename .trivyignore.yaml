@@ -2,7 +2,7 @@
 # portal/docs/VULNERABILIDADES.md. Vencido o prazo, a análise de imagens volta a reprovar até nova decisão.
 vulnerabilities:
   - id: CVE-2026-116587
-    statement: "go-jose v3 (proxy) sem correção na linha v3 e v4 (SeaweedFS) sem imagem oficial corrigida; caminho de código ausente na configuração: sem tls internal, ACME interno ou JWT no proxy; SeaweedFS só em rede interna e sem JWT. Itens 1 e 2."
+    statement: "go-jose v3 (proxy) sem correção na linha v3; caminho de código ausente na configuração: sem tls internal, ACME interno ou JWT no proxy. Item 1."
     expired_at: 2026-12-01
   - id: CVE-2026-102554
     statement: "Guava no Keycloak 26.8.1, sem versão do Keycloak com a correção; instância única, sem desserialização de dados de cliente. Item 3."
