@@ -4,7 +4,7 @@ Site estático em português do Brasil, feito com [Astro](https://astro.build) e
 
 Para publicar, comece por [`docs/PUBLICACAO.md`](docs/PUBLICACAO.md). O estado desta entrega e as evidências estão em [`docs/FECHAMENTO.md`](docs/FECHAMENTO.md).
 
-O portal do cliente é uma aplicação separada, com servidor e serviços próprios: não é publicado junto com este site. Veja [`portal/README.md`](portal/README.md).
+O portal do cliente é uma aplicação separada, com servidor e serviços próprios: não é publicado junto com este site. Veja [`portal/README.md`](portal/README.md). As demonstrações públicas dos produtos ficam numa segunda VPS, separada da do portal: veja [`demos/README.md`](demos/README.md).
 
 ## Instalação e execução
 
