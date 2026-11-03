@@ -18,11 +18,11 @@ As afirmações sobre o site institucional não valem aqui: **o site não usa co
 | Eventos de auditoria: ator, organização, recurso, ação, data | Rastreabilidade | `audit_event` | Administração da Union |
 | Sessão: identificador em hash, tokens cifrados, datas | Manter o login | Banco `portal_sessao` | Só o BFF |
 | Registros técnicos: IP, caminho sem parâmetros, status | Operação e segurança | Saída dos containers, até 50 MB por serviço | Quem administra o servidor |
-| E-mails: convites, definição e recuperação de senha | Dar acesso | Provedor de SMTP (a contratar) | Provedor de SMTP |
+| E-mails: convites, definição e recuperação de senha | Dar acesso | Serviço de e-mail da Hostinger | Hostinger |
 | Avisos: título, link, data e leitura; preferência de e-mail | Informar a pessoa sobre atividade nos seus projetos | `notification`, `app_user.email_notifications` | A própria pessoa |
 | Fila de e-mails: destinatário, assunto, situação, erro; corpo só até o envio | Entrega durável dos avisos e convites | `email_outbox` | Administração da Union (destinatário mascarado) |
 | Simulações e execuções de retenção: contagens por categoria | Aplicar a política de retenção | `retention_run` | Administração da Union |
-| Backups: cópia cifrada de tudo acima, exceto sessões | Recuperação | Destino externo (a definir) | Quem tem a chave do backup |
+| Backups: cópia cifrada de tudo acima, exceto sessões | Recuperação | Conta de hospedagem na Hostinger, por sftp | Quem tem a chave do backup |
 
 ## Cookies do portal
 
@@ -48,7 +48,7 @@ Os dados não saem do Brasil nem passam por outros operadores. Não há analytic
 
 ## Campos a preencher
 
-Nenhum destes dados foi inventado. Os itens marcados como "A DEFINIR" precisam existir antes de o portal ser aberto a clientes:
+Nenhum destes dados foi inventado. Os itens marcados como "A DEFINIR" são decisões pendentes da empresa, com orientação jurídica, e precisam existir antes de o portal ser aberto a clientes. Prazos legais de retenção não são definidos pela equipe técnica:
 
 | Campo | Valor |
 | --- | --- |

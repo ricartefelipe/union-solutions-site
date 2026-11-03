@@ -143,6 +143,10 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline-offs
 .public__logo img { width: 168px; }
 .public__head { display: inline-block; margin: calc(var(--space-6) * -1) calc(var(--space-6) * -1) var(--space-5); padding: var(--space-4) var(--space-6); width: calc(100% + var(--space-6) * 2); background: var(--brand); border-radius: var(--radius) var(--radius) 0 0; }
 .public__card h1 { margin-bottom: var(--space-3); }
+.public__privacy { margin-top: var(--space-4); font-size: var(--text-sm); }
+.public__privacy a { display: inline-flex; align-items: center; min-height: 2.75rem; }
+.portal-footer { padding-block: var(--space-3); border-top: 1px solid var(--line); font-size: var(--text-sm); }
+.portal-footer a { display: inline-flex; align-items: center; min-height: 2.75rem; }
 .public__actions { display: grid; gap: var(--space-2); margin-top: var(--space-4); }
 
 @media (min-width: 62rem) {

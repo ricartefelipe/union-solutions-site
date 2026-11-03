@@ -7,7 +7,7 @@ import { Badge, Disclosure, Empty, FileLink, PageTitle, Section, When } from '@/
 
 export const metadata: Metadata = { title: 'Solicitação' };
 
-export default async function TicketPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function TicketPage({ params }: Readonly<{ params: Promise<{ id: string }> }>) {
   const { id } = await params;
   const detail = await apiGet<TicketDetail>(`/v1/tickets/${id}`);
   const { ticket } = detail;

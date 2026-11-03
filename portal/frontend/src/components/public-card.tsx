@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-export function PublicCard({ title, children }: { title: string; children: ReactNode }) {
+export function PublicCard({ title, children }: Readonly<{ title: string; children: ReactNode }>) {
   return (
     <main className="public">
       <div className="public__card">
@@ -9,6 +9,7 @@ export function PublicCard({ title, children }: { title: string; children: React
         </div>
         <h1>{title}</h1>
         {children}
+        <p className="public__privacy"><a href="https://unionsolutions.tech/privacidade/">Política de privacidade</a></p>
       </div>
     </main>
   );

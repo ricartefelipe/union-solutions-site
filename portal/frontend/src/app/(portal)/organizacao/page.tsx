@@ -9,7 +9,7 @@ import { PageTitle, Pagination, Section, Truncated } from '@/components/ui';
 
 export const metadata: Metadata = { title: 'Organização' };
 
-export default async function OrganizationPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+export default async function OrganizationPage({ searchParams }: Readonly<{ searchParams: Promise<Record<string, string | undefined>> }>) {
   const params = await searchParams;
   const me = await getMe();
   if (me.role !== 'CLIENT_ADMIN') redirect('/');

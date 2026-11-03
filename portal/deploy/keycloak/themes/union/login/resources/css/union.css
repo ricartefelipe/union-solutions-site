@@ -35,3 +35,16 @@ body,
   outline: 3px solid #f2b45c;
   outline-offset: 2px;
 }
+
+.union-privacidade {
+  margin-top: 1rem;
+  font-size: 0.875rem;
+}
+
+.union-privacidade a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  color: #1a1360;
+  text-decoration: underline;
+}

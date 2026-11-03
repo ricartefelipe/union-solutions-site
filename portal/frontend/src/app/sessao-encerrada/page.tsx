@@ -3,7 +3,7 @@ import { PublicCard } from '@/components/public-card';
 
 export const metadata: Metadata = { title: 'Sessão encerrada' };
 
-export default async function SessionEnded({ searchParams }: { searchParams: Promise<{ falha?: string; provedor?: string }> }) {
+export default async function SessionEnded({ searchParams }: Readonly<{ searchParams: Promise<{ falha?: string; provedor?: string }> }>) {
   const { falha, provedor } = await searchParams;
   return (
     <PublicCard title={falha ? 'Não foi possível entrar' : 'Você saiu do portal'}>

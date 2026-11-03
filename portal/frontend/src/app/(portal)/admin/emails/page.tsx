@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: 'Fila de e-mails' };
 
 const FILTERS = [['', 'Todos'], ['PENDING', 'Na fila'], ['SENT', 'Enviados'], ['FAILED', 'Desistiram']];
 
-export default async function OutboxPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+export default async function OutboxPage({ searchParams }: Readonly<{ searchParams: Promise<Record<string, string | undefined>> }>) {
   const me = await getMe();
   if (me.role !== 'UNION_ADMIN') redirect('/');
   const params = await searchParams;
