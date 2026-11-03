@@ -14,7 +14,15 @@ export type ProductSlug =
   | 'assinaflow'
   | 'archlens'
   | 'fluxe-b2b-suite'
-  | 'comercialcloud';
+  | 'comercialcloud'
+  | 'skillforge'
+  | 'cards-api';
+
+/** Credencial pública de uma demonstração. `copy` só vale para valor sem espaços (aparece o botão Copiar). */
+export interface DemoAccess {
+  label: string;
+  value: string;
+}
 
 export interface FlowStep {
   title: string;
@@ -45,7 +53,7 @@ export interface Product {
   /** O que vale levar para a conversa sobre demonstração. */
   conversationTopics: string[];
   /** Demonstração pública no ar, quando existir: endereço HTTPS e o que o visitante encontra lá. */
-  liveDemo?: { url: string; note: string; access?: string[]; links?: { label: string; url: string }[] };
+  liveDemo?: { url: string; note: string; access?: DemoAccess[]; links?: { label: string; url: string }[] };
 }
 
 export const products: Product[] = [
@@ -183,7 +191,10 @@ export const products: Product[] = [
     liveDemo: {
       url: 'https://demo-archlens.unionsolutions.tech/',
       note: 'Entre com a conta abaixo, crie uma avaliação e importe o arquivo de exemplo para ver inventário, achados, pontuações e roteiro. O ambiente é compartilhado e apagado todos os dias: não envie dados reais.',
-      access: ['Usuário: architect', 'Senha: union-demo'],
+      access: [
+        { label: 'Usuário', value: 'architect' },
+        { label: 'Senha', value: 'union-demo' },
+      ],
       links: [{ label: 'Baixar o arquivo de exemplo', url: 'https://demo-archlens.unionsolutions.tech/amostra/analysis.json' }],
     },
   },
@@ -219,7 +230,10 @@ export const products: Product[] = [
     liveDemo: {
       url: 'https://demo-fluxe.unionsolutions.tech/',
       note: 'Compre na loja e acompanhe o pedido na operação e na administração de uma empresa fictícia. O pagamento também é fictício. O ambiente é compartilhado e apagado todos os dias: use dados inventados, inclusive no checkout.',
-      access: ['E-mail: visitante@demo-fluxe.unionsolutions.tech', 'Senha: ops123'],
+      access: [
+        { label: 'E-mail', value: 'visitante@demo-fluxe.unionsolutions.tech' },
+        { label: 'Senha', value: 'ops123' },
+      ],
       links: [
         { label: 'Operação', url: 'https://demo-fluxe.unionsolutions.tech/ops/' },
         { label: 'Administração', url: 'https://demo-fluxe.unionsolutions.tech/admin/' },
@@ -260,9 +274,88 @@ export const products: Product[] = [
       note: 'Abra a loja de demonstração com produtos, clientes e vendas fictícios. Os dados são apagados todos os dias, e cobrança e nota fiscal rodam só em modo de teste.',
     },
   },
+  {
+    slug: 'skillforge',
+    name: 'Skillforge',
+    area: 'Ensino a distância',
+    purpose: 'Reúne cursos, turmas, aulas, práticas, provas e certificado numa escola a distância, com acesso separado para aluno, docente e administração.',
+    context: 'Para instituições e equipes de treinamento que ministram cursos online e precisam acompanhar turmas, notas e presença.',
+    capabilities: [
+      'Cursos com módulos e aulas em texto, PDF ou vídeo, e turmas com docente e alunos matriculados',
+      'Práticas com prazo e rubrica opcionais, provas com até cinco tentativas, nota e boletim',
+      'Avisos, chamada e certificado liberado pela média e pela presença',
+    ],
+    onHome: false,
+    situations: [
+      'Os cursos a distância vivem em planilhas, e-mails e mensagens soltas.',
+      'Docentes e alunos precisam ver só as turmas em que estão.',
+      'A instituição quer nota, presença e certificado no mesmo lugar.',
+    ],
+    flow: [
+      { title: 'Administração', text: 'Cria o curso, abre a turma, indica o docente e matricula os alunos.' },
+      { title: 'Docente', text: 'Publica módulos, materiais, práticas e provas, devolve as notas e registra a chamada.' },
+      { title: 'Aluno', text: 'Conclui as aulas, entrega as práticas, faz as provas, tira dúvidas e acompanha o boletim e o certificado.' },
+    ],
+    goodToKnow: 'O acesso usa o Keycloak, configurado na implantação. Cobrança de mensalidades e integração com sistemas acadêmicos que você já usa não fazem parte do que está verificado e entram na conversa sobre o seu caso.',
+    availability: 'Disponível para demonstração e avaliação de piloto com dados de teste.',
+    conversationTopics: [
+      'Como seus cursos, turmas e docentes estão organizados hoje',
+      'Quais regras de nota, presença e certificado a sua instituição usa',
+      'Quais sistemas existentes precisam ser considerados',
+    ],
+    liveDemo: {
+      url: 'https://demo-skillforge.unionsolutions.tech/',
+      note: 'Entre como administração para criar um curso, abrir a turma e matricular, como docente para publicar material e prática, e como aluno para concluir a aula. O ambiente é compartilhado e apagado todos os dias: não informe dados reais.',
+      access: [
+        { label: 'Usuários', value: 'aluno, docente ou administracao' },
+        { label: 'Senha', value: 'union-demo' },
+      ],
+    },
+  },
+  {
+    slug: 'cards-api',
+    name: 'Cards API',
+    area: 'Contas e cartões',
+    purpose: 'API para gestão de contas, clientes e cartões físicos e virtuais, da emissão à entrega, validação, reemissão e cancelamento.',
+    context: 'Para equipes que constroem produtos financeiros e querem o fluxo de cartões atrás de uma API, com a transportadora e a processadora ligadas por webhook.',
+    capabilities: [
+      'Cartão físico e virtual: emissão, entrega, validação e reemissão',
+      'CVV consultado sob demanda e mantido só em memória, sem gravar no banco',
+      'Acesso por OAuth2/OIDC, com cada titular vendo só os próprios cartões, e webhooks autenticados por chave',
+    ],
+    onHome: false,
+    situations: [
+      'Um produto financeiro precisa emitir e acompanhar cartões sem montar o fluxo do zero.',
+      'A entrega do cartão físico e a ativação dependem de eventos de uma transportadora e de uma processadora.',
+      'O CVV não pode ficar gravado no banco de dados.',
+    ],
+    flow: [
+      { title: 'Cadastro', text: 'A administração cria clientes e contas.' },
+      { title: 'Emissão', text: 'O titular pede um cartão físico ou virtual, e a API acompanha o pedido.' },
+      { title: 'Entrega e validação', text: 'A transportadora e a processadora avisam por webhook, e o cartão é entregue e validado.' },
+    ],
+    goodToKnow: 'Em produção, a API se recusa a iniciar sem uma processadora e uma transportadora reais contratadas. Os simuladores existem só para desenvolvimento, testes e a demonstração, e nenhum cartão real é emitido por eles. A ligação com o seu parceiro é avaliada na conversa.',
+    availability: 'Disponível para demonstração com simuladores e para avaliação técnica.',
+    conversationTopics: [
+      'Qual processadora e qual transportadora a sua operação usa ou pretende usar',
+      'Como a emissão, a entrega e a validação funcionam hoje',
+      'Quais exigências de segurança e de auditoria precisam ser consideradas',
+    ],
+    liveDemo: {
+      url: 'https://demo-cards.unionsolutions.tech/',
+      note: 'Entre com a conta abaixo para criar uma conta, simular a entrega do cartão por webhook, validá-lo, emitir um cartão virtual e consultar o CVV. A demonstração usa simuladores e nenhum cartão real é emitido. O ambiente é compartilhado e apagado todos os dias: não informe dados reais.',
+      access: [
+        { label: 'E-mail', value: 'visitante@demo-cards.unionsolutions.tech' },
+        { label: 'Senha', value: 'union-demo' },
+      ],
+    },
+  },
 ];
 
 export const homeProducts = products.filter((product) => product.onHome).slice(0, 3);
+
+/** Produtos com demonstração pública no ar, na ordem do catálogo. */
+export const demoProducts = products.filter((product) => product.liveDemo);
 
 export function productContactUrl(slug: ProductSlug): string {
   return `/contato/?interesse=produto&produto=${slug}`;

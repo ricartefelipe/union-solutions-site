@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Arrow from '../../components/Arrow.astro';
 import PageHero from '../../components/PageHero.astro';
+import DemoAccess from '../../components/DemoAccess.astro';
 import ProductGlyph from '../../components/ProductGlyph.astro';
 import { productContactUrl, products, type Product } from '../../data/products';
 
@@ -80,11 +81,7 @@ const title = `${product.name}: ${product.area.charAt(0).toLowerCase()}${product
         {product.liveDemo && (
           <>
             <p class="demo-text">{product.liveDemo.note}</p>
-            {product.liveDemo.access && (
-              <ul class="demo-access">
-                {product.liveDemo.access.map((item) => <li>{item}</li>)}
-              </ul>
-            )}
+            {product.liveDemo.access && <DemoAccess access={product.liveDemo.access} />}
             <div class="btn-row">
               <a class="btn demo-cta" href={product.liveDemo.url} rel="noopener">Testar agora<Arrow /></a>
               <a class="btn btn--ghost demo-cta" href={contactUrl}>Conversar sobre o seu cenário<Arrow /></a>
@@ -180,9 +177,9 @@ const title = `${product.name}: ${product.area.charAt(0).toLowerCase()}${product
     place-items: center;
     width: 2.25rem;
     height: 2.25rem;
-    border: 1px solid var(--brand);
+    border: 1px solid var(--brand-ink);
     border-radius: 50%;
-    color: var(--brand);
+    color: var(--brand-ink);
     font-family: var(--font-display);
   }
 
@@ -199,12 +196,6 @@ const title = `${product.name}: ${product.area.charAt(0).toLowerCase()}${product
   .demo-text {
     max-width: 48ch;
     margin-block: var(--space-2) var(--space-5);
-  }
-
-  .demo-access {
-    margin-bottom: var(--space-4);
-    font-weight: 500;
-    overflow-wrap: anywhere;
   }
 
   .demo-links {
@@ -246,7 +237,7 @@ const title = `${product.name}: ${product.area.charAt(0).toLowerCase()}${product
     display: inline-flex;
     align-items: center;
     min-height: 2.75rem;
-    color: var(--brand);
+    color: var(--brand-ink);
     font-weight: 600;
   }
 </style>

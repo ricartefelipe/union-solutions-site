@@ -1,0 +1,138 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Arrow from '../../components/Arrow.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import DemoAccess from '../../components/DemoAccess.astro';
+import PageHero from '../../components/PageHero.astro';
+import { demoProducts, productContactUrl } from '../../data/products';
+---
+
+<BaseLayout
+  title="Demonstrações online"
+  description="Teste os produtos da Union Solutions no navegador, com acesso público e dados fictícios. Veja o que cada demonstração mostra e como entrar."
+>
+  <PageHero
+    title="Teste os produtos no navegador."
+    intro="Cada demonstração abaixo está no ar, com acesso público e dados de exemplo. Entre, explore e depois converse conosco sobre o seu cenário."
+  />
+
+  <section class="section surface-mist" aria-labelledby="aviso">
+    <div class="wrap">
+      <h2 id="aviso" class="notice__title">Antes de entrar</h2>
+      <ul class="node-list notice__list">
+        <li>Os dados são fictícios. Não informe dados pessoais, de clientes ou de sua empresa.</li>
+        <li>O ambiente é compartilhado: outras pessoas podem estar usando ao mesmo tempo.</li>
+        <li>Tudo o que for criado é apagado diariamente, e a demonstração volta ao estado inicial.</li>
+        <li>É uma amostra para avaliação. Não substitui a conversa sobre implantação, integrações e prazos.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="wrap">
+    {demoProducts.map((product) => (
+      <section class="demo reveal" id={product.slug} aria-labelledby={`${product.slug}-demo`}>
+        <div>
+          <span class="demo__area muted">{product.area}</span>
+          <h2 id={`${product.slug}-demo`}>{product.name}</h2>
+          <p class="demo__purpose">{product.purpose}</p>
+          <p class="muted">{product.liveDemo!.note}</p>
+          <ul class="node-list demo__shows">
+            {product.capabilities.slice(0, 3).map((capability) => <li>{capability}</li>)}
+          </ul>
+        </div>
+        <div class="demo__access">
+          <h3>Como entrar</h3>
+          {product.liveDemo!.access ? (
+            <DemoAccess access={product.liveDemo!.access} />
+          ) : (
+            <p class="muted">Acesso direto, sem cadastro.</p>
+          )}
+          <div class="btn-row">
+            <a class="btn" href={product.liveDemo!.url} rel="noopener">Abrir a demonstração<span class="sr-only"> do {product.name}</span></a>
+            <a class="text-link" href={`/produtos/${product.slug}/`}>Conhecer o produto<span class="sr-only"> {product.name}</span><Arrow /></a>
+          </div>
+          <a class="demo__talk text-link" href={productContactUrl(product.slug)}>Falar com a Union sobre o {product.name}<Arrow /></a>
+        </div>
+      </section>
+    ))}
+  </div>
+
+  <CtaBand
+    title="Quer ver isso com os dados da sua operação?"
+    text="Conte o seu cenário e mostramos como o produto se encaixa, com prazos e escopo claros."
+    label="Conversar sobre meu projeto"
+    href="/contato/"
+    secondary={{ label: 'Ver todos os produtos', href: '/produtos/' }}
+  />
+</BaseLayout>
+
+<style>
+  .notice__title {
+    margin-bottom: var(--space-3);
+    color: var(--brand-ink);
+    font-size: var(--text-h3, 1.25rem);
+  }
+
+  .notice__list {
+    gap: var(--space-1);
+    max-width: var(--measure);
+  }
+
+  .demo {
+    display: grid;
+    gap: var(--space-5) clamp(2rem, 6vw, 5rem);
+    padding-block: 2rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .demo:last-child {
+    border-bottom: 0;
+  }
+
+  .demo__area {
+    display: block;
+    margin-bottom: var(--space-1);
+    font-size: var(--text-sm);
+    font-weight: 600;
+  }
+
+  .demo h2 {
+    color: var(--brand-ink);
+  }
+
+  .demo__purpose {
+    max-width: var(--measure);
+    margin-block: var(--space-2) var(--space-1);
+    font-size: 1.125rem;
+    line-height: 1.4;
+  }
+
+  .demo__shows {
+    gap: 0;
+    margin-top: var(--space-3);
+    line-height: 1.5;
+  }
+
+  .demo__access {
+    align-self: start;
+    padding: var(--space-4);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    background: var(--mist);
+  }
+
+  .demo__access h3 {
+    margin-bottom: var(--space-3);
+    font-size: 1.125rem;
+  }
+
+  .demo__talk {
+    margin-top: var(--space-3);
+  }
+
+  @media (min-width: 62rem) {
+    .demo {
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    }
+  }
+</style>
