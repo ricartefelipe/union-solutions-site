@@ -197,7 +197,7 @@ export function ApiForm({ path, method = 'POST', fields, values = {}, submitLabe
   return (
     <form className={`form ${className ?? ''}`} onSubmit={submit} aria-busy={busy}>
       {failure && <ErrorMessage failure={failure} innerRef={errorRef} />}
-      {success && <div className="alert alert--success" role="status">{success}</div>}
+      {success && <output className="alert alert--success">{success}</output>}
       {fields.map((field) => <FieldView key={field.name} field={field} formId={formId} />)}
       <div className="form__actions">
         <button className="btn" type="submit" disabled={busy}>{busy ? 'Enviando…' : submitLabel}</button>

@@ -26,7 +26,7 @@ export default async function OutboxPage({ searchParams }: Readonly<{ searchPara
         </ul></nav>
       }>
         {data.items.length === 0 ? <Empty>Nenhum e-mail nesta situação.</Empty> : (
-          <div className="table-wrap" tabIndex={0} role="region" aria-label="Fila de e-mails">
+          <section className="table-wrap" tabIndex={0} aria-label="Fila de e-mails">
             <table>
               <thead><tr><th scope="col">Criado</th><th scope="col">Destinatário</th><th scope="col">Assunto</th><th scope="col">Situação</th><th scope="col">Tentativas</th><th scope="col">Detalhe</th><th scope="col"><span className="sr-only">Ações</span></th></tr></thead>
               <tbody>
@@ -43,7 +43,7 @@ export default async function OutboxPage({ searchParams }: Readonly<{ searchPara
                 ))}
               </tbody>
             </table>
-          </div>
+          </section>
         )}
         <Pagination page={data} basePath="/admin/emails" query={{ situacao: status }} />
       </Section>
