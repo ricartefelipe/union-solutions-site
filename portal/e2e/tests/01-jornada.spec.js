@@ -453,7 +453,10 @@ test.describe.serial('Jornada completa do portal', () => {
     await expect(union.getByRole('button', { name: 'Reativar produto' })).toBeVisible();
     await page.goto('/produtos');
     await expect(page.getByText('Nenhum produto registrado para você.')).toBeVisible();
+    // O rótulo vira "Enviando…" no clique; só a resposta da API garante que o produto voltou antes de abrir a lista.
+    const reativado = union.waitForResponse((r) => r.url().includes('/bff/v1/products/') && r.request().method() === 'PATCH');
     await union.getByRole('button', { name: 'Reativar produto' }).click();
+    expect((await reativado).ok()).toBe(true);
     await expect(union.getByRole('button', { name: 'Reativar produto' })).toHaveCount(0);
     await page.goto('/produtos');
     await expect(page.getByRole('link', { name: /Acessar HookGuard/ })).toBeVisible();
@@ -478,7 +481,10 @@ test.describe.serial('Jornada completa do portal', () => {
   });
 
   test('projeto, entrega e solicitação sobrevivem à reinicialização', async () => {
-    await restartServices('postgres', 'backend', 'frontend');
+    // A mesma cadeia de `portal-prod.sh reiniciar-banco`. Sem o provedor, o pool dele guarda conexões mortas e o próximo
+    // login recebe a tela de erro: essa janela está documentada em OPERACAO.md e é medida em 04-producao.spec.js.
+    test.setTimeout(300_000);
+    await restartServices('postgres', 'keycloak', 'backend', 'frontend');
     const page = await clientA.newPage();
     await page.goto(`/entregas/${ids.delivery}`);
     await expect(page.getByRole('heading', { level: 1, name: DELIVERY })).toBeVisible();
@@ -488,6 +494,22 @@ test.describe.serial('Jornada completa do portal', () => {
     await page.goto(`/projetos/${ids.project}`);
     await expect(page.getByRole('heading', { level: 1, name: PROJECT })).toBeVisible();
     await page.close();
+  });
+
+  test('reinício só do banco não derruba o painel aberto', async () => {
+    test.setTimeout(300_000);
+    const aberta = await clientA.newPage();
+    await aberta.goto('/');
+    await expect(aberta.getByRole('heading', { level: 1, name: /Olá/ })).toBeVisible();
+    try {
+      await restartServices('postgres');
+      await aberta.goto('/');
+      await expect(aberta.getByRole('heading', { level: 1, name: /Olá/ })).toBeVisible();
+    } finally {
+      // Devolve o provedor sem conexões mortas para os próximos logins.
+      await restartServices('keycloak');
+      await aberta.close();
+    }
   });
 
   test('sair encerra a sessão no portal e no provedor', async () => {
