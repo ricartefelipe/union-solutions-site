@@ -67,11 +67,12 @@ Achados HIGH e CRITICAL com correção disponível (Trivy 0.70.0, `--ignore-unfi
 | Fluxe, loja | 26 | 0 |
 | Fluxe, operação e administração | 62 e 62 | 0 e 0 |
 | Fluxe, orders e payments (API e workers) | 0 | 0 |
+| PostgreSQL 16 (nove demonstrações) e MariaDB 10.11 (cards) | 26 (1 crítico) cada | 0 e 0 (`demos/imagens`, 03/11/2026) |
+| Redis 7 (Fluxe) | 0 | 0 |
 
 Pendências conhecidas, sem correção disponível ou fora do alcance desta mudança:
 
-- **PostgreSQL 16 e MariaDB 10.11:** 26 achados (1 crítico) vêm do binário de inicialização da imagem oficial, compilado com uma versão antiga do Go; não há imagem corrigida. Trocar o resumo (`@sha256`) do PostgreSQL não muda o resultado.
-- **Keycloak 26.8.1:** 1 achado HIGH (Guava) sem versão corrigida, aceito em `.trivyignore.yaml` até 01/12/2026.
+- **Keycloak 26.8.1 (cards e Skillforge):** reanalisado em 03/11/2026, já no digest mais recente (`26.8.1-2`), sem versão nova. 1 achado HIGH com correção na biblioteca, Guava 33.6.0 (corrigida na 33.7.2), que só chega com uma versão do Keycloak que a inclua; 3 sem correção do fabricante na base UBI 9 (`sqlite-libs` 2 e OpenJDK 1). Os quatro estão aceitos em `.trivyignore.yaml` até 01/12/2026 e avaliados em `portal/docs/VULNERABILIDADES.md`.
 - **RabbitMQ 3 (Fluxe):** a linha 3 não recebe mais correções (69 achados). A troca para a linha 4 é uma mudança de versão maior e fica para uma etapa própria.
 - **Fluxe, saas-core:** 2 achados da `libexpat` 2.9.0 (corrigida na 2.10.0) vêm da imagem base do Dockerfile do próprio produto, que não executa `apk upgrade`; resolve-se no repositório do spring-saas-core.
 - **Keycloak 26.8:** recusa o token com `Origin` fora de `webOrigins` (403 "Invalid origin"). O `demo.sh` do cards ajusta o cliente `cards-admin` para o endereço público.
@@ -109,6 +110,20 @@ sh demo.sh status
 ```
 
 Fluxe B2B Suite: `sh demo.sh construir` numa máquina de trabalho e carregue as imagens na VPS (`docker save demo-fluxe-... | gzip | ssh ... 'gunzip | docker load'`); `subir` e `reiniciar-dados` não compilam. ArchLens e AssinaFlow podem seguir o mesmo caminho, para poupar o portal da compilação (`docker compose --env-file .env -f compose.yaml up -d --no-build --wait`).
+
+### Imagens de banco (`demos/imagens`)
+
+A imagem oficial do PostgreSQL e a do MariaDB, em todas as versões publicadas até 03/11/2026, trazem o `gosu` 1.19 compilado com Go 1.24.6 (26 achados, 1 crítico). Ele só serve para o entrypoint trocar de root para o usuário do banco. `postgres.Dockerfile` e `mariadb.Dockerfile` removem o binário, e o container inicia direto como `postgres` (uid 70) ou `mysql` (uid 999). Volumes criados pela imagem oficial continuam funcionando, porque o diretório de dados já pertence a esse usuário. Todas as demonstrações com PostgreSQL usam `union-demos-postgres:16`; o cards usa `union-demos-mariadb:10.11`.
+
+Fluxe, Skillforge, Orders, SpringMind e cards sobem e reiniciam os dados com `--no-build`, inclusive pelo timer da madrugada: construa as duas imagens na VPS **antes** de copiar os `compose.yaml` novos.
+
+```bash
+cd /opt/union-solutions/demos/imagens
+docker build -t union-demos-postgres:16 -f postgres.Dockerfile .
+docker build -t union-demos-mariadb:10.11 -f mariadb.Dockerfile .
+```
+
+Depois, em cada demonstração, `sh demo.sh reiniciar-dados` troca o banco já com a imagem nova.
 
 Registro DNS `A` de `demo-<produto>.unionsolutions.tech` para o IP da VPS, antes de `instalar`. Timer diário: copie `systemd/*` para `/etc/systemd/system` e `systemctl enable --now demo-<produto>.timer`.
 
