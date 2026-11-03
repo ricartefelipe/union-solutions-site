@@ -43,8 +43,8 @@ Na versão v1.5.6 o dono de uma conta `admin` lista só o próprio locatário e 
 | ComercialCloud | v1.5.0 |
 | Skillforge | v0.16.0 |
 | FileNorm | v0.3.0 |
-| SpringMind | springmind v0.2.0 com ReactMind no commit de `.env.example` |
-| VueMind | vuemind-api v0.2.0 com o front no commit de `.env.example` |
+| SpringMind | springmind v0.3.0, reactmind v0.1.0 e mind-shared v2.1.0 |
+| VueMind | vuemind-api v0.3.0, vuemind v0.1.0 e mind-shared v2.1.0 |
 | cards-api | v1.4.4 |
 | AssinaFlow | v1.0.8, com o RabbitMQ 4.4.0 na imagem do produto |
 | order-service, HookGuard, ArchLens | sem mudança de versão |
@@ -68,7 +68,7 @@ Achados HIGH e CRITICAL com correção disponível (Trivy 0.70.0, `--ignore-unfi
 | Fluxe, loja | 26 | 0 |
 | Fluxe, operação e administração | 62 e 62 | 0 e 0 |
 | Fluxe, orders e payments (API e workers) | 0 | 0 |
-| PostgreSQL 16 (nove demonstrações) e MariaDB 10.11 (cards) | 26 (1 crítico) cada | 0 e 0 (`demos/imagens`, 03/11/2026) |
+| PostgreSQL 16 (nove demonstrações) e MariaDB 10.11 (cards) | 26 (1 crítico) cada | 0 e 0 (`demos/imagens`, na VPS desde 03/11/2026; 0 também sem `--ignore-unfixed`) |
 | Redis 7 (Fluxe) | 0 | 0 |
 | RabbitMQ, Fluxe | 71 (3.13.7) | 0 (4.4.0) |
 | RabbitMQ, AssinaFlow (`assinaflow-rabbitmq:4-patched`) | 0 (3.13.7 com `apk upgrade`) | 0 (4.4.0), nenhum achado de nenhuma gravidade |
@@ -78,7 +78,7 @@ Pendências conhecidas, sem correção disponível ou fora do alcance desta muda
 - **Keycloak 26.8.1 (cards e Skillforge):** reanalisado em 03/11/2026, já no digest mais recente (`26.8.1-2`), sem versão nova. 1 achado HIGH com correção na biblioteca, Guava 33.6.0 (corrigida na 33.7.2), que só chega com uma versão do Keycloak que a inclua; 3 sem correção do fabricante na base UBI 9 (`sqlite-libs` 2 e OpenJDK 1). Os quatro estão aceitos em `.trivyignore.yaml` até 01/12/2026 e avaliados em `portal/docs/VULNERABILIDADES.md`.
 - **Fluxe, saas-core:** 2 achados da `libexpat` 2.9.0 (corrigida na 2.10.0) vêm da imagem base do Dockerfile do próprio produto, que não executa `apk upgrade`; resolve-se no repositório do spring-saas-core.
 - **Keycloak 26.8:** recusa o token com `Origin` fora de `webOrigins` (403 "Invalid origin"). O `demo.sh` do cards ajusta o cliente `cards-admin` para o endereço público.
-- **VueMind:** a `vuemind-api` não gera o código end-to-end do PIX; o comprovante mostra o campo vazio.
+- **VueMind e SpringMind:** desde 03/11/2026 o comprovante do PIX traz o end-to-end no formato do arranjo do Banco Central, com o ISPB fictício `99999999`, e avisa que o PIX é simulado.
 - **FileNorm:** o link de acesso só aparece na resposta com o código de acesso da demonstração; na VPS o modo está desligado e o link vai por e-mail. Destinatário recusado pelo servidor de e-mail responde 500.
 
 ## RabbitMQ 4
