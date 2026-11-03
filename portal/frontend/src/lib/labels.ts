@@ -48,11 +48,20 @@ export const activityLabels: Record<string, string> = {
 const SUMMARY_GROUPS: Record<string, keyof typeof labels> = { TICKET_STATUS_CHANGED: 'ticket', MILESTONE_STATUS_CHANGED: 'milestone', PROJECT_STATUS_CHANGED: 'project', PRODUCT_STATUS_CHANGED: 'product' };
 
 /** Resumos de auditoria terminam com o código da situação; nas telas, o código vira o rótulo em português. */
+/** Início do código em maiúsculas que encerra o texto: começa por uma letra e pode conter sublinhados. */
+function trailingCodeStart(text: string): number {
+  let start = text.length;
+  while (start > 0 && /[A-Z_]/.test(text[start - 1])) start -= 1;
+  while (text[start] === '_') start += 1;
+  return start;
+}
+
 export function humanizeSummary(action: string, summary: string | null | undefined): string {
   if (!summary) return '';
   const group = SUMMARY_GROUPS[action];
   if (!group) return summary;
-  return summary.replace(/([A-Z][A-Z_]+)$/, (code) => label(group, code));
+  const start = trailingCodeStart(summary);
+  return start < summary.length - 1 ? summary.slice(0, start) + label(group, summary.slice(start)) : summary;
 }
 
 export function label(group: keyof typeof labels, value: string | null | undefined): string {

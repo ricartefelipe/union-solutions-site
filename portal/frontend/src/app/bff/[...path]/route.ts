@@ -24,18 +24,13 @@ async function clientIp() {
   return forwarded?.split(',')[0]?.trim() || 'bff';
 }
 
-async function handle(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
-  const { path } = await context.params;
-  if (path.some((segment) => segment === '..' || segment === '.' || segment.includes('\\') || segment === '')) return error(404, 'NOT_FOUND', 'Registro não encontrado.');
-  const joined = path.join('/');
-  const method = request.method;
-  const mutating = method !== 'GET' && method !== 'HEAD';
+function routable(path: string[], publicCall: boolean) {
+  if (path.some((segment) => segment === '..' || segment === '.' || segment.includes('\\') || segment === '')) return false;
+  if (!publicCall && path[0] !== 'v1') return false;
+  return !path.join('/').startsWith('v1/public');
+}
 
-  const publicCall = PUBLIC_ENDPOINTS.has(joined) && method === 'POST';
-  if (!publicCall && path[0] !== 'v1') return error(404, 'NOT_FOUND', 'Registro não encontrado.');
-  if (joined.startsWith('v1/public')) return error(404, 'NOT_FOUND', 'Registro não encontrado.');
-  if (mutating && !originAllowed(request)) return error(403, 'BAD_ORIGIN', 'Origem não permitida.');
-
+async function baseHeaders(request: NextRequest) {
   const upstreamHeaders: Record<string, string> = {
     Accept: request.headers.get('accept') ?? 'application/json',
     'X-Correlation-Id': request.headers.get('x-correlation-id') ?? crypto.randomUUID(),
@@ -43,18 +38,47 @@ async function handle(request: NextRequest, context: { params: Promise<{ path: s
   };
   const contentType = request.headers.get('content-type');
   if (contentType) upstreamHeaders['Content-Type'] = contentType;
+  return upstreamHeaders;
+}
 
+/** Valor do cabeçalho Authorization da sessão, ou a recusa da chamada. */
+async function authorization(request: NextRequest, mutating: boolean): Promise<string | NextResponse> {
+  let session;
+  try {
+    session = await readSession(await cookies());
+  } catch (cause) {
+    if (cause instanceof SessionStoreUnavailable) return error(503, 'UNAVAILABLE', 'O serviço está indisponível no momento. Tente novamente.');
+    throw cause;
+  }
+  if (!session) return error(401, 'UNAUTHENTICATED', 'Sua sessão terminou. Entre novamente.');
+  if (mutating && request.headers.get('x-csrf-token') !== session.csrf) return error(403, 'CSRF', 'Recarregue a página e tente novamente.');
+  return `Bearer ${session.accessToken}`;
+}
+
+function forward(upstream: Response) {
+  const responseHeaders = new Headers({ 'Cache-Control': 'private, no-store' });
+  for (const name of FORWARDED_RESPONSE_HEADERS) {
+    const value = upstream.headers.get(name);
+    if (value) responseHeaders.set(name, value);
+  }
+  return new NextResponse(upstream.status === 204 ? null : upstream.body, { status: upstream.status, headers: responseHeaders });
+}
+
+async function handle(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
+  const { path } = await context.params;
+  const joined = path.join('/');
+  const method = request.method;
+  const mutating = method !== 'GET' && method !== 'HEAD';
+
+  const publicCall = PUBLIC_ENDPOINTS.has(joined) && method === 'POST';
+  if (!routable(path, publicCall)) return error(404, 'NOT_FOUND', 'Registro não encontrado.');
+  if (mutating && !originAllowed(request)) return error(403, 'BAD_ORIGIN', 'Origem não permitida.');
+
+  const upstreamHeaders = await baseHeaders(request);
   if (!publicCall) {
-    let session;
-    try {
-      session = await readSession(await cookies());
-    } catch (cause) {
-      if (cause instanceof SessionStoreUnavailable) return error(503, 'UNAVAILABLE', 'O serviço está indisponível no momento. Tente novamente.');
-      throw cause;
-    }
-    if (!session) return error(401, 'UNAUTHENTICATED', 'Sua sessão terminou. Entre novamente.');
-    if (mutating && request.headers.get('x-csrf-token') !== session.csrf) return error(403, 'CSRF', 'Recarregue a página e tente novamente.');
-    upstreamHeaders.Authorization = `Bearer ${session.accessToken}`;
+    const authorized = await authorization(request, mutating);
+    if (authorized instanceof NextResponse) return authorized;
+    upstreamHeaders.Authorization = authorized;
   }
 
   const declared = Number(request.headers.get('content-length') ?? 0);
@@ -74,13 +98,7 @@ async function handle(request: NextRequest, context: { params: Promise<{ path: s
   } catch {
     return error(502, 'UPSTREAM', 'O serviço está indisponível no momento. Tente novamente.');
   }
-
-  const responseHeaders = new Headers({ 'Cache-Control': 'private, no-store' });
-  for (const name of FORWARDED_RESPONSE_HEADERS) {
-    const value = upstream.headers.get(name);
-    if (value) responseHeaders.set(name, value);
-  }
-  return new NextResponse(upstream.status === 204 ? null : upstream.body, { status: upstream.status, headers: responseHeaders });
+  return forward(upstream);
 }
 
 export const GET = handle;

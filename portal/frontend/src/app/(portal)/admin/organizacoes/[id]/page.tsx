@@ -10,6 +10,11 @@ import { Badge, Disclosure, Empty, PageTitle, Section, Truncated } from '@/compo
 
 export const metadata: Metadata = { title: 'Cliente' };
 
+function PeopleReadOnly({ users }: Readonly<{ users: UserView[] }>) {
+  if (users.length === 0) return <Empty>Nenhuma pessoa com acesso.</Empty>;
+  return <ul className="list">{users.map((u) => <li key={u.id}>{u.name ?? u.email} <span className="meta">{label('role', u.role)}</span></li>)}</ul>;
+}
+
 export default async function OrganizationPage({ params }: Readonly<{ params: Promise<{ id: string }> }>) {
   const { id } = await params;
   const me = await getMe();
@@ -50,9 +55,7 @@ export default async function OrganizationPage({ params }: Readonly<{ params: Pr
 
       <div className="grid-2">
         <Section title="Pessoas do cliente">
-          {isAdmin ? <PeopleList users={users.items} selfId={me.id} /> : users.items.length === 0 ? <Empty>Nenhuma pessoa com acesso.</Empty> : (
-            <ul className="list">{users.items.map((u) => <li key={u.id}>{u.name ?? u.email} <span className="meta">{label('role', u.role)}</span></li>)}</ul>
-          )}
+          {isAdmin ? <PeopleList users={users.items} selfId={me.id} /> : <PeopleReadOnly users={users.items} />}
           <Truncated page={users} hint="" />
         </Section>
         {isAdmin && (

@@ -2,8 +2,9 @@
 # Confia na autoridade de teste só neste container. Sem isso os navegadores recusam o certificado: nenhum erro de TLS é ignorado.
 set -eu
 trust() {
-  [ -f "$1/cert9.db" ] || certutil -d "sql:$1" -N --empty-password </dev/null
-  certutil -d "sql:$1" -A -t "C,," -n prova-portal -i /pki/ca.crt </dev/null
+  perfil=$1
+  [ -f "$perfil/cert9.db" ] || certutil -d "sql:$perfil" -N --empty-password </dev/null
+  certutil -d "sql:$perfil" -A -t "C,," -n prova-portal -i /pki/ca.crt </dev/null
 }
 mkdir -p "$HOME/.pki/nssdb" /evidencias/perfil-firefox
 trust "$HOME/.pki/nssdb"

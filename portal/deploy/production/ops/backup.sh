@@ -15,13 +15,13 @@ cleanup() { rm -rf "$STAGE"; }
 
 preparar() {
   # Limpeza instalada antes de qualquer passo falível: pg_dump, rclone, soma.
-  trap 'rc=$?; [ $rc -eq 0 ] || cleanup; exit $rc' EXIT
+  trap 'rc=$?; [[ $rc -eq 0 ]] || cleanup; exit $rc' EXIT
   trap 'exit 143' INT TERM
   MIN_FREE_MB=${PORTAL_BACKUP_MIN_FREE_MB:-2048}
   rm -rf "$STAGE"
   mkdir -p "$STAGE/objetos"
   FREE_MB=$(df -Pm /staging | awk 'NR==2 {print $4}')
-  if [ "$FREE_MB" -lt "$MIN_FREE_MB" ]; then
+  if [[ "$FREE_MB" -lt "$MIN_FREE_MB" ]]; then
     echo "Espaço insuficiente para o backup: ${FREE_MB} MB livres, mínimo ${MIN_FREE_MB} MB." >&2
     exit 3
   fi
@@ -42,7 +42,7 @@ enviar() {
   : "${PORTAL_BACKUP_KEEP_WEEKLY:?defina a retenção}"
   : "${PORTAL_BACKUP_KEEP_MONTHLY:?defina a retenção}"
   LIMIT=${PORTAL_BACKUP_TIMEOUT_SECONDS:-14400}
-  [ -f "$STAGE/SHA256SUMS" ] || { echo "Não há cópia preparada." >&2; exit 1; }
+  [[ -f "$STAGE/SHA256SUMS" ]] || { echo "Não há cópia preparada." >&2; exit 1; }
   r() { timeout "$LIMIT" /ops/restic.sh "$@"; }
   # Só inicializa um repositório que o restic diz não existir (saída 10). Senha errada (12), indisponibilidade,
   # corrupção ou falta de permissão interrompem o backup, em vez de criar um repositório novo por engano.
@@ -68,9 +68,9 @@ abandonadas() {
   # Margem de uma hora como proteção extra contra uma execução que tenha escapado da trava.
   found=0
   for dir in /staging/*/; do
-    [ -d "$dir" ] || continue
-    [ "$dir" = "$STAGE/" ] && continue
-    if [ -z "$(find "$dir" -maxdepth 0 -mmin -60)" ]; then
+    [[ -d "$dir" ]] || continue
+    [[ "$dir" = "$STAGE/" ]] && continue
+    if [[ -z "$(find "$dir" -maxdepth 0 -mmin -60)" ]]; then
       echo "Removendo área abandonada: $(basename "$dir")"
       rm -rf "$dir"
       found=$((found + 1))

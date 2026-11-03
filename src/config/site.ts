@@ -6,7 +6,7 @@
 
 function optional(value: string | undefined): string | null {
   const trimmed = value?.trim();
-  return trimmed ? trimmed : null;
+  return trimmed || null;
 }
 
 function isLocalhost(url: URL): boolean {
@@ -31,7 +31,7 @@ function optionalUrl(name: string, value: string | undefined): string | null {
 
 function optionalEmail(value: string | undefined): string | null {
   const raw = optional(value);
-  if (raw && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw)) {
+  if (raw && !/^[^\s@]+@[^\s@][^\s@.]*\.[^\s@]+$/.test(raw)) {
     throw new Error('PUBLIC_CONTACT_EMAIL não é um e-mail válido.');
   }
   return raw;
@@ -96,11 +96,12 @@ export const contactForm = {
  */
 export type ContactMode = 'form' | 'direct' | 'pending';
 
-export const contactMode: ContactMode = contactForm.endpoint
-  ? 'form'
-  : contact.email || contact.whatsappUrl
-    ? 'direct'
-    : 'pending';
+function resolveContactMode(): ContactMode {
+  if (contactForm.endpoint) return 'form';
+  return contact.email || contact.whatsappUrl ? 'direct' : 'pending';
+}
+
+export const contactMode: ContactMode = resolveContactMode();
 
 export const hasDirectContact = Boolean(contact.email || contact.phone || contact.whatsappUrl);
 

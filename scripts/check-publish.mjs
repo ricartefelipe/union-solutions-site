@@ -13,8 +13,10 @@ const DIST = resolve(distArg > -1 ? process.argv[distArg + 1] : 'dist');
 const env = { ...process.env };
 if (existsSync('.env')) {
   for (const line of readFileSync('.env', 'utf8').split(/\r?\n/)) {
-    const match = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/);
-    if (match && !(match[1] in env)) env[match[1]] = match[2].replace(/^["']|["']$/g, '');
+    const trimmed = line.trim();
+    const equals = trimmed.indexOf('=');
+    const name = trimmed.slice(0, Math.max(equals, 0)).trimEnd();
+    if (/^[A-Z0-9_]+$/.test(name) && !(name in env)) env[name] = trimmed.slice(equals + 1).trim().replace(/^["']|["']$/g, '');
   }
 }
 const read = (name) => env[name]?.trim() ?? '';
@@ -22,8 +24,13 @@ const read = (name) => env[name]?.trim() ?? '';
 // Valor previsto em .env.example: precisa ser substituído ou apagado.
 const EXAMPLE_VALUE = /SUBSTITUIR/i;
 // Hosts que nunca são endereços definitivos: locais, reservados para exemplos ou túneis de teste.
-const PLACEHOLDER_HOST =
-  /(^|\.)(localhost|local|test|example|invalid)$|^(example|exemplo)\.|(^|\.)(example|exemplo|seudominio|nomedaempresa)\.(com|net|org)(\.br)?$|(^|\.)(ngrok(-free)?\.(io|app|dev)|trycloudflare\.com|loca\.lt|webhook\.site|requestbin\.(com|net))$/i;
+const PLACEHOLDER_HOSTS = [
+  /(^|\.)(localhost|local|test|example|invalid)$/i,
+  /^(example|exemplo)\./i,
+  /(^|\.)(example|exemplo|seudominio|nomedaempresa)\.(com|net|org)(\.br)?$/i,
+  /(^|\.)(ngrok(-free)?\.(io|app|dev)|trycloudflare\.com|loca\.lt|webhook\.site|requestbin\.(com|net))$/i,
+];
+const isPlaceholderHost = (host) => PLACEHOLDER_HOSTS.some((pattern) => pattern.test(host));
 const IP_HOST = /^(\d{1,3}\.){3}\d{1,3}$|^\[.*\]$/;
 
 function urlProblem(value) {
@@ -34,7 +41,7 @@ function urlProblem(value) {
     return 'não é uma URL válida';
   }
   if (url.protocol !== 'https:') return 'precisa usar HTTPS';
-  if (IP_HOST.test(url.hostname) || PLACEHOLDER_HOST.test(url.hostname)) {
+  if (IP_HOST.test(url.hostname) || isPlaceholderHost(url.hostname)) {
     return `aponta para "${url.hostname}", que é um endereço local, de exemplo ou temporário`;
   }
   return null;
@@ -74,7 +81,7 @@ if (endpoint && !untouched('PUBLIC_CONTACT_FORM_ENDPOINT')) {
 }
 if (email && !untouched('PUBLIC_CONTACT_EMAIL')) {
   const domain = email.split('@')[1] ?? '';
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || PLACEHOLDER_HOST.test(domain)) {
+  if (!/^[^\s@]+@[^\s@][^\s@.]*\.[^\s@]+$/.test(email) || isPlaceholderHost(domain)) {
     blockers.push('PUBLIC_CONTACT_EMAIL não é um e-mail real válido.');
   }
 }
@@ -105,7 +112,7 @@ if (!existsSync(join(DIST, 'contato/index.html'))) {
   const all = files(DIST);
   const label = (path) => relative(DIST, path);
 
-  const exposed = all.filter((path) => /^\.env/.test(basename(path)) || /\.map$/.test(path) || /^(artifacts|docs|scripts|src)\//.test(label(path)));
+  const exposed = all.filter((path) => basename(path).startsWith('.env') || path.endsWith('.map') || /^(artifacts|docs|scripts|src)\//.test(label(path)));
   for (const path of exposed) blockers.push(`${distName}/: arquivo interno exposto: ${label(path)}.`);
 
   const text = all.filter((path) => /\.(html|js|css|xml|txt|json|webmanifest)$/.test(path)).map((path) => ({ path, content: readFileSync(path, 'utf8') }));

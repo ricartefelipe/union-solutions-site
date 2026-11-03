@@ -34,6 +34,30 @@ function unavailable(pathname: string) {
   return new NextResponse('O portal está temporariamente indisponível. Tente novamente em instantes.', { status: 503, headers: { ...headers, 'Content-Type': 'text/plain; charset=utf-8' } });
 }
 
+/** Renova um token perto de vencer. Devolve a sessão vigente, ou a recusa quando não há provedor para renovar um token já vencido. */
+async function renewTokens(session: Session, now: number, request: NextRequest): Promise<Session | NextResponse | null> {
+  let refreshed: Session;
+  try {
+    refreshed = await refreshSession(session);
+  } catch (cause) {
+    if (cause instanceof ProviderUnavailable) return session.accessExp <= now ? unavailable(request.nextUrl.pathname) : session;
+    // Conta desativada ou sessão encerrada no provedor: exige novo login.
+    await deleteSession(session.id);
+    return null;
+  }
+  const outcome = await replaceTokens(refreshed);
+  if (outcome === 'updated') return refreshed;
+  return outcome === 'conflict' ? readSession(request.cookies) : null;
+}
+
+async function currentSession(request: NextRequest, now: number): Promise<Session | NextResponse | null> {
+  const session = await readSession(request.cookies);
+  if (!session) return null;
+  if (session.accessExp - now < 30) return renewTokens(session, now, request);
+  if (now - session.lastActive > 60 && !(await touchSession(session, now))) return null;
+  return session;
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const config = getConfig();
@@ -47,44 +71,19 @@ export async function proxy(request: NextRequest) {
   requestHeaders.set('x-correlation-id', correlationId);
 
   const now = Math.floor(Date.now() / 1000);
-  let session: Session | null = null;
+  let session: Session | null;
   const hadCookie = request.cookies.has(sessionCookieName());
 
   // Sem o armazenamento de sessões ou sem provedor para renovar um token vencido, o acesso é recusado e a sessão continua guardada.
   // Toda atualização é condicional: uma sessão encerrada por outra requisição não volta a existir a partir daqui.
   try {
-    session = await readSession(request.cookies);
-    if (session) {
-      if (session.accessExp - now < 30) {
-        let refreshed: Session | null = null;
-        try {
-          refreshed = await refreshSession(session);
-        } catch (cause) {
-          if (!(cause instanceof ProviderUnavailable)) {
-            // Conta desativada ou sessão encerrada no provedor: exige novo login.
-            await deleteSession(session.id);
-            session = null;
-          } else if (session.accessExp <= now) {
-            return unavailable(pathname);
-          }
-        }
-        if (refreshed) {
-          const outcome = await replaceTokens(refreshed);
-          if (outcome === 'updated') session = refreshed;
-          else if (outcome === 'conflict') session = await readSession(request.cookies);
-          else session = null;
-        }
-      } else if (now - session.lastActive > 60) {
-        if (!(await touchSession(session, now))) session = null;
-      }
-    }
+    const current = await currentSession(request, now);
+    if (current instanceof NextResponse) return current;
+    session = current;
   } catch (cause) {
-    if (cause instanceof SessionStoreUnavailable) {
-      if (isPublic(pathname) && !hadCookie) session = null;
-      else return unavailable(pathname);
-    } else {
-      throw cause;
-    }
+    if (!(cause instanceof SessionStoreUnavailable)) throw cause;
+    if (!isPublic(pathname) || hadCookie) return unavailable(pathname);
+    session = null;
   }
 
   let response: NextResponse;
