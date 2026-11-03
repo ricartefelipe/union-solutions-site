@@ -52,6 +52,88 @@ function fillTemplate(template: string, values: Record<string, unknown>) {
   return template.replace(/\{([\w.]+)\}/g, (_, path: string) => asText(path.split('.').reduce<unknown>((current, key) => (current as Record<string, unknown>)?.[key], values)));
 }
 
+function multipartBody(values: Record<string, unknown>, data: FormData) {
+  const multipart = new FormData();
+  for (const [key, value] of Object.entries(values)) if (value !== null && value !== undefined) multipart.set(key, asText(value));
+  for (const [key, value] of data.entries()) if (value !== '' && !(value instanceof File && value.size === 0)) multipart.set(key, value);
+  return multipart;
+}
+
+function jsonBody(values: Record<string, unknown>, fields: Field[], data: FormData) {
+  const body: Record<string, unknown> = { ...values };
+  for (const field of fields) {
+    if (field.type === 'checkbox') body[field.name] = data.get(field.name) === 'on';
+    else if (field.type === 'checkboxes') body[field.name] = data.getAll(field.name);
+    else {
+      const entry = data.get(field.name);
+      const value = typeof entry === 'string' ? entry.trim() : '';
+      if (value !== '') body[field.name] = field.type === 'datetime-local' ? new Date(value).toISOString() : value;
+    }
+  }
+  return body;
+}
+
+type ControlField = Exclude<Field, { type: 'checkbox' | 'checkboxes' }>;
+
+function FieldControl({ field, id, required, describedBy }: Readonly<{ field: ControlField; id: string; required: boolean | undefined; describedBy: string | undefined }>) {
+  if (field.type === 'textarea') {
+    return <textarea id={id} name={field.name} required={required} maxLength={field.maxLength} rows={field.rows ?? 4} defaultValue={field.defaultValue} aria-describedby={describedBy} />;
+  }
+  if (field.type === 'select') {
+    return (
+      <select id={id} name={field.name} required={required} defaultValue={field.defaultValue ?? ''} aria-describedby={describedBy}>
+        <option value="">{field.placeholder ?? 'Selecione'}</option>
+        {field.options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+      </select>
+    );
+  }
+  if (field.type === 'file') {
+    return <input id={id} name={field.name} type="file" required={required} accept={field.accept} aria-describedby={describedBy} />;
+  }
+  return <input id={id} name={field.name} type={field.type} required={required} maxLength={field.maxLength} defaultValue={field.defaultValue} autoComplete={field.autoComplete} aria-describedby={describedBy} />;
+}
+
+function FieldView({ field, formId }: Readonly<{ field: Field; formId: string }>) {
+  const id = `${formId}-${field.name}`;
+  const hintId = `${id}-hint`;
+  const hint = field.hint ? <p className="field__hint" id={hintId}>{field.hint}</p> : null;
+  const describedBy = field.hint ? hintId : undefined;
+  if (field.type === 'checkbox') {
+    return (
+      <div className="field field--check">
+        <input id={id} name={field.name} type="checkbox" defaultChecked={field.defaultChecked} aria-describedby={describedBy} />
+        <label htmlFor={id}>{field.label}</label>
+        {hint}
+      </div>
+    );
+  }
+  if (field.type === 'checkboxes') {
+    return (
+      <fieldset className="field field--group" aria-describedby={describedBy}>
+        <legend>{field.label}</legend>
+        {hint}
+        {field.options.length === 0 && <p className="field__hint">Nenhuma opção disponível.</p>}
+        {field.options.map((option, index) => (
+          <div className="field--check" key={option.value}>
+            <input id={`${id}-${index}`} name={field.name} type="checkbox" value={option.value} defaultChecked={option.checked} />
+            <label htmlFor={`${id}-${index}`}>{option.label}</label>
+          </div>
+        ))}
+      </fieldset>
+    );
+  }
+  const required = 'required' in field && field.required;
+  return (
+    <div className="field">
+      <label htmlFor={id}>{field.label}{!required && <span className="field__optional"> (opcional)</span>}</label>
+      <FieldControl field={field} id={id} required={required} describedBy={describedBy} />
+      {hint}
+    </div>
+  );
+}
+
+const TONE_CLASS: Record<'primary' | 'ghost' | 'danger', string> = { primary: '', ghost: 'btn--ghost', danger: 'btn--danger' };
+
 /** Formulário ligado à API. Valores fixos entram por `values`; campos vazios não são enviados. */
 export function ApiForm({ path, method = 'POST', fields, values = {}, submitLabel, successMessage, confirm, redirectTo, className }: Readonly<{
   path: string;
@@ -88,24 +170,9 @@ export function ApiForm({ path, method = 'POST', fields, values = {}, submitLabe
     const data = new FormData(form);
     let response: Response;
     try {
-      if (hasFile) {
-        const multipart = new FormData();
-        for (const [key, value] of Object.entries(values)) if (value !== null && value !== undefined) multipart.set(key, asText(value));
-        for (const [key, value] of data.entries()) if (value !== '' && !(value instanceof File && value.size === 0)) multipart.set(key, value);
-        response = await send(path, method, multipart);
-      } else {
-        const body: Record<string, unknown> = { ...values };
-        for (const field of fields) {
-          if (field.type === 'checkbox') body[field.name] = data.get(field.name) === 'on';
-          else if (field.type === 'checkboxes') body[field.name] = data.getAll(field.name);
-          else {
-            const entry = data.get(field.name);
-            const value = typeof entry === 'string' ? entry.trim() : '';
-            if (value !== '') body[field.name] = field.type === 'datetime-local' ? new Date(value).toISOString() : value;
-          }
-        }
-        response = await send(path, method, JSON.stringify(body), 'application/json');
-      }
+      response = hasFile
+        ? await send(path, method, multipartBody(values, data))
+        : await send(path, method, JSON.stringify(jsonBody(values, fields, data)), 'application/json');
     } catch {
       setBusy(false);
       setFailure({ message: 'Não foi possível conectar ao portal. Verifique sua conexão e tente novamente.', details: [] });
@@ -131,55 +198,7 @@ export function ApiForm({ path, method = 'POST', fields, values = {}, submitLabe
     <form className={`form ${className ?? ''}`} onSubmit={submit} aria-busy={busy}>
       {failure && <ErrorMessage failure={failure} innerRef={errorRef} />}
       {success && <div className="alert alert--success" role="status">{success}</div>}
-      {fields.map((field) => {
-        const id = `${formId}-${field.name}`;
-        const hintId = `${id}-hint`;
-        const hint = field.hint ? <p className="field__hint" id={hintId}>{field.hint}</p> : null;
-        const describedBy = field.hint ? hintId : undefined;
-        if (field.type === 'checkbox') {
-          return (
-            <div className="field field--check" key={field.name}>
-              <input id={id} name={field.name} type="checkbox" defaultChecked={field.defaultChecked} aria-describedby={describedBy} />
-              <label htmlFor={id}>{field.label}</label>
-              {hint}
-            </div>
-          );
-        }
-        if (field.type === 'checkboxes') {
-          return (
-            <fieldset className="field field--group" key={field.name} aria-describedby={describedBy}>
-              <legend>{field.label}</legend>
-              {hint}
-              {field.options.length === 0 && <p className="field__hint">Nenhuma opção disponível.</p>}
-              {field.options.map((option, index) => (
-                <div className="field--check" key={option.value}>
-                  <input id={`${id}-${index}`} name={field.name} type="checkbox" value={option.value} defaultChecked={option.checked} />
-                  <label htmlFor={`${id}-${index}`}>{option.label}</label>
-                </div>
-              ))}
-            </fieldset>
-          );
-        }
-        const required = 'required' in field && field.required;
-        return (
-          <div className="field" key={field.name}>
-            <label htmlFor={id}>{field.label}{!required && <span className="field__optional"> (opcional)</span>}</label>
-            {field.type === 'textarea' ? (
-              <textarea id={id} name={field.name} required={required} maxLength={field.maxLength} rows={field.rows ?? 4} defaultValue={field.defaultValue} aria-describedby={describedBy} />
-            ) : field.type === 'select' ? (
-              <select id={id} name={field.name} required={required} defaultValue={field.defaultValue ?? ''} aria-describedby={describedBy}>
-                <option value="">{field.placeholder ?? 'Selecione'}</option>
-                {field.options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-              </select>
-            ) : field.type === 'file' ? (
-              <input id={id} name={field.name} type="file" required={required} accept={field.accept} aria-describedby={describedBy} />
-            ) : (
-              <input id={id} name={field.name} type={field.type} required={required} maxLength={field.maxLength} defaultValue={field.defaultValue} autoComplete={field.autoComplete} aria-describedby={describedBy} />
-            )}
-            {hint}
-          </div>
-        );
-      })}
+      {fields.map((field) => <FieldView key={field.name} field={field} formId={formId} />)}
       <div className="form__actions">
         <button className="btn" type="submit" disabled={busy}>{busy ? 'Enviando…' : submitLabel}</button>
       </div>
@@ -223,7 +242,7 @@ export function ApiButton({ path, method = 'POST', body, label, confirm, tone = 
 
   return (
     <span className="action">
-      <button className={`btn ${tone === 'ghost' ? 'btn--ghost' : tone === 'danger' ? 'btn--danger' : ''}`} type="button" disabled={busy} onClick={() => (confirm ? dialogRef.current?.showModal() : run())}>
+      <button className={`btn ${TONE_CLASS[tone]}`} type="button" disabled={busy} onClick={() => (confirm ? dialogRef.current?.showModal() : run())}>
         {busy ? 'Enviando…' : label}
       </button>
       {confirm && (
