@@ -4,6 +4,12 @@
     "name": "HookGuard",
     "area": "Integrações por webhook",
     "purpose": "Recebe webhooks, entrega ao seu sistema com novas tentativas em caso de falha e permite reprocessar o que não chegou, com cada tentativa registrada.",
+    "screens": [
+      {
+        "id": "hookguard-entrada",
+        "alt": "Tela de entrada da demonstração do HookGuard, com acesso por link enviado ao e-mail."
+      }
+    ],
     "context": "Para equipes que recebem webhooks e não querem operar fila e novas tentativas.",
     "capabilities": [
       "Recepção com gravação do evento antes da resposta ao provedor",
@@ -47,6 +53,12 @@
     "name": "FileNorm",
     "area": "Arquivos financeiros",
     "purpose": "Normaliza arquivos OFX, CNAB 240 de retorno, CSV bancário e PDF com texto em eventos padronizados, indicando o que não pôde ser convertido.",
+    "screens": [
+      {
+        "id": "filenorm-entrada",
+        "alt": "Tela de entrada da demonstração do FileNorm, que recebe OFX, CSV, CNAB ou PDF e devolve eventos financeiros normalizados."
+      }
+    ],
     "context": "Para empresas e software houses que recebem extratos em formatos diferentes.",
     "capabilities": [
       "OFX, CNAB 240 de retorno de cobrança, CSV bancário e PDF com texto",
@@ -90,6 +102,12 @@
     "name": "AssinaFlow",
     "area": "Assinaturas e cobrança",
     "purpose": "Controla o ciclo de assinaturas recorrentes, da contratação ao cancelamento, e aciona o provedor de pagamento para a cobrança.",
+    "screens": [
+      {
+        "id": "assinaflow-assinatura",
+        "alt": "Portal do assinante no AssinaFlow: assinatura Premium ativa, ciclo de um mês com renovação automática e as opções de trocar de plano e cancelar."
+      }
+    ],
     "context": "Para equipes técnicas que buscam uma base em Java e Spring para assinaturas.",
     "capabilities": [
       "Renovação, novas tentativas e suspensão de assinaturas",
@@ -133,6 +151,16 @@
     "name": "ArchLens",
     "area": "Diagnóstico de arquitetura",
     "purpose": "Apoia o diagnóstico de aplicações Java legadas: analisa o projeto no seu ambiente, organiza evidências e ajuda a montar um roteiro de modernização.",
+    "screens": [
+      {
+        "id": "archlens-achados",
+        "alt": "Achados do ArchLens num projeto Java de exemplo: regra que detectou cada um, severidade, status e os arquivos que servem de evidência."
+      },
+      {
+        "id": "archlens-inventario",
+        "alt": "Inventário do ArchLens com os módulos e pacotes do projeto de exemplo e a quantidade de arquivos e linhas de cada pacote."
+      }
+    ],
     "context": "Para equipes responsáveis por evoluir sistemas Java pouco documentados.",
     "capabilities": [
       "Análise estática local, sem enviar o código-fonte para fora",
@@ -192,6 +220,16 @@
     "name": "Fluxe B2B Suite",
     "area": "Operações B2B",
     "purpose": "Reúne loja, portal de operações e console de administração em uma suíte para empresas que vendem a outras empresas, com dados separados por cliente.",
+    "screens": [
+      {
+        "id": "fluxe-operacao",
+        "alt": "Painel do portal de operações da Fluxe B2B Suite numa empresa fictícia: receita dos últimos sete dias, ticket médio, total de pedidos e pedidos por status."
+      },
+      {
+        "id": "fluxe-pedidos",
+        "alt": "Lista de pedidos no portal de operações da Fluxe B2B Suite, com cliente, valor total, status e data de cada pedido."
+      }
+    ],
     "context": "Para operações B2B que precisam conectar pedidos, inventário e administração.",
     "capabilities": [
       "Loja com catálogo, carrinho e criação de pedidos",
@@ -255,6 +293,16 @@
     "name": "ComercialCloud",
     "area": "Operações comerciais",
     "purpose": "Sistema web de frente de caixa (PDV) e retaguarda para pequenos e médios comércios, com dados separados por cliente.",
+    "screens": [
+      {
+        "id": "comercialcloud-pdv",
+        "alt": "Frente de caixa do ComercialCloud numa loja fictícia: busca de produtos, atalhos de produtos, carrinho com três itens e total da venda."
+      },
+      {
+        "id": "comercialcloud-produtos",
+        "alt": "Cadastro de produtos na retaguarda do ComercialCloud, com SKU, estoque, preço e situação de cada item."
+      }
+    ],
     "context": "Para comércios com venda no balcão que precisam ligar o caixa à gestão do dia a dia.",
     "capabilities": [
       "PDV: busca de produtos, carrinho, pagamentos e comprovante",
@@ -308,6 +356,16 @@
     "name": "Skillforge",
     "area": "Ensino a distância",
     "purpose": "Reúne cursos, turmas, aulas, práticas, provas e certificado numa escola a distância, com acesso separado para aluno, docente e administração.",
+    "screens": [
+      {
+        "id": "skillforge-turma",
+        "alt": "Turma do Skillforge vista pelo aluno: aulas organizadas por unidade, progresso e abas de provas, práticas, avisos, chamada e certificado."
+      },
+      {
+        "id": "skillforge-aula",
+        "alt": "Aula do Skillforge com o índice das unidades, o texto da aula, o link para a próxima e o espaço para dúvidas."
+      }
+    ],
     "context": "Para instituições e equipes de treinamento que ministram cursos online e precisam acompanhar turmas, notas e presença.",
     "capabilities": [
       "Cursos com módulos e aulas em texto, PDF ou vídeo, e turmas com docente e alunos matriculados",
@@ -361,6 +419,16 @@
     "name": "Cards API",
     "area": "Contas e cartões",
     "purpose": "API para gestão de contas, clientes e cartões físicos e virtuais, da emissão à entrega, validação, reemissão e cancelamento.",
+    "screens": [
+      {
+        "id": "cards-api-fisicos",
+        "alt": "Console da Cards API com os cartões físicos emitidos na demonstração: código de rastreio, situação da entrega e do cartão."
+      },
+      {
+        "id": "cards-api-painel",
+        "alt": "Painel do console da Cards API com o total de contas, clientes, cartões físicos e cartões virtuais da demonstração."
+      }
+    ],
     "context": "Para equipes que constroem produtos financeiros e querem o fluxo de cartões atrás de uma API, com a transportadora e a processadora ligadas por webhook.",
     "capabilities": [
       "Cartão físico e virtual: emissão, entrega, validação e reemissão",

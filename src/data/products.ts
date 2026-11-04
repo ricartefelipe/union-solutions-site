@@ -26,6 +26,16 @@ export interface DemoAccess {
   value: string;
 }
 
+/**
+ * Captura de uma tela da demonstração pública, com dados fictícios e sem credenciais.
+ * `id` é o nome dos arquivos em public/capturas/ (gerados por `npm run assets:shots`); a primeira é a principal.
+ */
+export interface ProductScreen {
+  id: string;
+  /** Descreve o que a tela mostra, para quem não a vê. */
+  alt: string;
+}
+
 export interface FlowStep {
   title: string;
   text: string;
@@ -38,6 +48,8 @@ export interface Product {
   area: string;
   /** Uma frase sobre a finalidade do produto. */
   purpose: string;
+  /** Telas da demonstração: a primeira aparece na home, no catálogo e no topo da página do produto. */
+  screens: ProductScreen[];
   /** Uma linha sobre público ou contexto de uso. */
   context: string;
   /** Capacidades verificadas: no máximo três. */
@@ -63,8 +75,19 @@ export const products: Product[] = productsData as Product[];
 
 export const homeProducts = products.filter((product) => product.onHome).slice(0, 3);
 
+/** Produtos cujas telas aparecem em camadas no topo da home (atrás, na frente e ao lado), pela primeira captura. */
+export const heroSlugs: ProductSlug[] = ['fluxe-b2b-suite', 'comercialcloud', 'cards-api'];
+
 /** Produtos com demonstração pública no ar, na ordem do catálogo. */
 export const demoProducts = products.filter((product) => product.liveDemo);
+
+/** Todos os produtos têm demonstração pública: o selo por produto deixa de informar e some. */
+export const allHaveDemo = demoProducts.length === products.length;
+
+/** Endereço que leva à demonstração: a página de demonstrações, onde ficam o aviso e o acesso. */
+export function productDemoUrl(slug: ProductSlug): string {
+  return `/demonstracoes/#${slug}`;
+}
 
 export function productContactUrl(slug: ProductSlug): string {
   return `/contato/?interesse=produto&produto=${slug}`;

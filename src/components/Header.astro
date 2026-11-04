@@ -152,8 +152,15 @@ const isCurrent = (href: string) => path === href || path.startsWith(href);
     transform: rotate(-90deg);
   }
 
-  /* Em telas muito estreitas, só o ícone cabe ao lado da logo; o rótulo segue acessível. */
-  @media (max-width: 23.75rem) {
+  /*
+   * Em telas estreitas, só o ícone cabe ao lado da logo: a barra fica numa linha só e não muda de altura quando a
+   * fonte carrega. O rótulo segue acessível.
+   */
+  @media (max-width: 29.99rem) {
+    .site-header__bar {
+      gap: 0 var(--space-3);
+    }
+
     .menu-toggle {
       min-width: 2.75rem;
       justify-content: center;
