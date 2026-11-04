@@ -63,8 +63,9 @@ services:
       demos:
         aliases: [demo-skillforge-keycloak]
     mem_limit: 768m
+    # Só a resposta 200 indica pronto: a 503 também traz "UP" no corpo, nas verificações internas que estão de pé.
     healthcheck:
-      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000; printf 'GET /health/ready HTTP/1.0\\r\\n\\r\\n' >&3; grep -q UP <&3"]
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000; printf 'GET /health/ready HTTP/1.0\\r\\n\\r\\n' >&3; head -n 1 <&3 | grep -q ' 200 '"]
       interval: 10s
       timeout: 5s
       retries: 30
