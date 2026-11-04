@@ -32,7 +32,7 @@ Data de referência: 31/10/2026, rodada de preparação do site. O trabalho foi 
 | Fluxe B2B Suite | `906195a` | Loja, portal de operações e console de administração, conforme README e páginas das aplicações | Texto genérico trocado pelas três aplicações reais | Depende de três serviços próprios. Uso em produção e provedores de pagamento não comprovados nesta leitura (publicado como limite) |
 | ComercialCloud | `d810033` | PDV, retaguarda, baixa de estoque na venda, perfis de acesso, conforme README, recursos da API e nota de verificação da versão 1.4.1 | Texto genérico trocado pelas capacidades reais | **Emissão fiscal sem homologação**, com sandbox por padrão (publicado como limite). Gateway sem validação real (não citado) |
 
-Nos esquemas gráficos, os rótulos usam apenas termos do texto da página. São fluxos conceituais, não telas, e não há captura de produto publicada.
+Nos esquemas gráficos, os rótulos usam apenas termos do texto da página. São fluxos conceituais, não telas. As telas de produto publicadas são capturas das demonstrações públicas, com dados fictícios e sem credencial na imagem (`public/capturas/`, ver o README); HookGuard e FileNorm entram por link enviado ao e-mail, e por isso aparecem pela tela de entrada.
 
 ### Dúvidas materiais que permanecem
 

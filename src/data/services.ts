@@ -38,10 +38,20 @@ export const engagementModels: ScopeItem[] = [
   },
 ];
 
+/** Da primeira mensagem à proposta: aparece na página de contato. */
 export const proposalSteps: ScopeItem[] = [
   { title: 'Conte o contexto', text: 'Descreva o problema ou o objetivo e o que já existe na sua empresa.' },
   { title: 'Alinhamos escopo e formato', text: 'Definimos o que faz parte do trabalho e qual modalidade faz sentido.' },
   { title: 'Você recebe a proposta', text: 'Com objetivo, entregáveis, limites, prazos e valores para decidir.' },
+];
+
+/** Etapas de um trabalho contratado: aparecem uma vez, na página de serviços. */
+export const workSteps: ScopeItem[] = [
+  { title: 'Entendimento do contexto', text: 'O que a empresa precisa, o que já existe e o que limita o trabalho.' },
+  { title: 'Definição de escopo e proposta', text: 'O que será feito, o que fica de fora e como será contratado.' },
+  { title: 'Arquitetura e planejamento', text: 'As decisões técnicas e a sequência de trabalho.' },
+  { title: 'Implementação e validação', text: 'A construção, com verificação do que foi combinado.' },
+  { title: 'Implantação e evolução', text: 'A entrada em uso e os próximos passos, conforme contratação.' },
 ];
 
 export const techIntro =

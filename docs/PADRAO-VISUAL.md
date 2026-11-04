@@ -17,14 +17,18 @@ O site institucional e o portal do cliente são aplicações separadas, mas usam
 
 O portal continua só no tema claro. No site, `src/styles/tema.css` redefine, sob `:root[data-theme='dark']`, as cores de papel, texto e linhas e cria tokens semânticos que invertem entre os temas: `--brand-ink` (marca usada como texto ou borda), `--btn-bg`/`--btn-fg` (botão principal) e `--white-fixed`. `--brand` continua sendo a cor das superfícies escuras (cabeçalho, rodapé, faixas), igual nos dois temas. Por isso, em texto ou borda sobre o papel use `--brand-ink`, não `--brand`. `tokens.css` não muda, e a cópia do portal segue idêntica. Todo par de cores deve manter contraste AA nos dois temas, e o botão de tema tem estado visível de foco e `aria-pressed`.
 
+O mesmo arquivo guarda os tokens que só o site usa, com valor próprio no tema escuro e nas superfícies escuras: `--eyebrow-ink` (rótulo em caixa alta acima dos títulos), `--radius-card`, `--radius-control` (botões) e `--radius-pill`, `--card`, `--card-line`, `--card-line-hover`, `--shadow-card` e `--shadow-raised` (cartões), `--shot-*` (moldura das capturas de tela), `--glow` (brilho do topo), `--text-display` (título da home) e `--lift` (deslocamento do cartão no hover). O portal não os usa, e por isso eles não entram em `tokens.css`.
+
 ## Componentes e estados
 
 | Elemento | Site | Portal |
 | --- | --- | --- |
 | Cabeçalho e página atual | `aria-current="page"` nos itens do menu e no botão de contato; menu móvel com `aria-expanded`, fecha com Esc e devolve o foco | Barra com nome, organização, notificações com contador e "Sair"; navegação com `aria-current="page"` sublinhado em `--accent` |
-| Botões e links | `.btn`, `.btn--ghost`; links de texto sublinhados | Os mesmos, mais `.btn--danger` para revogar e arquivar; toda ação sensível pede confirmação em `<dialog>` acessível |
+| Botões e links | `.btn`, `.btn--ghost`; links de texto sublinhados; um botão principal por seção | Os mesmos, mais `.btn--danger` para revogar e arquivar; toda ação sensível pede confirmação em `<dialog>` acessível |
 | Formulários | Campos com rótulo visível, "(opcional)" quando não obrigatório, erro por campo com `aria-describedby`, resumo de erro com foco | O mesmo padrão em `ApiForm`: erro da API com detalhes por campo, código de correlação e foco no alerta; sucesso em `role="status"` |
-| Tabelas e listas | Listas editoriais (`.rows`, `.node-list`) | `.table-wrap` com rolagem horizontal, cabeçalhos `scope="col"`; listas `.list` com título, metadados e ações alinhadas; paginação `Anterior`/`Próxima` e aviso "Mostrando N de M" quando uma lista é carregada de uma vez |
+| Cartões | `.card`; `.card--link` com o link principal em `.card__link`, que cobre o cartão e leva o anel de foco; outros links dentro dele usam `.card__above`. Hover com borda, sombra e deslocamento de `--lift`, este só sem `prefers-reduced-motion` | Não há |
+| Capturas de produto | `ProductShot`: `<picture>` com AVIF e WebP em 640, 1024 e 1600 px, JPEG de reserva, 1600 × 900 declarados, `loading="lazy"` fora da primeira dobra e `alt` vindo de `products.json` | Não há |
+| Tabelas e listas | Listas editoriais (`.rows`, `.node-list`, `.situations`) | `.table-wrap` com rolagem horizontal, cabeçalhos `scope="col"`; listas `.list` com título, metadados e ações alinhadas; paginação `Anterior`/`Próxima` e aviso "Mostrando N de M" quando uma lista é carregada de uma vez |
 | Filtros | Não há | Formulário `GET` com `role="search"`, campos em linha a partir de 48 rem (`.form--filters`), estado preservado na URL e na paginação |
 | Situações | Não há | `Badge` com tom por valor (`ok`, `warn`, `bad`, `info`, neutro) e rótulos em português de `lib/labels.ts` |
 | Vazio, carregando, erro, sem acesso | 404 própria com navegação | `Empty` por lista com texto específico; `loading.tsx`; `error.tsx` com código de correlação; `/sem-acesso`, `/sessao-encerrada`, convite inválido; registro inexistente responde "Registro não encontrado" sem revelar se existe para outro cliente |
