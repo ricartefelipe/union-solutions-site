@@ -10,6 +10,8 @@ Resumo versionado da análise das imagens finais e das dependências. O relatór
 
 **Reavaliação de 03/11/2026** (Trivy 0.70.0, base do dia). Nenhum dos itens aceitos ganhou correção: o Keycloak 26.8.1 já está no digest mais recente (`26.8.1-2`, de 31/10/2026) e não há versão mais nova; a Guava 33.7.2 existe, mas nenhuma versão do Keycloak a inclui; `sqlite-libs` e OpenJDK seguem sem pacote corrigido na UBI 9; `go-jose/v3` segue em 3.0.5, a última da linha v3. PostgreSQL do portal (sem `gosu`), ClamAV 1.5 e SeaweedFS 4.52: sem achados altos ou críticos.
 
+**Correção de 04/11/2026** (Trivy 0.70.0, base do dia). O item 1 saiu: o proxy passa a usar a correção que o próprio projeto go-jose publicou no ramo v3, ainda sem tag (ver item 1). Continuam aceitos os itens 3, 4, 5 e 6, no prazo de **01/12/2026**.
+
 **Critério de reavaliação:** repetir a análise antes de cada implantação e sempre que uma imagem base mudar, ou a cada 30 dias enquanto o portal estiver no ar. Um item volta a exigir ação quando o projeto publicar versão corrigida, ou quando surgir caminho de exploração a partir de dados do cliente.
 
 | Ferramenta | Versão | Base de dados | Escopo |
@@ -55,25 +57,22 @@ Por isso nenhuma atualização suportada foi aplicada naquela rodada além das j
 | PostgreSQL: 61 achados no binário `gosu` | Removido da imagem; o container inicia como `postgres` e nunca o executava |
 | Web: `undici` e `brace-expansion` do `npm` embutido no Node | `npm`, `npx` e `corepack` removidos da imagem final |
 | SeaweedFS: CVE-2026-116587 em `go-jose/v4` 4.1.5 (item 2) | Imagem oficial 4.52, fixada por digest, sem achados altos ou críticos, em 02/11/2026 |
+| Proxy: CVE-2026-116587 em `go-jose/v3` 3.0.5 (item 1) | `go-jose/v3` no commit `0e502b8` do ramo v3 do projeto, em 04/11/2026; detalhes no item 1 |
 
 ## Ocorrências altas, uma a uma
 
-### 1. CVE-2026-116587 em `github.com/go-jose/go-jose/v3` 3.0.5, imagem do proxy
+### 1. Corrigido em 04/11/2026
 
-| Item | Registro |
-| --- | --- |
-| Imagem e digest | `union-portal-prova-proxy` (ID em `imagens.txt`); base `alpine:3.22@sha256:2e0b81d6…` |
-| Componente | `go-jose/v3` 3.0.5, dependência indireta do binário `/usr/local/bin/caddy` |
-| Versão corrigida | **Nenhuma na linha v3** (GHSA-mgcc-cww5-fp2q lista correção só em v4 4.1.6, que o proxy também traz, já corrigida) |
-| Condições para exploração | A aplicação precisa analisar uma JWS ou JWK fornecida pelo atacante (`jose.ParseSigned` com JWK embutida no cabeçalho), o que chega a `rsaPrivateKey()` e consome CPU de forma cúbica. Impacto: negação de serviço |
-| Presença e alcance aqui | Está no binário: `go version -m` lista o módulo. `go mod why`: entra por `caddytls → smallstep/certificates/authority/provisioner → go.step.sm/crypto/jose`, o emissor interno de certificados. A configuração não usa `tls internal`, servidor ACME nem autenticação JWT; nenhuma rota do Caddyfile analisa JWS ou JWK do cliente. O build mínimo (só `caddyhttp`, `caddytls`, `reverseproxy`, `headers`, `requestbody`, `logging`) ainda liga o módulo, porque `caddytls` o importa |
-| Mitigações e limites | Ausência de caminho de código na configuração atual. Limite: a avaliação vale enquanto o Caddyfile não habilitar `tls internal`, `acme_server` ou módulos de autenticação; qualquer mudança nele exige reavaliar |
-| Atualização suportada | Nenhuma: nem Caddy nem smallstep publicaram versão sem `go-jose/v3` |
-| Recomendação | **Submeter a aceite explícito**, com a condição acima registrada em `IMPLANTACAO.md` (revisar a cada mudança no Caddyfile). Reavaliar quando o advisory ganhar correção v3 ou o Caddy trocar a dependência |
+CVE-2026-116587 (GHSA-mgcc-cww5-fp2q) em `go-jose/v3` 3.0.5, dependência indireta do Caddy (`caddytls → smallstep/certificates → go.step.sm/crypto/jose`), não tem versão publicada corrigida na linha v3. Nem o Caddy (até a 2.11.8) nem o smallstep publicaram versão sem a v3. Compilar sem a PKI interna também não é possível, porque `caddytls` e o adaptador do Caddyfile a importam.
+
+- **Correção aplicada:** o `go.mod` do proxy exige `v3.0.6-0.20261030183946-0e502b87c7aa`. É o commit `0e502b8` do ramo `v3` do próprio go-jose (PR 314, de 30/10/2026), que porta a correção da v4.1.6: módulo RSA limitado a 4096 bits, conferência de p·q = n e recusa de JWK com parâmetros privados nos cabeçalhos JWS e JWE. Quando a v3.0.6 sair, ela substitui o commit.
+- **Por que não uma cópia local com `replace`:** o Trivy ignora módulos substituídos por pasta local e deixaria de ver a `go-jose/v3` inteira, inclusive o que não foi corrigido.
+- **Evidência:** a imagem do proxy fica sem achado alto. Uma JWS de 4 KB com JWK malformada, enviada a um `acme_server` de teste, custava 2,6 s de CPU por requisição antes e custa 0,01 s depois. O certificado por `tls internal` e a emissão ACME continuam funcionando.
+- **Limite:** CVE-2026-116585 e CVE-2026-116586 (médias, ver "Médias e baixas") não têm correção na v3. O Trivy deixa de apontá-las porque compara por faixa de versão (até 3.0.5).
 
 ### 2. Corrigido em 02/11/2026
 
-CVE-2026-116587 saiu da imagem do SeaweedFS na versão 4.52; ver "Corrigido anteriormente". O aceite segue só para o item 1, no proxy.
+CVE-2026-116587 saiu da imagem do SeaweedFS na versão 4.52; ver "Corrigido anteriormente".
 
 ### 3. CVE-2026-102554 em `com.google.guava:guava` 33.6.0, imagem do Keycloak
 
@@ -118,11 +117,11 @@ CVE-2026-116587 saiu da imagem do SeaweedFS na versão 4.52; ver "Corrigido ante
 
 - API: `opentelemetry-api` (CVE-2026-118259), transitiva do Quarkus 3.40.1, corrigida em versão mais nova da biblioteca ainda não incorporada pelo Quarkus. A API não recebe cabeçalhos `tracestate` do cliente: só o BFF a alcança e não os repassa. Recomendação: aceitar até a próxima versão do Quarkus.
 - Keycloak: 38 médias e 28 baixas em pacotes da base UBI 9, sem correção publicada.
-- Proxy: 3 médias em dependências Go indiretas, sem correção publicada.
+- Proxy: 3 médias em dependências Go indiretas, sem correção publicada. Duas são da `go-jose/v3`, CVE-2026-116585 (pânico em JWE com CBC-HMAC) e CVE-2026-116586 (JSON aninhado demais). Seguem sem correção na v3, mas desde 04/11/2026 o Trivy não as aponta (ver item 1). Só são alcançáveis com `acme_server` ou `tls internal`, ausentes do Caddyfile; qualquer mudança nele exige reavaliá-las.
 
 ## Decisão operacional
 
-Itens 1 a 6 aceitos por Felipe em 01/11/2026, com reavaliação até 01/12/2026 (ver o início deste documento); o item 2 foi corrigido em 02/11/2026 e os demais seguem no aceite. Este item deixou de bloquear a abertura do portal a clientes; `docs/PUBLICACAO.md` mantém as pendências restantes. A análise semanal da CI (`imagens.yml`) e a reavaliação manual a cada implantação continuam, e um achado novo, crítico ou com correção publicada reabre a decisão.
+Itens 1 a 6 aceitos por Felipe em 01/11/2026, com reavaliação até 01/12/2026 (ver o início deste documento); os itens 2 e 1 foram corrigidos em 02/11/2026 e 04/11/2026, e os demais seguem no aceite. Este item deixou de bloquear a abertura do portal a clientes; `docs/PUBLICACAO.md` mantém as pendências restantes. A análise semanal da CI (`imagens.yml`) e a reavaliação manual a cada implantação continuam, e um achado novo, crítico ou com correção publicada reabre a decisão.
 
 ## Não coberto
 
