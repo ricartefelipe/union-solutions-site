@@ -237,6 +237,10 @@ test.describe.serial('Configuração de produção', () => {
       expect((await page.request.get('/bff/v1/me')).status()).toBe(200);
     }).toPass({ timeout: 60_000, intervals: [1000] });
     await context.close();
+    // Login novo assim que o banco volta. O provedor guardava por 10 s a resposta "nome não existe" do banco e recusava o login
+    // com o banco já de pé (cache de DNS da JVM).
+    const novo = await signedIn(browser, state.clientA);
+    await novo.context.close();
   });
 
   test('provedor fora do ar: sessão vigente segue, token vencido falha com segurança e novo login não abre', async ({ browser }) => {
