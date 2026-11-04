@@ -11,6 +11,7 @@ RUN apk upgrade --no-cache \
   && addgroup -S portal && adduser -S portal -G portal \
   && mkdir -p /app /tmp/portal-uploads && chown portal:portal /tmp/portal-uploads
 COPY --from=build /app/target/quarkus-app/ /app/
+COPY dns.security /app/dns.security
 USER portal
 WORKDIR /app
 ENV QUARKUS_HTTP_BODY_UPLOADS_DIRECTORY=/tmp/portal-uploads
@@ -18,4 +19,5 @@ ENV JAVA_OPTS_APPEND="-XX:MaxRAMPercentage=70"
 EXPOSE 8080 9000
 HEALTHCHECK --interval=10s --timeout=5s --start-period=60s --retries=12 \
   CMD wget -q -O /dev/null http://127.0.0.1:9000/q/health/ready || exit 1
-ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS_APPEND -jar quarkus-run.jar"]
+# O cache de DNS fica fora de JAVA_OPTS_APPEND, que o Compose substitui nos ambientes de teste e local.
+ENTRYPOINT ["sh", "-c", "exec java -Djava.security.properties=/app/dns.security $JAVA_OPTS_APPEND -jar quarkus-run.jar"]

@@ -6,9 +6,13 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags "-s -w" -o /caddy .
 
 FROM alpine:3.22@sha256:2e0b81d60597f449baa56dc25d355367869d2dca4cd57e866f1e2b52af3eb55f
 # Correções de segurança do Alpine publicadas depois da imagem base entram em cada build.
-RUN apk upgrade --no-cache && apk add --no-cache ca-certificates mailcap \
+# O índice é baixado uma vez, com nova tentativa se o espelho falhar.
+RUN (apk update || (sleep 5 && apk update) || (sleep 15 && apk update)) \
+  && apk upgrade \
+  && apk add ca-certificates mailcap \
   && addgroup -S -g 1001 caddy && adduser -S -u 1001 -G caddy caddy \
-  && mkdir -p /etc/caddy/conf.d /etc/caddy/sites /data/caddy /config/caddy && chown -R caddy:caddy /data /config
+  && mkdir -p /etc/caddy/conf.d /etc/caddy/sites /data/caddy /config/caddy && chown -R caddy:caddy /data /config \
+  && rm -rf /var/cache/apk/*
 COPY --from=build /caddy /usr/local/bin/caddy
 COPY Caddyfile /etc/caddy/Caddyfile
 COPY sites/00-vazio.caddy /etc/caddy/sites/00-vazio.caddy

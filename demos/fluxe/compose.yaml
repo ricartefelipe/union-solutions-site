@@ -25,7 +25,10 @@ x-frontend: &frontend
 services:
   postgres:
     <<: *comum
-    image: postgres:16-alpine@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab
+    image: union-demos-postgres:16
+    build:
+      context: ../imagens
+      dockerfile: postgres.Dockerfile
     environment:
       POSTGRES_USER: fluxe
       POSTGRES_PASSWORD: ${FLUXE_DB_PASSWORD:?}
@@ -56,7 +59,8 @@ services:
 
   rabbitmq:
     <<: *comum
-    image: rabbitmq:3-management-alpine@sha256:606d8c0d6b3c18d1da9afc53bc7cdb2a8d5486df91b5a9830e9e07626c9ae281
+    # Sem o painel de administração: a demonstração não o expõe, e a imagem sem ele usa menos memória.
+    image: rabbitmq:4.4.0-alpine@sha256:21577d148f4f7563a87d761862fa353f59348a094833ca8b1b1a46a8102dffce
     environment:
       RABBITMQ_DEFAULT_USER: fluxe
       RABBITMQ_DEFAULT_PASS: ${FLUXE_RABBIT_PASSWORD:?}

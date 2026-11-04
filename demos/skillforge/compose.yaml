@@ -17,7 +17,10 @@ x-comum: &comum
 services:
   postgres:
     <<: *comum
-    image: postgres:16-alpine@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab
+    image: union-demos-postgres:16
+    build:
+      context: ../imagens
+      dockerfile: postgres.Dockerfile
     user: "70:70"
     environment:
       POSTGRES_DB: skillforge
@@ -78,7 +81,9 @@ services:
         COPY api/ .
         RUN mvn -B -q -DskipTests -Dcheckstyle.skip package
         FROM eclipse-temurin:21-jre
-        RUN groupadd --system --gid 10001 app && useradd --system --uid 10001 --gid app --home-dir /app app
+        # Correções de segurança da base publicadas depois da imagem entram em cada build.
+        RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y --no-install-recommends && rm -rf /var/lib/apt/lists/* \
+          && groupadd --system --gid 10001 app && useradd --system --uid 10001 --gid app --home-dir /app app
         WORKDIR /app
         COPY --from=build /b/target/*.jar /app/app.jar
         USER app
