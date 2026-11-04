@@ -95,7 +95,8 @@ services:
       KC_HTTP_ENABLED: "true"
       KC_HEALTH_ENABLED: "true"
       KC_PROXY_HEADERS: xforwarded
-      JAVA_OPTS_APPEND: -Xms256m -Xmx768m
+      # Substitui o JAVA_OPTS_APPEND da imagem: o cache de DNS precisa ser repetido aqui.
+      JAVA_OPTS_APPEND: -Xms256m -Xmx768m -Djava.security.properties=/opt/keycloak/conf/dns.security
       PORTAL_PUBLIC_URL: http://localhost:${PORTAL_WEB_PORT:-3100}
       PORTAL_WEB_CLIENT_SECRET: ${PORTAL_WEB_CLIENT_SECRET:?rode portal.sh init}
       PORTAL_KEYCLOAK_ADMIN_SECRET: ${PORTAL_KEYCLOAK_ADMIN_SECRET:?rode portal.sh init}
