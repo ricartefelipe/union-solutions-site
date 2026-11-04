@@ -1,5 +1,7 @@
 {
-	admin off
+	# Administração só por socket Unix dentro do container, sem porta TCP: é o que permite recarregar a configuração sem
+	# derrubar as demonstrações (`recarregar.sh`). Só o próprio usuário do Caddy alcança o socket.
+	admin unix//tmp/caddy-admin.sock|0600
 	email {$ACME_EMAIL}
 }
 
