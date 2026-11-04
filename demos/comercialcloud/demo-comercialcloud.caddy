@@ -1,5 +1,6 @@
-# Instalado em demos/proxy/sites/ por demo.sh instalar. Modo de demonstração do produto: a API aceita o locatário
-# fictício da carga inicial, por isso só as rotas de uso entram e o cadastro público de novos locatários fica fechado.
+# Instalado em demos/proxy/sites/ por demo.sh instalar. Modo de demonstração do produto: a API só atende o locatário
+# fictício da carga inicial, com a sessão da conta de demonstração (POST /api/v1/public/demo/sessao); o cadastro
+# público de novos locatários fica fechado.
 demo-comercialcloud.unionsolutions.tech {
 	encode gzip
 	request_body {

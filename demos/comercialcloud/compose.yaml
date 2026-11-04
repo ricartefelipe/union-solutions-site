@@ -1,5 +1,5 @@
 # Demonstração pública do ComercialCloud na VPS das demonstrações, no modo de demonstração do produto: sem Keycloak, só com o
-# locatário fictício da carga inicial. Isolada: rede interna para o banco, rede `demos` só com o proxy, limites de memória e
+# locatário fictício da carga inicial e só para quem entra com a conta de demonstração. Isolada: rede interna para o banco, rede `demos` só com o proxy, limites de memória e
 # dados descartados por `demo.sh reiniciar-dados`.
 name: demo-comercialcloud
 
@@ -47,8 +47,11 @@ services:
       QUARKUS_DATASOURCE_PASSWORD: ${COMERCIALCLOUD_DB_PASSWORD:?}
       QUARKUS_HTTP_CORS_ORIGINS: https://${DEMO_HOST:?}
       COMERCIALCLOUD_UPLOAD_DIR: /data/uploads
-      # Locatário e usuário fixos no servidor: sem isso, a API exige token e responde 401.
+      # Locatário fictício, mas só com a sessão que o servidor emite à conta de demonstração (cabeçalho X-Sessao-Demo):
+      # sem ela, toda rota de dados responde 401.
       COMERCIAL_CLOUD_TENANT_RESOLUTION: demo
+      COMERCIAL_CLOUD_DEMO_SESSION_SECRET: ${COMERCIALCLOUD_DEMO_SESSION_SECRET:?}
+      COMERCIAL_CLOUD_DEMO_SENHA: ${COMERCIALCLOUD_DEMO_SENHA:?}
       COMERCIAL_CLOUD_KEYCLOAK_PROVISIONING_ENABLED: "false"
       COMERCIAL_CLOUD_BILLING_GATEWAY: sandbox
       COMERCIAL_CLOUD_BILLING_ASAAS_ENABLED: "false"
@@ -81,6 +84,10 @@ services:
         NEXT_PUBLIC_KEYCLOAK_URL: https://${DEMO_HOST:?}/auth
         NEXT_PUBLIC_KEYCLOAK_REALM: comercialcloud
         NEXT_PUBLIC_KEYCLOAK_CLIENT_ID: comercial-cloud-web
+        # Login da demonstração: mostra a conta pública e entra por ela.
+        NEXT_PUBLIC_AUTH_MODE: demo
+        NEXT_PUBLIC_DEMO_EMAIL: admin@demo.com
+        NEXT_PUBLIC_DEMO_SENHA: ${COMERCIALCLOUD_DEMO_SENHA:?}
     depends_on:
       backend:
         condition: service_healthy

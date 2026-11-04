@@ -17,8 +17,14 @@ require_env() {
 case "${1:-ajuda}" in
   segredos)
     [ -f .env ] || { cp .env.example .env && chmod 600 .env; }
-    sed -i "s|^COMERCIALCLOUD_DB_PASSWORD=GERADO$|COMERCIALCLOUD_DB_PASSWORD=$(od -An -N24 -tx1 /dev/urandom | tr -d ' \n')|" .env
-    echo "Criado .env com a senha do banco gerada. Preencha o restante marcado com SUBSTITUIR."
+    # Um .env de versão anterior ganha as variáveis novas do exemplo, sem tocar nas que já existem.
+    grep -E '^[A-Z_]+=' .env.example | while IFS= read -r linha; do
+      grep -q "^${linha%%=*}=" .env || printf '%s\n' "$linha" >> .env
+    done
+    for campo in COMERCIALCLOUD_DB_PASSWORD COMERCIALCLOUD_DEMO_SESSION_SECRET; do
+      sed -i "s|^$campo=GERADO\$|$campo=$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')|" .env
+    done
+    echo "Segredos gerados em .env. Preencha o restante marcado com SUBSTITUIR."
     ;;
   instalar)
     require_env
