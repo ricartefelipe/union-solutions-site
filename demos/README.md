@@ -35,19 +35,21 @@ Código em quatro repositórios, nas tags de `demos/fluxe/.env.example`. Depois 
 
 Na versão v1.5.7 o dono de uma conta `admin` lista só o próprio locatário, a cobrança recorrente vencida é liquidada uma única vez, sem repetição a cada minuto, e os workers voltam a processar pedidos depois de uma queda do RabbitMQ (conferido na VPS em 03/11/2026).
 
-## Versões e análise de imagens (03/11/2026)
+## Versões e análise de imagens (04/11/2026)
 
 | Sistema | Versão em produção |
 | --- | --- |
-| Fluxe B2B Suite | fluxe-b2b-suite v1.5.7, spring-saas-core v1.4.1, node-b2b-orders v1.4.7, py-payments-ledger v2.0.6, com o RabbitMQ 4.4.0 |
-| ComercialCloud | v1.5.0 |
-| Skillforge | v0.16.0 |
-| FileNorm | v0.3.0 |
-| SpringMind | springmind v0.3.0, reactmind v0.1.0 e mind-shared v2.1.0 |
-| VueMind | vuemind-api v0.3.0, vuemind v0.1.0 e mind-shared v2.1.0 |
-| cards-api | v1.4.4 |
-| AssinaFlow | v1.0.8, com o RabbitMQ 4.4.0 na imagem do produto |
-| order-service, HookGuard, ArchLens | sem mudança de versão |
+| Fluxe B2B Suite | fluxe-b2b-suite v1.5.8, spring-saas-core v1.4.2, node-b2b-orders v1.4.8, py-payments-ledger v2.0.7, com o RabbitMQ 4.4.0 |
+| ComercialCloud | v1.5.2, com a API só para a sessão da conta de demonstração |
+| ArchLens | v1.0.0, com a API fechada ao público e a ponte `/bff/v1` |
+| Skillforge | v0.16.0, com a API reconstruída com as correções da base |
+| FileNorm | v0.3.1 |
+| SpringMind | springmind v0.4.0, reactmind v0.2.0 e mind-shared v2.2.0 |
+| VueMind | vuemind-api v0.4.0, vuemind v0.2.0 e mind-shared v2.2.0 |
+| cards-api | v1.4.5 |
+| AssinaFlow | v1.0.9, com o RabbitMQ 4.4.0 na imagem do produto |
+| order-service | mesmo commit, imagens reconstruídas com as correções da base |
+| HookGuard | sem mudança de versão |
 
 Achados HIGH e CRITICAL com correção disponível (Trivy 0.70.0, `--ignore-unfixed`), antes e depois:
 
@@ -64,7 +66,7 @@ Achados HIGH e CRITICAL com correção disponível (Trivy 0.70.0, `--ignore-unfi
 | FileNorm, web | 0 | 0 |
 | SpringMind, API e web | 45 e 49 | 0 e 0 |
 | VueMind, API e web | 63 e 49 | 0 e 0 |
-| Fluxe, saas-core | 57 | 2 |
+| Fluxe, saas-core | 57 | 0 (v1.4.2: a `libexpat` 2.9.0 da base saiu com as correções do Alpine na etapa final) |
 | Fluxe, loja | 26 | 0 |
 | Fluxe, operação e administração | 62 e 62 | 0 e 0 |
 | Fluxe, orders e payments (API e workers) | 0 | 0 |
@@ -75,10 +77,13 @@ Achados HIGH e CRITICAL com correção disponível (Trivy 0.70.0, `--ignore-unfi
 | AssinaFlow, web | 2 (`libexpat` 2.9.0, publicada em 03/11/2026) | 0 (imagem reconstruída: o Dockerfile do produto já executa `apk upgrade`) |
 | AssinaFlow, API, PostgreSQL e Redis | 0 | 0 |
 
+Reanalisadas em 04/11/2026, depois da rodada final, as 29 imagens construídas para as demonstrações (as dez pilhas acima, menos o HookGuard, que não mudou) não têm nenhum achado HIGH ou CRITICAL, com ou sem correção disponível. O PostgreSQL do AssinaFlow vem da imagem do próprio produto: mantém o `gosu`, recompilado com Go 1.27.3, sem achados.
+
+Rodada final na VPS em 04/11/2026, conferida pelos endereços públicos: ArchLens com `/api/v1/*` respondendo 404, ponte sem sessão e cabeçalhos de identidade forjados respondendo 401, e login, criação e leitura de avaliação pela interface; ComercialCloud com clientes, usuários, auditoria e configurações respondendo 401 sem sessão, senha errada e token forjado recusados, e login pela interface com a conta de demonstração; VueMind e SpringMind com PIX imediato e agendado (executado depois da data) com end-to-end, data no passado e além de 365 dias recusadas, chave CNPJ com dígito inválido recusada e sem rolagem horizontal em 390 px; Fluxe com pedido até `PAID` e um único pagamento `SETTLED`, administração vendo 1 locatário e as APIs anunciando 1.4.2, 1.4.8 e 2.0.7; AssinaFlow, cards, FileNorm, Skillforge (três papéis) e Orders (pedido idempotente) no fluxo básico.
+
 Pendências conhecidas, sem correção disponível ou fora do alcance desta mudança:
 
 - **Keycloak 26.8.1 (cards e Skillforge):** reanalisado em 03/11/2026, já no digest mais recente (`26.8.1-2`), sem versão nova. 1 achado HIGH com correção na biblioteca, Guava 33.6.0 (corrigida na 33.7.2), que só chega com uma versão do Keycloak que a inclua; 3 sem correção do fabricante na base UBI 9 (`sqlite-libs` 2 e OpenJDK 1). Os quatro estão aceitos em `.trivyignore.yaml` até 01/12/2026 e avaliados em `portal/docs/VULNERABILIDADES.md`.
-- **Fluxe, saas-core:** 2 achados da `libexpat` 2.9.0 (corrigida na 2.10.0) vêm da imagem base do Dockerfile do próprio produto, que não executa `apk upgrade`; resolve-se no repositório do spring-saas-core.
 - **Keycloak 26.8:** recusa o token com `Origin` fora de `webOrigins` (403 "Invalid origin"). O `demo.sh` do cards ajusta o cliente `cards-admin` para o endereço público.
 - **VueMind e SpringMind:** desde 03/11/2026 o comprovante do PIX traz o end-to-end no formato do arranjo do Banco Central, com o ISPB fictício `99999999`, e avisa que o PIX é simulado.
 - **FileNorm:** o link de acesso só aparece na resposta com o código de acesso da demonstração; na VPS o modo está desligado e o link vai por e-mail. Destinatário recusado pelo servidor de e-mail responde 500.
