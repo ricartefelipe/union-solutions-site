@@ -57,9 +57,10 @@ Os workflows foram escritos e validados localmente comando a comando; a primeira
 brand/originais/      Originais da marca. Não editar.
 docs/FECHAMENTO.md    Relatório de fechamento e evidências dos produtos.
 public/               Assets finais: logo, favicon, imagem social, .htaccess.
+public/capturas/      Telas das demonstrações, otimizadas por npm run assets:shots.
 scripts/              Geração de assets e verificações.
 src/config/site.ts    Dados institucionais, contatos, modo de contato e navegação.
-src/data/products.ts  Catálogo de produtos.
+src/data/products.*   Catálogo de produtos: dados em products.json, tipos em products.ts.
 src/data/services.ts  Serviços, modalidades e competências tecnológicas.
 src/lib/              Envio do formulário, links de contato e opções.
 src/components/       Componentes.
@@ -70,11 +71,13 @@ src/styles/           Variáveis de design (tokens.css), tema claro/escuro (tema
 
 ## Como editar
 
-**Produtos.** Edite `src/data/products.ts`. Um novo item gera a página, a entrada no catálogo e a opção no formulário. Inclua também o slug no tipo `ProductSlug` e um esquema em `src/components/ProductGlyph.astro`; o `npm run check` aponta o que faltar. Um produto com `liveDemo` ganha o selo "Demonstração online" no catálogo e na home e entra na página `/demonstracoes/`; `liveDemo.access` lista as credenciais públicas como pares `label`/`value` (valores sem espaço ganham botão de copiar). O campo `onHome` define a seleção editorial da home, com no máximo três produtos, e `capabilities` aceita até três itens no catálogo.
+**Produtos.** Edite `src/data/products.json`. Um novo item gera a página, a entrada no catálogo, o cartão na home e a opção no formulário. Inclua também o slug no tipo `ProductSlug` (`src/data/products.ts`) e um esquema em `src/components/ProductGlyph.astro`; o `npm run check` aponta o que faltar. Um produto com `liveDemo` entra na página `/demonstracoes/`, que é o único lugar com o aviso, a nota e o acesso de cada demonstração; os botões "Testar a demonstração" levam para lá. `liveDemo.access` lista as credenciais públicas como pares `label`/`value` (valores sem espaço ganham botão de copiar). Enquanto todos os produtos tiverem demonstração, isso é dito uma vez no título da vitrine e no topo do catálogo; o selo "Demonstração online" por produto só aparece quando algum não tiver. O campo `onHome` define os destaques da home, com no máximo três produtos, e `capabilities` aceita até três itens no catálogo.
+
+**Telas dos produtos.** `screens` lista as capturas de cada produto, com `id` (nome dos arquivos) e `alt` (o que a tela mostra); a primeira aparece na home, no catálogo, nas demonstrações e no topo da página do produto, e as demais numa seção da página do produto. As capturas vêm das demonstrações públicas, com dados fictícios e sem credencial, nome de usuário ou chave na imagem: entre com a conta pública, recorte a área de conteúdo em 1280 × 720 com escala 1,5 (PNG de 1920 × 1080) salve em `artifacts/capturas/`, fora do Git, e rode `npm run assets:shots`, que grava em `public/capturas/` AVIF e WebP em 640, 1024 e 1600 px e um JPEG de reserva em 1024 px. `src/components/ProductShot.astro` monta o `<picture>` com dimensões fixas e `loading="lazy"`, exceto na imagem que abre a página. Os três produtos do topo da home estão em `heroSlugs`, em `src/data/products.ts`.
 
 Cada afirmação precisa de evidência no repositório do produto. Limites e disponibilidade ficam nos campos `goodToKnow` e `availability`, exibidos uma vez na página do produto. Os esquemas gráficos são fluxos conceituais, não telas, e seus rótulos usam termos do texto da página.
 
-**Serviços e tecnologias.** Edite `src/data/services.ts`.
+**Serviços e tecnologias.** Edite `src/data/services.ts`. Cada bloco aparece uma vez: resumo dos serviços na home, etapas de trabalho, modalidades e tecnologias em `/servicos/`, etapas da proposta em `/contato/`. As páginas de cada serviço levam a esses blocos por link.
 
 **Home, Sobre e Contato.** Os textos estão em `src/pages/index.astro`, `src/pages/sobre.astro` e `src/pages/contato.astro`.
 

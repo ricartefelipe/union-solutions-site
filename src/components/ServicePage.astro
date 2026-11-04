@@ -2,8 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Arrow from './Arrow.astro';
 import PageHero from './PageHero.astro';
-import TechStack from './TechStack.astro';
-import { engagementModels, proposalSteps, serviceContactUrl, services, type Service } from '../data/services';
+import { serviceContactUrl, services, type Service } from '../data/services';
 
 interface Props {
   service: Service;
@@ -50,7 +49,7 @@ const contactUrl = serviceContactUrl(service.slug);
     </div>
   </section>
 
-  <section class="section surface-deep">
+  <section class="section">
     <div class="wrap split">
       <div class="split__sticky">
         <h2>Entregáveis que podem ser acordados</h2>
@@ -67,44 +66,15 @@ const contactUrl = serviceContactUrl(service.slug);
     </div>
   </section>
 
-  <section class="section">
-    <div class="wrap split">
-      <div class="split__sticky">
-        <h2>Modalidades de contratação</h2>
-        <p class="muted side-note">Prazos e valores dependem do escopo e são apresentados na proposta.</p>
-      </div>
-      <ul class="rows">
-        {engagementModels.map((model) => (
-          <li>
-            <h3>{model.title}</h3>
-            <p class="muted">{model.text}</p>
-          </li>
-        ))}
-      </ul>
-    </div>
-  </section>
-
-  <div class="surface-mist">
-    <TechStack />
-  </div>
-
   <section class="section surface-dark proposal">
-    <div class="wrap split">
+    <div class="wrap proposal__inner">
       <div>
         <h2>Como iniciar uma proposta</h2>
-        <a class="btn proposal__cta" href={contactUrl}>{service.ctaLabel}<Arrow /></a>
+        <p class="lede muted proposal__text">
+          Conte o contexto na página de contato. Modalidades de contratação e tecnologias estão em <a href="/servicos/#modalidades">Serviços</a>.
+        </p>
       </div>
-      <ol class="proposal__steps">
-        {proposalSteps.map((step, index) => (
-          <li>
-            <span class="proposal__number" aria-hidden="true">{index + 1}</span>
-            <div>
-              <h3>{step.title}</h3>
-              <p class="muted">{step.text}</p>
-            </div>
-          </li>
-        ))}
-      </ol>
+      <a class="btn" href={contactUrl}>{service.ctaLabel}<Arrow /></a>
     </div>
   </section>
 
@@ -122,54 +92,31 @@ const contactUrl = serviceContactUrl(service.slug);
 </BaseLayout>
 
 <style>
-  .situations li {
-    padding-block: var(--space-4);
-    border-top: 1px solid var(--line);
-    font-family: var(--font-display);
-    font-size: var(--text-xl);
-    line-height: 1.25;
-    letter-spacing: -0.01em;
-  }
-
-  .situations li:first-child {
-    padding-top: 0;
-    border-top: 0;
-  }
-
   .side-note {
     max-width: 34ch;
     margin-top: var(--space-3);
   }
 
-  .proposal__cta {
-    margin-top: var(--space-5);
-  }
-
-  .proposal__steps {
+  .proposal__inner {
     display: grid;
-    gap: var(--space-5);
+    gap: var(--space-5) var(--space-7);
+    align-items: center;
   }
 
-  .proposal__steps li {
-    display: grid;
-    grid-template-columns: 2.25rem minmax(0, 1fr);
-    gap: var(--space-4);
+  .proposal__text {
+    max-width: 52ch;
+    margin-top: var(--space-3);
   }
 
-  .proposal__number {
-    display: grid;
-    place-items: center;
-    width: 2.25rem;
-    height: 2.25rem;
-    border: 1px solid var(--accent);
-    border-radius: 50%;
-    color: var(--accent);
-    font-family: var(--font-display);
+  .proposal__text a {
+    color: var(--on-dark);
+    font-weight: 600;
   }
 
-  .proposal__steps h3 {
-    margin-bottom: var(--space-1);
-    font-size: 1.125rem;
+  @media (min-width: 62rem) {
+    .proposal__inner {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
   }
 
   .other-services {
