@@ -26,10 +26,16 @@ baixar() {
   fixar cards-api "$(value CARDS_TAG)"
 }
 # O login do console pede e-mail e os usuários da carga do produto não têm. A conta pública é ajustada aqui, só nesta demonstração.
+# Qualquer falha interrompe o script: antes, o último comando (`rm`) escondia o erro e o console ficava sem login até o reinício
+# seguinte.
 ajustar_conta() {
   $COMPOSE exec -T -e SENHA="$(value CARDS_KEYCLOAK_ADMIN_PASSWORD)" keycloak sh -s <<'KC'
+set -e
 K=/opt/keycloak/bin/kcadm.sh
-$K config credentials --config /tmp/kc --server http://127.0.0.1:8080 --realm master --user admin --password "$SENHA" >/dev/null 2>&1
+i=0
+until $K config credentials --config /tmp/kc --server http://127.0.0.1:8080 --realm master --user admin --password "$SENHA" >/dev/null 2>&1; do
+  i=$((i + 1)); [ $i -lt 30 ] || { echo "O Keycloak não aceitou a conta administrativa em 60 s." >&2; exit 1; }; sleep 2
+done
 ID=$($K get users --config /tmp/kc -r quarkus -q username=admin --fields id --format csv --noquotes)
 $K update users/$ID --config /tmp/kc -r quarkus -s email=visitante@demo-cards.unionsolutions.tech -s emailVerified=true -s firstName=Visitante -s lastName=Demonstracao
 $K set-password --config /tmp/kc -r quarkus --userid "$ID" --new-password union-demo
@@ -38,6 +44,14 @@ CID=$($K get clients --config /tmp/kc -r quarkus -q clientId=cards-admin --field
 $K update clients/$CID --config /tmp/kc -r quarkus -s 'webOrigins=["https://demo-cards.unionsolutions.tech"]'
 rm -f /tmp/kc
 KC
+}
+
+# O console público só sobe depois da conta ajustada. Antes, ele atendia enquanto a conta ainda não tinha senha e o cliente
+# recusava a origem pública (403 "Invalid origin"); agora, até o fim, o proxy responde que a demonstração está indisponível.
+subir_tudo() {
+  $COMPOSE up -d --no-build --wait --wait-timeout 600 mariadb keycloak cards-api
+  ajustar_conta
+  $COMPOSE up -d --no-build --wait --wait-timeout 300 cards-admin
 }
 
 case "${1:-ajuda}" in
@@ -56,7 +70,7 @@ case "${1:-ajuda}" in
     require_env
     baixar
     cp demo-cards.caddy "$PROXY/sites/demo-cards.caddy"
-    echo "Site instalado no proxy das demonstrações. Reinicie o proxy: (cd $PROXY && docker compose --env-file .env restart proxy)"
+    echo "Site instalado no proxy das demonstrações. Recarregue o proxy, sem derrubar as outras demonstrações: sh $PROXY/recarregar.sh"
     ;;
   ajustar)
     require_env
@@ -68,8 +82,7 @@ case "${1:-ajuda}" in
     ;;
   subir)
     require_env
-    $COMPOSE up -d --no-build --wait --wait-timeout 600
-    ajustar_conta
+    subir_tudo
     $COMPOSE ps --format 'table {{.Service}}\t{{.Status}}'
     ;;
   parar) $COMPOSE down ;;
@@ -77,8 +90,7 @@ case "${1:-ajuda}" in
     # Descarta todos os dados da demonstração e sobe de novo. Agendado diariamente pelo timer demo-cards.timer.
     require_env
     $COMPOSE down -v
-    $COMPOSE up -d --no-build --wait --wait-timeout 600
-    ajustar_conta
+    subir_tudo
     echo "Dados da demonstração reiniciados em $(date -u +%FT%TZ)."
     ;;
   status) $COMPOSE ps --format 'table {{.Service}}\t{{.Status}}'; docker stats --no-stream --format 'table {{.Name}}\t{{.MemUsage}}\t{{.CPUPerc}}' $($COMPOSE ps -q) 2>/dev/null ;;

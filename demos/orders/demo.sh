@@ -51,7 +51,7 @@ case "${1:-ajuda}" in
     baixar
     cp demo-orders.caddy "$PROXY/sites/demo-orders.caddy"
     gerar_entrada "$PROXY/sites/orders-entrada"
-    echo "Site instalado no proxy das demonstrações. Reinicie o proxy: (cd $PROXY && docker compose --env-file .env restart proxy)"
+    echo "Site instalado no proxy das demonstrações. Recarregue o proxy, sem derrubar as outras demonstrações: sh $PROXY/recarregar.sh"
     ;;
   entrada)
     # Gera só a página /entrar na pasta indicada.

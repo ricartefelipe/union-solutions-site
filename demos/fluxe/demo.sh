@@ -47,7 +47,7 @@ case "${1:-ajuda}" in
     checkout node-b2b-orders "$(value ORDERS_TAG)"
     checkout py-payments-ledger "$(value PAYMENTS_TAG)"
     cp demo-fluxe.caddy "$PROXY/sites/demo-fluxe.caddy"
-    echo "Site instalado no proxy das demonstrações. Reinicie o proxy: (cd $PROXY && docker compose --env-file .env restart proxy)"
+    echo "Site instalado no proxy das demonstrações. Recarregue o proxy, sem derrubar as outras demonstrações: sh $PROXY/recarregar.sh"
     ;;
   construir)
     require_env
