@@ -29,7 +29,7 @@ case "${1:-ajuda}" in
     if [ -d "$src/.git" ]; then git -C "$src" fetch -q --tags origin; else git clone -q https://github.com/ricartefelipe/assinaflow.git "$src"; fi
     git -C "$src" checkout -q "$tag" && echo "AssinaFlow $tag em $src ($(git -C "$src" rev-parse --short HEAD))."
     cp demo-assinaflow.caddy "$PROXY/sites/demo-assinaflow.caddy"
-    echo "Site instalado no proxy das demonstrações. Reinicie o proxy: (cd $PROXY && docker compose --env-file .env restart proxy)"
+    echo "Site instalado no proxy das demonstrações. Recarregue o proxy, sem derrubar as outras demonstrações: sh $PROXY/recarregar.sh"
     ;;
   subir)
     require_env
