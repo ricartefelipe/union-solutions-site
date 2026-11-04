@@ -63,7 +63,7 @@ Por isso nenhuma atualização suportada foi aplicada naquela rodada além das j
 
 ### 1. Corrigido em 04/11/2026
 
-CVE-2026-116587 (GHSA-mgcc-cww5-fp2q) em `go-jose/v3` 3.0.5, dependência indireta do Caddy (`caddytls → smallstep/certificates → go.step.sm/crypto/jose`), não tem versão publicada corrigida na linha v3. Nenhum Caddy, nem a 2.11.8, nem o smallstep publicaram versão sem a v3. Compilar sem a PKI interna também não é possível, porque `caddytls` e o adaptador do Caddyfile a importam.
+CVE-2026-116587 (GHSA-mgcc-cww5-fp2q) em `go-jose/v3` 3.0.5, dependência indireta do Caddy (`caddytls → smallstep/certificates → go.step.sm/crypto/jose`), não tem versão publicada corrigida na linha v3. Nem o Caddy (até a 2.11.8) nem o smallstep publicaram versão sem a v3. Compilar sem a PKI interna também não é possível, porque `caddytls` e o adaptador do Caddyfile a importam.
 
 - **Correção aplicada:** o `go.mod` do proxy exige `v3.0.6-0.20261030183946-0e502b87c7aa`. É o commit `0e502b8` do ramo `v3` do próprio go-jose (PR 314, de 30/10/2026), que porta a correção da v4.1.6: módulo RSA limitado a 4096 bits, conferência de p·q = n e recusa de JWK com parâmetros privados nos cabeçalhos JWS e JWE. Quando a v3.0.6 sair, ela substitui o commit.
 - **Por que não uma cópia local com `replace`:** o Trivy ignora módulos substituídos por pasta local e deixaria de ver a `go-jose/v3` inteira, inclusive o que não foi corrigido.
