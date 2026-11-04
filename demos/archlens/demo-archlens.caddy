@@ -24,8 +24,10 @@ demo-archlens.unionsolutions.tech {
 		root * /etc/caddy/sites/archlens-amostra
 		file_server
 	}
-	handle /api/* {
-		reverse_proxy archlens-api:8080
+	# A API não é pública: o navegador fala com a ponte /bff/v1 do frontend, que confere a sessão e repassa a
+	# identidade com o segredo do servidor. /api/auth/* é do login do frontend e segue para ele no bloco final.
+	handle /api/v1/* {
+		respond 404
 	}
 	handle /q/health/ready {
 		reverse_proxy archlens-api:8080
