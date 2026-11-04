@@ -2,9 +2,9 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Arrow from '../../components/Arrow.astro';
 import PageHero from '../../components/PageHero.astro';
-import DemoAccess from '../../components/DemoAccess.astro';
 import ProductGlyph from '../../components/ProductGlyph.astro';
-import { productContactUrl, products, type Product } from '../../data/products';
+import ProductShot from '../../components/ProductShot.astro';
+import { productContactUrl, productDemoUrl, products, type Product } from '../../data/products';
 
 export function getStaticPaths() {
   return products.map((product) => ({ params: { slug: product.slug }, props: { product } }));
@@ -16,7 +16,7 @@ interface Props {
 
 const { product } = Astro.props;
 const contactUrl = productContactUrl(product.slug);
-const testUrl = product.liveDemo?.access ? '#demonstracao' : product.liveDemo?.url;
+const [mainScreen, ...moreScreens] = product.screens;
 const others = products.filter((item) => item.slug !== product.slug);
 const title = `${product.name}: ${product.area.charAt(0).toLowerCase()}${product.area.slice(1)}`;
 ---
@@ -28,15 +28,18 @@ const title = `${product.name}: ${product.area.charAt(0).toLowerCase()}${product
     eyebrow={product.area}
     crumbs={[{ label: 'Produtos', href: '/produtos/' }, { label: product.name }]}
   >
-    {product.liveDemo && <a slot="actions" class="btn" href={testUrl} rel="noopener">Testar agora<Arrow /></a>}
-    <a slot="actions" class={product.liveDemo ? 'btn btn--ghost' : 'btn'} href={contactUrl}>{product.liveDemo ? 'Falar com a Union' : 'Solicitar demonstração'}<Arrow /></a>
-    <div slot="art" class="product-art"><ProductGlyph slug={product.slug} /></div>
+    {product.liveDemo && <a slot="actions" class="btn" href={productDemoUrl(product.slug)}>Testar a demonstração<Arrow /></a>}
+    <a slot="actions" class={product.liveDemo ? 'btn btn--ghost' : 'btn'} href={contactUrl}>{product.liveDemo ? 'Falar com a Union' : 'Solicitar demonstração'}</a>
+    <div slot="art" class="product-art">
+      <ProductShot screen={mainScreen} priority sizes="(min-width: 62rem) 46vw, 92vw" />
+    </div>
   </PageHero>
 
   <section class="section">
     <div class="wrap split">
       <div>
-        <h2>Para quem e em que situação</h2>
+        <span class="eyebrow">Para quem</span>
+        <h2>Em que situação o {product.name} ajuda</h2>
         <p class="lede muted audience">{product.context}</p>
       </div>
       <ul class="situations">
@@ -45,55 +48,67 @@ const title = `${product.name}: ${product.area.charAt(0).toLowerCase()}${product
     </div>
   </section>
 
-  <section class="section surface-mist">
-    <div class="wrap split">
-      <div>
-        <h2>Capacidades</h2>
-        <ul class="node-list capabilities">
-          {product.capabilities.map((capability) => <li>{capability}</li>)}
-        </ul>
-        <h3 class="know-title">Bom saber</h3>
-        <p class="muted know-text">{product.goodToKnow}</p>
+  <section class="section surface-mist" aria-labelledby="como-funciona">
+    <div class="wrap">
+      <div class="flow-head">
+        <div>
+          <span class="eyebrow">Como funciona</span>
+          <h2 id="como-funciona">Do primeiro passo ao resultado</h2>
+        </div>
+        <div class="flow-head__art"><ProductGlyph slug={product.slug} /></div>
       </div>
-      <div>
-        <h2>Como funciona</h2>
-        <ol class="flow">
-          {product.flow.map((step, index) => (
-            <li>
-              <span class="flow__number" aria-hidden="true">{index + 1}</span>
-              <div>
-                <h3>{step.title}</h3>
-                <p class="muted">{step.text}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
+      <ol class="flow">
+        {product.flow.map((step, index) => (
+          <li class="card">
+            <span class="flow__number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+            <h3>{step.title}</h3>
+            <p class="muted">{step.text}</p>
+          </li>
+        ))}
+      </ol>
+      <div class="split capabilities-row">
+        <div>
+          <h2 class="small-title">Capacidades</h2>
+          <ul class="node-list capabilities">
+            {product.capabilities.map((capability) => <li>{capability}</li>)}
+          </ul>
+        </div>
+        <aside class="know" aria-labelledby="bom-saber">
+          <h2 id="bom-saber" class="small-title">Bom saber</h2>
+          <p>{product.goodToKnow}</p>
+        </aside>
       </div>
     </div>
   </section>
 
-  <section class="section surface-deep" id="demonstracao">
+  {moreScreens.length > 0 && (
+    <section class="section" aria-labelledby="na-demonstracao">
+      <div class="wrap">
+        <div class="section-head">
+          <h2 id="na-demonstracao">Na demonstração <span class="title-soft">com dados fictícios.</span></h2>
+          {product.liveDemo && <a class="text-link" href={productDemoUrl(product.slug)}>Como entrar<Arrow /></a>}
+        </div>
+        {moreScreens.map((screen) => (
+          <figure class="gallery">
+            <ProductShot screen={screen} sizes="(min-width: 80rem) 76rem, 92vw" />
+            <figcaption class="muted" aria-hidden="true">{screen.alt}</figcaption>
+          </figure>
+        ))}
+      </div>
+    </section>
+  )}
+
+  <section class="section surface-deep" id="demonstracao" aria-labelledby="avaliar">
     <div class="wrap split">
       <div>
-        <h2>Solicite uma demonstração</h2>
+        <span class="eyebrow">Avaliação</span>
+        <h2 id="avaliar">Avaliar o {product.name} no seu cenário</h2>
         <p class="demo-availability">{product.availability}</p>
         <p class="muted demo-text">A conversa parte do seu cenário: avaliamos se o produto atende à sua operação e, se não atender, quais outros caminhos fazem sentido.</p>
-        {product.liveDemo && (
-          <>
-            <p class="demo-text">{product.liveDemo.note}</p>
-            {product.liveDemo.access && <DemoAccess access={product.liveDemo.access} />}
-            <div class="btn-row">
-              <a class="btn demo-cta" href={product.liveDemo.url} rel="noopener">Testar agora<Arrow /></a>
-              <a class="btn btn--ghost demo-cta" href={contactUrl}>Conversar sobre o seu cenário<Arrow /></a>
-            </div>
-            {product.liveDemo.links && (
-              <ul class="demo-links">
-                {product.liveDemo.links.map((link) => <li><a href={link.url} rel="noopener">{link.label}</a></li>)}
-              </ul>
-            )}
-          </>
-        )}
-        {!product.liveDemo && <a class="btn demo-cta" href={contactUrl}>Solicitar demonstração<Arrow /></a>}
+        <div class="btn-row">
+          <a class="btn" href={contactUrl}>Conversar sobre o seu cenário<Arrow /></a>
+          {product.liveDemo && <a class="text-link" href={productDemoUrl(product.slug)}>Como entrar na demonstração</a>}
+        </div>
       </div>
       <div>
         <h3 class="topics-title">O que vale levar para a conversa</h3>
@@ -116,101 +131,105 @@ const title = `${product.name}: ${product.area.charAt(0).toLowerCase()}${product
 </BaseLayout>
 
 <style>
-  .product-art {
-    width: 100%;
-    max-width: 22rem;
-    color: var(--on-dark);
-  }
-
-  @media (min-width: 62rem) {
-    .product-art {
-      margin-left: auto;
-    }
+  .product-art :global(.shot) {
+    box-shadow: 0 30px 60px -28px rgb(0 0 0 / 0.75);
   }
 
   .audience {
     margin-top: var(--space-3);
   }
 
-  .situations li {
-    padding-block: var(--space-4);
-    border-top: 1px solid var(--line);
-    font-family: var(--font-display);
-    font-size: var(--text-xl);
-    line-height: 1.25;
-    letter-spacing: -0.01em;
+  .flow-head {
+    display: grid;
+    gap: var(--space-5);
+    align-items: end;
+    margin-bottom: var(--space-6);
   }
 
-  .situations li:first-child {
-    padding-top: 0;
-    border-top: 0;
+  .flow-head__art {
+    width: 100%;
+    max-width: 20rem;
+    color: var(--brand-ink);
+    --glyph-node-stroke: var(--brand-ink);
   }
 
-  .capabilities {
-    margin-top: var(--space-4);
-  }
-
-  .know-title {
-    margin-top: var(--space-5);
-    font-size: 1.125rem;
-  }
-
-  .know-text {
-    max-width: 52ch;
-    margin-top: var(--space-1);
+  @media (min-width: 48rem) {
+    .flow-head {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 20rem);
+    }
   }
 
   .flow {
     display: grid;
     gap: var(--space-4);
-    margin-top: var(--space-4);
   }
 
   .flow li {
-    display: grid;
-    grid-template-columns: 2.25rem minmax(0, 1fr);
-    gap: var(--space-4);
+    padding: var(--space-5);
   }
 
   .flow__number {
-    display: grid;
-    place-items: center;
-    width: 2.25rem;
-    height: 2.25rem;
-    border: 1px solid var(--brand-ink);
-    border-radius: 50%;
-    color: var(--brand-ink);
+    display: block;
+    margin-bottom: var(--space-3);
+    color: var(--eyebrow-ink);
     font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 600;
   }
 
   .flow h3 {
-    font-size: 1.125rem;
+    margin-bottom: var(--space-2);
+    font-size: var(--text-xl);
+  }
+
+  @media (min-width: 48rem) {
+    .flow {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .capabilities-row {
+    margin-top: var(--space-7);
+  }
+
+  .small-title {
+    margin-bottom: var(--space-4);
+    font-size: var(--text-xl);
+  }
+
+  .know {
+    align-self: start;
+    padding: var(--space-5);
+    border-left: 3px solid var(--notice-line);
+    border-radius: 0 var(--radius-card) var(--radius-card) 0;
+    background: var(--notice-bg);
+    color: var(--notice-ink);
+  }
+
+  .know .small-title {
+    margin-bottom: var(--space-2);
+  }
+
+  .gallery {
+    margin: 0;
+  }
+
+  .gallery figcaption {
+    max-width: var(--measure);
+    margin-top: var(--space-3);
+    font-size: var(--text-sm);
   }
 
   .demo-availability {
     max-width: 48ch;
-    margin-top: var(--space-3);
+    margin-top: var(--space-4);
+    font-size: var(--text-lg);
     font-weight: 500;
   }
 
   .demo-text {
     max-width: 48ch;
     margin-block: var(--space-2) var(--space-5);
-  }
-
-  .demo-links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0 var(--space-5);
-    margin-top: var(--space-2);
-  }
-
-  .demo-links a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 2.75rem;
-    color: var(--on-dark);
-    text-decoration: underline;
   }
 
   .topics-title {
@@ -223,21 +242,34 @@ const title = `${product.name}: ${product.area.charAt(0).toLowerCase()}${product
   }
 
   .more-products h2 {
-    margin-bottom: var(--space-2);
+    margin-bottom: var(--space-3);
     font-size: var(--text-lg);
   }
 
   .more-products ul {
     display: flex;
     flex-wrap: wrap;
-    gap: 0 var(--space-5);
+    gap: var(--space-2);
   }
 
   .more-products a {
     display: inline-flex;
     align-items: center;
     min-height: 2.75rem;
+    padding-inline: var(--space-4);
+    border: 1px solid var(--card-line);
+    border-radius: var(--radius-pill);
+    background: var(--card);
     color: var(--brand-ink);
     font-weight: 600;
+    text-decoration: none;
+    transition:
+      border-color var(--transition),
+      background-color var(--transition);
+  }
+
+  .more-products a:hover {
+    border-color: var(--card-line-hover);
+    background: var(--mist);
   }
 </style>
