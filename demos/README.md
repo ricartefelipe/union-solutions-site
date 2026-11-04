@@ -33,13 +33,13 @@ Medido na VPS em 03/11/2026, depois das atualizações e do reinício dos dados,
 
 Código em quatro repositórios, nas tags de `demos/fluxe/.env.example`. Depois de subir, `ajustar_carga` em `demo.sh` desativa as contas da plataforma, com senha pública no repositório do produto, e dá à conta pública o papel `admin`, para abrir as três aplicações, e um endereço no domínio da Union.
 
-Na versão v1.5.6 o dono de uma conta `admin` lista só o próprio locatário e a cobrança recorrente vencida é liquidada uma única vez, sem repetição a cada minuto (conferido na VPS em 03/11/2026).
+Na versão v1.5.7 o dono de uma conta `admin` lista só o próprio locatário, a cobrança recorrente vencida é liquidada uma única vez, sem repetição a cada minuto, e os workers voltam a processar pedidos depois de uma queda do RabbitMQ (conferido na VPS em 03/11/2026).
 
 ## Versões e análise de imagens (03/11/2026)
 
 | Sistema | Versão em produção |
 | --- | --- |
-| Fluxe B2B Suite | fluxe-b2b-suite v1.5.6, spring-saas-core v1.4.0, node-b2b-orders v1.4.6, py-payments-ledger v2.0.5 |
+| Fluxe B2B Suite | fluxe-b2b-suite v1.5.7, spring-saas-core v1.4.1, node-b2b-orders v1.4.7, py-payments-ledger v2.0.6, com o RabbitMQ 4.4.0 |
 | ComercialCloud | v1.5.0 |
 | Skillforge | v0.16.0 |
 | FileNorm | v0.3.0 |
@@ -72,6 +72,8 @@ Achados HIGH e CRITICAL com correção disponível (Trivy 0.70.0, `--ignore-unfi
 | Redis 7 (Fluxe) | 0 | 0 |
 | RabbitMQ, Fluxe | 71 (3.13.7) | 0 (4.4.0) |
 | RabbitMQ, AssinaFlow (`assinaflow-rabbitmq:4-patched`) | 0 (3.13.7 com `apk upgrade`) | 0 (4.4.0), nenhum achado de nenhuma gravidade |
+| AssinaFlow, web | 2 (`libexpat` 2.9.0, publicada em 03/11/2026) | 0 (imagem reconstruída: o Dockerfile do produto já executa `apk upgrade`) |
+| AssinaFlow, API, PostgreSQL e Redis | 0 | 0 |
 
 Pendências conhecidas, sem correção disponível ou fora do alcance desta mudança:
 
@@ -87,10 +89,12 @@ Fluxe e AssinaFlow usam o RabbitMQ 4.4.0: a Fluxe na imagem `rabbitmq:4.4.0-alpi
 
 Os dados do RabbitMQ ficam num volume anônimo, que o reinício diário apaga. Para trocar a versão, recrie tudo com `reiniciar-dados`: a 4.4 também arranca sobre dados da 3.13, mas mensagens persistentes dessas filas se perdem em silêncio, e os workers da Fluxe até node-b2b-orders v1.4.6 e py-payments-ledger v2.0.5 não se recuperam de um broker sem filas sem reiniciar.
 
-- **Fluxe:** `sh demo.sh reiniciar-dados`, depois de construir as imagens de banco (ver "Imagens de banco"). A imagem do RabbitMQ vem do Docker Hub; as do produto não mudam.
-- **AssinaFlow:** `ASSINAFLOW_TAG=v1.0.8` no `.env`, depois `sh demo.sh instalar`, `sh demo.sh subir` (reconstrói a imagem do RabbitMQ) e `sh demo.sh reiniciar-dados`. O site do proxy não muda.
+- **Fluxe:** tags de `.env.example` no `.env`, `sh demo.sh instalar`, `sh demo.sh construir` numa máquina de trabalho para orders e payments (API e workers), que mudaram na v1.4.7 e na v2.0.6, imagens carregadas na VPS e `sh demo.sh reiniciar-dados`. A imagem do RabbitMQ vem do Docker Hub; saas-core e frontends não mudam de código.
+- **AssinaFlow:** `ASSINAFLOW_TAG=v1.0.8` no `.env` e `sh demo.sh instalar`. `subir` reconstrói todas as imagens na VPS; para poupar memória, construa só a do RabbitMQ (`deploy/images/rabbitmq.Dockerfile`) numa máquina de trabalho, carregue como `demo-assinaflow-rabbitmq:latest` e rode `sh demo.sh reiniciar-dados`, que não reconstrói. O site do proxy não muda.
 
 Conferido numa máquina de trabalho em 03/11/2026, com as tags de produção da Fluxe e a branch do AssinaFlow que vira a v1.0.8: pedido até `PAID` em 4,2 s (4,3 s no 3.13), um único pagamento, administração vendo só o próprio locatário, cobrança recorrente vencida liquidada uma vez em dois ciclos, `flag.created` do saas-core entregue por `saas.events`; no AssinaFlow, cadastro, assinatura, renovação assíncrona cobrada pelo consumidor da fila `payments.charge`, troca de plano e cancelamento.
+
+Implantado na VPS em 03/11/2026 (04/11 em UTC), com o volume da 3.13 descartado e as duas filas rodando sem root (uid 100). Conferido pelos endereços públicos: na Fluxe, pedido até `PAID` em 4,4 s com um único pagamento `SETTLED`, administração vendo 1 de 5 locatários, recorrência vencida liquidada uma vez e mantida assim por mais dois ciclos; depois de duas quedas seguidas do RabbitMQ, os workers se reconectaram sem reiniciar (`rabbitmq.reconnected` e `outbox.dispatcher_stopped` duas vezes cada) e um pedido novo chegou a `PAID` em 4,7 s. No AssinaFlow, assinatura, troca de plano, renovação de R$ 39,90 pela fila `payments.charge` (evento `PAYMENT_CHARGE_REQUESTED` enviado e consumido, ciclo avançado em um mês) e cancelamento agendado.
 
 ## ArchLens e AssinaFlow
 
