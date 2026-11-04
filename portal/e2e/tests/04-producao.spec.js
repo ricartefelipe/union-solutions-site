@@ -279,7 +279,7 @@ test.describe('Configuração de produção', () => {
     await restartServices('postgres');
     const started = Date.now();
     const statuses = [];
-    // Primeiras ações depois do reinício. O BFF repete chamadas ao provedor em caso de falha temporária.
+    // Primeiras ações depois do reinício. As tentativas seguintes só servem para medir a recuperação, se ela falhar.
     await page.getByRole('button', { name: 'Sair' }).click();
     await expect(page.getByRole('heading', { level: 1, name: 'Você saiu do portal' })).toBeVisible();
     const warned = await page.getByText('O serviço de login não confirmou o encerramento.').count();
@@ -306,6 +306,9 @@ test.describe('Configuração de produção', () => {
     }
     console.log(`Recuperação após reiniciar o banco: logout com aviso=${warned}; tentativas de login: ${attempts.join(' ')}; total ${Math.round((Date.now() - started) / 1000)}s`);
     expect(ok).toBe(true);
+    // O provedor valida as conexões do pool: o logout é confirmado e o login entra na primeira tentativa, sem repetir.
+    expect(warned, 'logout confirmado pelo provedor logo depois do reinício').toBe(0);
+    expect(attempts.length, 'login na primeira tentativa logo depois do reinício').toBe(1);
     await context.close();
   });
 
