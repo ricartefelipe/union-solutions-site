@@ -96,7 +96,7 @@ sh portal-prod.sh status                                          # só o proxy 
 Depois, a partir de um computador externo:
 
 - teste as portas 5432, 8080, 8333, 9000 e 3310 no IP da VPS: precisam estar fechadas;
-- envie um convite real para um destino autorizado e confira entrega, SPF, DKIM e DMARC do remetente; Confira a cadeia do certificado TLS do SMTP contratado (ver item 6 de `VULNERABILIDADES.md`). Qualquer mudança no Caddyfile (`tls internal`, `acme_server`, autenticação) exige reavaliar o item 1 do mesmo documento.
+- envie um convite real para um destino autorizado e confira entrega, SPF, DKIM e DMARC do remetente; Confira a cadeia do certificado TLS do SMTP contratado (ver item 6 de `VULNERABILIDADES.md`). Qualquer mudança no Caddyfile (`tls internal`, `acme_server`, autenticação) exige reavaliar as médias da `go-jose/v3` (item 1 do mesmo documento).
 - percorra login com MFA, upload, download, EICAR bloqueado e logout;
 - rode `sh portal-prod.sh backup`, confira o destino externo e faça uma restauração de ensaio em ambiente separado.
 
