@@ -27,17 +27,32 @@ baixar() {
 }
 # O produto cria as contas sem senha e com endereço local; o script dele faz o mesmo em desenvolvimento. As senhas são públicas e
 # só dão acesso a dados fictícios, apagados todo dia.
+# Qualquer falha aqui interrompe o script: antes, o último comando (`rm`) escondia o erro e a demonstração ficava sem login até
+# o reinício seguinte.
 ajustar_contas() {
   host=$(value DEMO_HOST)
   cat "$(value SKILLFORGE_SRC)/skillforge/keycloak/user-profile.json" | $COMPOSE exec -T -e SENHA="$(value SKILLFORGE_KEYCLOAK_ADMIN_PASSWORD)" -e HOST="$host" keycloak sh -c '
+set -e
 K=/opt/keycloak/bin/kcadm.sh
 cat > /tmp/perfil.json
-$K config credentials --config /tmp/kc --server http://127.0.0.1:8080 --realm master --user admin --password "$SENHA" >/dev/null 2>&1
+i=0
+until $K config credentials --config /tmp/kc --server http://127.0.0.1:8080 --realm master --user admin --password "$SENHA" >/dev/null 2>&1; do
+  i=$((i + 1)); [ $i -lt 30 ] || { echo "O Keycloak não aceitou a conta administrativa em 60 s." >&2; exit 1; }; sleep 2
+done
 $K update users/profile --config /tmp/kc -r skillforge -f /tmp/perfil.json
 ID=$($K get clients --config /tmp/kc -r skillforge -q clientId=skillforge --fields id --format csv --noquotes)
 $K update clients/$ID --config /tmp/kc -r skillforge -s "redirectUris=[\"https://$HOST/callback\"]" -s "webOrigins=[\"https://$HOST\"]" -s "attributes.\"post.logout.redirect.uris\"=https://$HOST/"
 for conta in aluno docente administracao; do $K set-password --config /tmp/kc -r skillforge --username $conta --new-password union-demo; done
 rm -f /tmp/kc /tmp/perfil.json'
+}
+
+# A interface pública só sobe depois das contas ajustadas. Antes, ela atendia enquanto o cliente do realm ainda tinha o endereço
+# local do produto: quem chegasse nesse intervalo via o erro "Invalid parameter: redirect_uri" do Keycloak, ou tinha a senha
+# recusada. Agora, até o fim, o proxy responde que a demonstração está temporariamente indisponível.
+subir_tudo() {
+  $COMPOSE up -d --no-build --wait --wait-timeout 600 postgres keycloak api
+  ajustar_contas
+  $COMPOSE up -d --no-build --wait --wait-timeout 300 web
 }
 
 case "${1:-ajuda}" in
@@ -68,8 +83,7 @@ case "${1:-ajuda}" in
     ;;
   subir)
     require_env
-    $COMPOSE up -d --no-build --wait --wait-timeout 600
-    ajustar_contas
+    subir_tudo
     $COMPOSE ps --format 'table {{.Service}}\t{{.Status}}'
     ;;
   parar) $COMPOSE down ;;
@@ -77,8 +91,7 @@ case "${1:-ajuda}" in
     # Descarta todos os dados da demonstração e sobe de novo. Agendado diariamente pelo timer demo-skillforge.timer.
     require_env
     $COMPOSE down -v
-    $COMPOSE up -d --no-build --wait --wait-timeout 600
-    ajustar_contas
+    subir_tudo
     echo "Dados da demonstração reiniciados em $(date -u +%FT%TZ)."
     ;;
   status) $COMPOSE ps --format 'table {{.Service}}\t{{.Status}}'; docker stats --no-stream --format 'table {{.Name}}\t{{.MemUsage}}\t{{.CPUPerc}}' $($COMPOSE ps -q) 2>/dev/null ;;
