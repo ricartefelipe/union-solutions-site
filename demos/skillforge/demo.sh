@@ -56,7 +56,7 @@ case "${1:-ajuda}" in
     require_env
     baixar
     cp demo-skillforge.caddy "$PROXY/sites/demo-skillforge.caddy"
-    echo "Site instalado no proxy das demonstrações. Reinicie o proxy: (cd $PROXY && docker compose --env-file .env restart proxy)"
+    echo "Site instalado no proxy das demonstrações. Recarregue o proxy, sem derrubar as outras demonstrações: sh $PROXY/recarregar.sh"
     ;;
   ajustar)
     require_env

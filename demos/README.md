@@ -98,7 +98,7 @@ Implantado na VPS em 03/11/2026 (04/11 em UTC), com o volume da 3.13 descartado 
 
 ## ArchLens e AssinaFlow
 
-Nome curto de serviço não é seguro na rede `union-demos`: `backend` responde também pelo ComercialCloud. Por isso o frontend do ArchLens usa o alias `archlens-api`. A versão do ArchLens vem de `ARCHLENS_REF` (tag de release ou commit; `ARCHLENS_COMMIT`, de `.env` antigos, ainda vale). A API do ArchLens não é pública: o navegador fala com a ponte `/bff/v1` do frontend, que confere a sessão e envia a identidade à API com `ARCHLENS_LOCAL_HEADER_AUTH_SECRET`, segredo que só o servidor conhece; sem ele, a API responde 401, e o Caddy devolve 404 para `/api/v1/*`. Para atualizar um `.env` anterior: `sh demo.sh segredos` acrescenta o segredo sem mexer nos outros valores; depois ajuste `ARCHLENS_REF`, rode `instalar` (copia o Caddy novo), reinicie o proxy e rode `subir`.
+Nome curto de serviço não é seguro na rede `union-demos`: `backend` responde também pelo ComercialCloud. Por isso o frontend do ArchLens usa o alias `archlens-api`. A versão do ArchLens vem de `ARCHLENS_REF` (tag de release ou commit; `ARCHLENS_COMMIT`, de `.env` antigos, ainda vale). A API do ArchLens não é pública: o navegador fala com a ponte `/bff/v1` do frontend, que confere a sessão e envia a identidade à API com `ARCHLENS_LOCAL_HEADER_AUTH_SECRET`, segredo que só o servidor conhece; sem ele, a API responde 401, e o Caddy devolve 404 para `/api/v1/*`. Para atualizar um `.env` anterior: `sh demo.sh segredos` acrescenta o segredo sem mexer nos outros valores; depois ajuste `ARCHLENS_REF`, rode `instalar` (copia o Caddy novo), recarregue o proxy (`sh ../proxy/recarregar.sh`) e rode `subir`.
 
 ## Proxy (na VPS, em `/opt/union-solutions/demos/proxy`)
 
@@ -107,7 +107,9 @@ cp .env.example .env && chmod 600 .env
 docker compose --env-file .env -f compose.yaml up -d --build
 ```
 
-Depois de instalar ou alterar um site, reinicie o proxy: as demonstrações ficam indisponíveis por poucos segundos.
+Depois de instalar ou alterar um site, recarregue o proxy com `sh recarregar.sh`, nesta pasta. O script valida a configuração e só então a aplica, pela administração do Caddy num socket Unix dentro do container (`/tmp/caddy-admin.sock`, permissão 0600, sem porta TCP). As outras demonstrações não saem do ar, e uma configuração inválida é recusada sem mudar a que está em execução.
+
+Mudanças no próprio `Caddyfile` pedem reinício (`docker compose --env-file .env restart proxy`): ele é montado como arquivo, e a cópia por `tar` ou `rsync` troca o arquivo, que o container não vê até reiniciar. A pasta `sites/` é montada inteira, então sites novos ou alterados valem com a recarga. A primeira vez que este `Caddyfile` entra na VPS também pede reinício, porque a versão anterior desligava a administração (`admin off`) e não aceitava recarga.
 
 ## Demonstrações do portfólio: o que muda em relação aos produtos
 
