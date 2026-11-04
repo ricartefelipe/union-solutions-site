@@ -13,6 +13,27 @@
   --btn-bg-hover: var(--brand-lift);
   --btn-fg-hover: var(--on-dark);
   --white-fixed: #ffffff;
+
+  /*
+   * Tokens só do site, que o portal não usa: rótulos, cartões, capturas de tela e brilho do topo da home.
+   * Ficam aqui, e não em tokens.css, para a cópia do portal continuar idêntica.
+   */
+  --eyebrow-ink: #4a3fd0;
+  --radius-card: 0.875rem;
+  --radius-control: 0.5rem;
+  --radius-pill: 999px;
+  --card: #ffffff;
+  --card-line: var(--line);
+  --card-line-hover: #a9a6d6;
+  --shadow-card: 0 1px 2px rgb(21 20 43 / 0.05), 0 10px 28px -14px rgb(26 19 96 / 0.22);
+  --shadow-raised: 0 2px 6px rgb(21 20 43 / 0.06), 0 28px 56px -24px rgb(26 19 96 / 0.4);
+  --shot-bg: #ffffff;
+  --shot-bar: #f3f3f6;
+  --shot-line: rgb(21 20 43 / 0.12);
+  --shot-dot: #c9c7e0;
+  --glow: rgb(118 104 255 / 0.42);
+  --text-display: clamp(2.5rem, 1.35rem + 4.4vw, 4.75rem);
+  --lift: -3px;
 }
 
 :root[data-theme='dark'] {
@@ -41,4 +62,28 @@
   --neutral-bg: #26234f;
   --neutral-ink: #dcdaf0;
   --info-bg: #231f63;
+
+  --eyebrow-ink: var(--accent);
+  --card: #120e40;
+  --card-line: #2a2668;
+  --card-line-hover: #5b56a3;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.35), 0 14px 32px -18px rgb(0 0 0 / 0.7);
+  --shadow-raised: 0 2px 6px rgb(0 0 0 / 0.4), 0 28px 56px -24px rgb(0 0 0 / 0.85);
+  --shot-bg: #0c0930;
+  --shot-bar: #1b1656;
+  --shot-line: rgb(255 255 255 / 0.12);
+  --shot-dot: #4a4590;
+}
+
+/* Sobre as superfícies escuras (topo, faixas), iguais nos dois temas, cartões e molduras ficam translúcidos. */
+.surface-dark,
+.surface-deep {
+  --eyebrow-ink: var(--accent);
+  --card: rgb(255 255 255 / 0.04);
+  --card-line: var(--line-on-dark);
+  --card-line-hover: rgb(255 255 255 / 0.45);
+  --shot-bg: #120d47;
+  --shot-bar: #241d73;
+  --shot-line: rgb(255 255 255 / 0.16);
+  --shot-dot: rgb(255 255 255 / 0.32);
 }
