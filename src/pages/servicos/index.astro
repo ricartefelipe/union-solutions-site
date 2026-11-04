@@ -4,7 +4,32 @@ import Arrow from '../../components/Arrow.astro';
 import CtaBand from '../../components/CtaBand.astro';
 import PageHero from '../../components/PageHero.astro';
 import TechStack from '../../components/TechStack.astro';
-import { engagementModels, services } from '../../data/services';
+import { engagementModels, services, workSteps, type ServiceSlug } from '../../data/services';
+
+// Uma pergunta por caminho: cada serviço aparece aqui uma vez, com o link para a sua página.
+const questions: Record<ServiceSlug, { question: string; answer: string }> = {
+  consultoria: {
+    question: 'O problema ainda não está claro?',
+    answer: 'A consultoria investiga o que está acontecendo e indica o que fazer a seguir.',
+  },
+  arquitetura: {
+    question: 'Há uma decisão de estrutura pela frente?',
+    answer: 'A arquitetura define como a solução será organizada e como vai evoluir.',
+  },
+  desenvolvimento: {
+    question: 'Já se sabe o que precisa ser construído?',
+    answer: 'O desenvolvimento sob medida implementa a solução de acordo com seus processos.',
+  },
+};
+const paths = [
+  ...services.map((service) => ({ ...questions[service.slug], label: service.name, href: `/servicos/${service.slug}/` })),
+  {
+    question: 'A necessidade é específica e talvez já tenha solução?',
+    answer: 'Vale conhecer os produtos próprios e avaliar a aderência à sua operação.',
+    label: 'Produtos próprios',
+    href: '/produtos/',
+  },
+];
 ---
 
 <BaseLayout
@@ -14,54 +39,46 @@ import { engagementModels, services } from '../../data/services';
   <PageHero
     title="Da decisão técnica ao sistema em uso."
     intro="Consultoria, arquitetura e desenvolvimento podem ser contratados separadamente ou em conjunto, conforme o momento da sua empresa."
-  >
-    <a slot="actions" class="btn" href="/contato/">Conversar sobre meu projeto<Arrow /></a>
-  </PageHero>
+  />
 
-  <section aria-label="Serviços oferecidos">
+  <section class="section" aria-labelledby="comecar">
     <div class="wrap">
-      <ul class="services__list">
-        {services.map((service) => (
-          <li class="reveal">
-            <h2><a href={`/servicos/${service.slug}/`}>{service.name}</a></h2>
-            <div>
-              <p class="muted">{service.summary}</p>
-              <a class="text-link" href={`/servicos/${service.slug}/`}>Ver detalhes<span class="sr-only"> de {service.name}</span><Arrow /></a>
-            </div>
+      <div class="section-head">
+        <h2 id="comecar">Por onde começar <span class="title-soft">depende da pergunta que você tem hoje.</span></h2>
+      </div>
+      <ul class="paths">
+        {paths.map((path) => (
+          <li class="card card--link path reveal">
+            <h3>{path.question}</h3>
+            <p class="muted">{path.answer}</p>
+            <a class="card__link text-link" href={path.href}>{path.label}<Arrow /></a>
           </li>
         ))}
       </ul>
     </div>
   </section>
 
-  <section class="section surface-mist">
-    <div class="wrap split">
-      <h2>Como escolher por onde começar</h2>
-      <ul class="choose">
-        <li>
-          <h3>O problema ainda não está claro?</h3>
-          <p class="muted">A consultoria investiga o que está acontecendo e indica o que fazer a seguir.</p>
-        </li>
-        <li>
-          <h3>Há uma decisão de estrutura pela frente?</h3>
-          <p class="muted">A arquitetura define como a solução será organizada e como vai evoluir.</p>
-        </li>
-        <li>
-          <h3>Já se sabe o que precisa ser construído?</h3>
-          <p class="muted">O desenvolvimento sob medida implementa a solução de acordo com seus processos.</p>
-        </li>
-        <li>
-          <h3>A necessidade é específica e talvez já tenha solução?</h3>
-          <p class="muted">Vale conhecer os <a href="/produtos/">produtos próprios</a> e avaliar a aderência à sua operação.</p>
-        </li>
-      </ul>
+  <section class="section surface-mist" aria-labelledby="como-trabalhamos">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="como-trabalhamos">Como trabalhamos</h2>
+      </div>
+      <ol class="steps">
+        {workSteps.map((step, index) => (
+          <li>
+            <span class="steps__number" aria-hidden="true">{index + 1}</span>
+            <h3>{step.title}</h3>
+            <p class="muted">{step.text}</p>
+          </li>
+        ))}
+      </ol>
     </div>
   </section>
 
-  <section class="section">
+  <section class="section" id="modalidades" aria-labelledby="modalidades-titulo">
     <div class="wrap split">
       <div class="split__sticky">
-        <h2>Modalidades de contratação</h2>
+        <h2 id="modalidades-titulo">Modalidades de contratação</h2>
         <p class="muted models-note">Prazos e valores dependem do escopo e são apresentados na proposta.</p>
       </div>
       <ul class="rows">
@@ -88,59 +105,99 @@ import { engagementModels, services } from '../../data/services';
 </BaseLayout>
 
 <style>
-  .services__list li {
+  .paths {
     display: grid;
-    gap: var(--space-3) clamp(2rem, 6vw, 5rem);
-    padding-block: var(--space-6);
-    border-bottom: 1px solid var(--line);
+    gap: var(--space-4);
   }
 
-  .services__list li:last-child {
-    border-bottom: 0;
+  .path {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+    padding: var(--space-5);
   }
 
-  .services__list h2 {
-    color: var(--brand-ink);
+  .path h3 {
+    font-size: var(--text-xl);
   }
 
-  .services__list h2 a {
-    text-decoration: none;
+  .path .text-link {
+    margin-top: auto;
+    padding-top: var(--space-2);
   }
 
-  .services__list h2 a:hover {
-    text-decoration: underline;
-    text-decoration-thickness: 2px;
+  .path:hover .text-link :global(.arrow) {
+    transform: translateX(0.25em);
   }
 
-  .services__list p {
-    max-width: var(--measure);
-    margin-bottom: var(--space-1);
-  }
-
-  @media (min-width: 62rem) {
-    .services__list li {
-      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  @media (min-width: 40rem) {
+    .paths {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
-  .choose li {
-    padding-block: var(--space-4);
-    border-top: 1px solid var(--line-strong);
+  @media (min-width: 75rem) {
+    .paths {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
   }
 
-  .choose li:first-child {
-    padding-top: 0;
-    border-top: 0;
+  /* Etapas ligadas por uma linha, no sentido da evolução do trabalho. */
+  .steps {
+    display: grid;
+    gap: var(--space-5);
   }
 
-  .choose h3 {
+  .steps li {
+    position: relative;
+    padding-left: 3.25rem;
+  }
+
+  .steps__number {
+    position: absolute;
+    top: -0.125rem;
+    left: 0;
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    background: var(--btn-bg);
+    color: var(--btn-fg);
+    font-family: var(--font-display);
+    font-weight: 500;
+  }
+
+  .steps h3 {
     margin-bottom: var(--space-1);
-    font-size: 1.25rem;
+    font-size: 1.125rem;
   }
 
-  .choose a {
-    color: var(--brand-ink);
-    font-weight: 600;
+  @media (min-width: 62rem) {
+    .steps {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: clamp(1.25rem, 2vw, 2rem);
+    }
+
+    .steps li {
+      padding-top: 3.25rem;
+      padding-left: 0;
+    }
+
+    .steps li::before {
+      content: '';
+      position: absolute;
+      top: 1.125rem;
+      right: calc(clamp(1.25rem, 2vw, 2rem) * -1);
+      left: 2.75rem;
+      height: 1px;
+      background: var(--line-strong);
+    }
+
+    .steps li:last-child::before {
+      display: none;
+    }
   }
 
   .models-note {
