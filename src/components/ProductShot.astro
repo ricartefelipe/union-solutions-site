@@ -1,0 +1,79 @@
+---
+/**
+ * Captura de uma tela da demonstração, numa moldura de janela. AVIF e WebP em três larguras, JPEG de reserva
+ * e dimensões fixas (16:9), para a página não se mover enquanto a imagem carrega.
+ * Os arquivos são gerados por `npm run assets:shots` em public/capturas/.
+ */
+import type { ProductScreen } from '../data/products';
+
+interface Props {
+  screen: ProductScreen;
+  /** Largura ocupada na página, no formato do atributo `sizes`. */
+  sizes: string;
+  /** Só a imagem visível ao abrir a página deve carregar de imediato. */
+  priority?: boolean;
+  /** Mostra a barra da janela acima da tela. */
+  frame?: boolean;
+  class?: string;
+}
+
+const { screen, sizes, priority = false, frame = true, class: className } = Astro.props;
+
+// As mesmas larguras de scripts/prepare-product-shots.mjs.
+const WIDTHS = [640, 1024, 1600];
+const path = (width: number, ext: string) => `/capturas/${screen.id}-${width}.${ext}`;
+const srcset = (ext: string) => WIDTHS.map((width) => `${path(width, ext)} ${width}w`).join(', ');
+---
+
+<div class:list={['shot', { 'shot--frame': frame }, className]}>
+  {frame && <span class="shot__bar" aria-hidden="true"><i></i><i></i><i></i></span>}
+  <picture>
+    <source type="image/avif" srcset={srcset('avif')} sizes={sizes} />
+    <source type="image/webp" srcset={srcset('webp')} sizes={sizes} />
+    <img
+      src={path(1024, 'jpg')}
+      width="1600"
+      height="900"
+      alt={screen.alt}
+      loading={priority ? 'eager' : 'lazy'}
+      decoding={priority ? 'auto' : 'async'}
+      fetchpriority={priority ? 'high' : undefined}
+    />
+  </picture>
+</div>
+
+<style>
+  .shot {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--shot-line);
+    border-radius: var(--radius-card);
+    background: var(--shot-bg);
+    box-shadow: var(--shadow-card);
+  }
+
+  .shot__bar {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    height: 1.75rem;
+    padding-inline: 0.75rem;
+    border-bottom: 1px solid var(--shot-line);
+    background: var(--shot-bar);
+  }
+
+  .shot__bar i {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--shot-dot);
+  }
+
+  img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    object-position: top left;
+  }
+</style>
