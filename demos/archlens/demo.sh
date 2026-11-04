@@ -18,16 +18,19 @@ require_env() {
 case "${1:-ajuda}" in
   segredos)
     [ -f .env ] || { cp .env.example .env && chmod 600 .env; }
-    for campo in ARCHLENS_DB_PASSWORD ARCHLENS_AUTH_SECRET ARCHLENS_DEMO_ADMIN_PASSWORD ARCHLENS_DEMO_VIEWER_PASSWORD; do
+    for campo in ARCHLENS_DB_PASSWORD ARCHLENS_AUTH_SECRET ARCHLENS_LOCAL_HEADER_AUTH_SECRET ARCHLENS_DEMO_ADMIN_PASSWORD ARCHLENS_DEMO_VIEWER_PASSWORD; do
+      # Um .env de versão anterior pode não ter o campo: entra como GERADO e é preenchido abaixo.
+      grep -q "^$campo=" .env || echo "$campo=GERADO" >> .env
       sed -i "s|^$campo=GERADO\$|$campo=$(random)|" .env
     done
     echo "Criado .env com os segredos gerados. Confira DEMO_HOST e ARCHLENS_SRC."
     ;;
   instalar)
     require_env
-    commit=$(value ARCHLENS_COMMIT); src=$(value ARCHLENS_SRC)
-    if [ -d "$src/.git" ]; then git -C "$src" fetch -q origin; else git clone -q https://github.com/ricartefelipe/archlens.git "$src"; fi
-    git -C "$src" checkout -q "$commit" && echo "ArchLens $(git -C "$src" rev-parse --short HEAD) em $src."
+    ref=$(value ARCHLENS_REF); [ -n "$ref" ] || ref=$(value ARCHLENS_COMMIT); src=$(value ARCHLENS_SRC)
+    [ -n "$ref" ] || { echo "Defina ARCHLENS_REF (tag ou commit) no .env."; exit 2; }
+    if [ -d "$src/.git" ]; then git -C "$src" fetch -q --tags origin; else git clone -q https://github.com/ricartefelipe/archlens.git "$src"; fi
+    git -C "$src" checkout -q "$ref" && echo "ArchLens $ref ($(git -C "$src" rev-parse --short HEAD)) em $src."
     cp demo-archlens.caddy "$PROXY/sites/demo-archlens.caddy"
     mkdir -p "$PROXY/sites/archlens-amostra"
     cp amostra/analysis.json "$PROXY/sites/archlens-amostra/analysis.json"
