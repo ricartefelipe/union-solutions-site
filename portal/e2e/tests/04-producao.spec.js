@@ -25,7 +25,9 @@ async function signedIn(browser, email, password = state.password) {
 }
 const sessionOf = async (context) => (await context.cookies()).find((c) => c.name.includes('portal_session'));
 
-test.describe.serial('Configuração de produção', () => {
+// Em ordem (um worker, sem paralelismo), mas sem modo serial: cada teste entra com a própria conta e religa no finally o que
+// parou, então uma falha não invalida os seguintes, que continuam rodando e mostram o próprio resultado.
+test.describe('Configuração de produção', () => {
   test('HTTPS real, cookies seguros e emissor público', async ({ browser }) => {
     const { context, page } = await signedIn(browser, state.clientA);
     const cookie = await sessionOf(context);
