@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 // Gera as capturas dos produtos usadas no site: AVIF e WebP em três larguras e um JPEG de reserva, em public/capturas/.
-// Uso: npm run assets:shots -- <pasta>. A pasta tem um PNG de 1920 × 1080 por tela, com o nome usado em products.json
-// (por exemplo, comercialcloud-pdv.png). As telas vêm das demonstrações públicas, com dados fictícios e sem credenciais.
-import { mkdirSync, readdirSync } from 'node:fs';
+// Uso: npm run assets:shots. Lê artifacts/capturas/, fora do Git, com um PNG de 1920 × 1080 por tela e o nome usado em
+// products.json (por exemplo, comercialcloud-pdv.png). As telas vêm das demonstrações públicas, com dados fictícios
+// e sem credenciais.
+import { existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import sharp from 'sharp';
 
-const input = process.argv[2];
-if (!input) {
-  console.error('Informe a pasta com os PNG: npm run assets:shots -- <pasta>');
+const input = resolve('artifacts/capturas');
+if (!existsSync(input)) {
+  console.error('Salve os PNG em artifacts/capturas/ e rode de novo.');
   process.exit(1);
 }
 
