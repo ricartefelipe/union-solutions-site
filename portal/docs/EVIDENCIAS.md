@@ -105,6 +105,7 @@ Correções encontradas pelos testes de navegador nesta rodada: o nome acessíve
 | Cenário | Resultado |
 | --- | --- |
 | Reinício planejado (`portal-prod.sh reiniciar-banco`) | Provedor e API reiniciados junto; login em seguida OK |
+| Reinício não planejado do banco, rápido ou com o banco parado de 3 a 15 s | Login no provedor responde na primeira tentativa, em 12 de 12 rodadas (antes: falha em 3 de 3 reinícios rápidos e 500 por 5 s em 1 de 3 paradas de 8 s) |
 | Banco de sessões parado | 503 em páginas e BFF, sessão preservada, volta sozinha |
 | Provedor parado | Token vigente segue; token vencido 503 sem apagar a sessão; novo login 502 com aviso; logout encerra a sessão do portal e avisa |
 | ClamAV parado | Arquivo pendente, não liberado; verificado ao voltar |
