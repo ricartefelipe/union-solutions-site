@@ -34,7 +34,7 @@ case "${1:-ajuda}" in
     cp demo-archlens.caddy "$PROXY/sites/demo-archlens.caddy"
     mkdir -p "$PROXY/sites/archlens-amostra"
     cp amostra/analysis.json "$PROXY/sites/archlens-amostra/analysis.json"
-    echo "Site e amostra instalados no proxy das demonstrações. Reinicie o proxy: (cd $PROXY && docker compose --env-file .env restart proxy)"
+    echo "Site e amostra instalados no proxy das demonstrações. Recarregue o proxy, sem derrubar as outras demonstrações: sh $PROXY/recarregar.sh"
     ;;
   subir)
     require_env

@@ -35,19 +35,21 @@ Código em quatro repositórios, nas tags de `demos/fluxe/.env.example`. Depois 
 
 Na versão v1.5.7 o dono de uma conta `admin` lista só o próprio locatário, a cobrança recorrente vencida é liquidada uma única vez, sem repetição a cada minuto, e os workers voltam a processar pedidos depois de uma queda do RabbitMQ (conferido na VPS em 03/11/2026).
 
-## Versões e análise de imagens (03/11/2026)
+## Versões e análise de imagens (04/11/2026)
 
 | Sistema | Versão em produção |
 | --- | --- |
-| Fluxe B2B Suite | fluxe-b2b-suite v1.5.7, spring-saas-core v1.4.1, node-b2b-orders v1.4.7, py-payments-ledger v2.0.6, com o RabbitMQ 4.4.0 |
-| ComercialCloud | v1.5.0 |
-| Skillforge | v0.16.0 |
-| FileNorm | v0.3.0 |
-| SpringMind | springmind v0.3.0, reactmind v0.1.0 e mind-shared v2.1.0 |
-| VueMind | vuemind-api v0.3.0, vuemind v0.1.0 e mind-shared v2.1.0 |
-| cards-api | v1.4.4 |
-| AssinaFlow | v1.0.8, com o RabbitMQ 4.4.0 na imagem do produto |
-| order-service, HookGuard, ArchLens | sem mudança de versão |
+| Fluxe B2B Suite | fluxe-b2b-suite v1.5.8, spring-saas-core v1.4.2, node-b2b-orders v1.4.8, py-payments-ledger v2.0.7, com o RabbitMQ 4.4.0 |
+| ComercialCloud | v1.5.2, com a API só para a sessão da conta de demonstração |
+| ArchLens | v1.0.0, com a API fechada ao público e a ponte `/bff/v1` |
+| Skillforge | v0.16.0, com a API reconstruída com as correções da base |
+| FileNorm | v0.3.1 |
+| SpringMind | springmind v0.4.0, reactmind v0.2.0 e mind-shared v2.2.0 |
+| VueMind | vuemind-api v0.4.0, vuemind v0.2.0 e mind-shared v2.2.0 |
+| cards-api | v1.4.5 |
+| AssinaFlow | v1.0.9, com o RabbitMQ 4.4.0 na imagem do produto |
+| order-service | mesmo commit, imagens reconstruídas com as correções da base |
+| HookGuard | sem mudança de versão |
 
 Achados HIGH e CRITICAL com correção disponível (Trivy 0.70.0, `--ignore-unfixed`), antes e depois:
 
@@ -64,7 +66,7 @@ Achados HIGH e CRITICAL com correção disponível (Trivy 0.70.0, `--ignore-unfi
 | FileNorm, web | 0 | 0 |
 | SpringMind, API e web | 45 e 49 | 0 e 0 |
 | VueMind, API e web | 63 e 49 | 0 e 0 |
-| Fluxe, saas-core | 57 | 2 |
+| Fluxe, saas-core | 57 | 0 (v1.4.2: a `libexpat` 2.9.0 da base saiu com as correções do Alpine na etapa final) |
 | Fluxe, loja | 26 | 0 |
 | Fluxe, operação e administração | 62 e 62 | 0 e 0 |
 | Fluxe, orders e payments (API e workers) | 0 | 0 |
@@ -75,10 +77,13 @@ Achados HIGH e CRITICAL com correção disponível (Trivy 0.70.0, `--ignore-unfi
 | AssinaFlow, web | 2 (`libexpat` 2.9.0, publicada em 03/11/2026) | 0 (imagem reconstruída: o Dockerfile do produto já executa `apk upgrade`) |
 | AssinaFlow, API, PostgreSQL e Redis | 0 | 0 |
 
+Reanalisadas em 04/11/2026, depois da rodada final, as 29 imagens construídas para as demonstrações (as dez pilhas acima, menos o HookGuard, que não mudou) não têm nenhum achado HIGH ou CRITICAL, com ou sem correção disponível. O PostgreSQL do AssinaFlow vem da imagem do próprio produto: mantém o `gosu`, recompilado com Go 1.27.3, sem achados.
+
+Rodada final na VPS em 04/11/2026, conferida pelos endereços públicos: ArchLens com `/api/v1/*` respondendo 404, ponte sem sessão e cabeçalhos de identidade forjados respondendo 401, e login, criação e leitura de avaliação pela interface; ComercialCloud com clientes, usuários, auditoria e configurações respondendo 401 sem sessão, senha errada e token forjado recusados, e login pela interface com a conta de demonstração; VueMind e SpringMind com PIX imediato e agendado (executado depois da data) com end-to-end, data no passado e além de 365 dias recusadas, chave CNPJ com dígito inválido recusada e sem rolagem horizontal em 390 px; Fluxe com pedido até `PAID` e um único pagamento `SETTLED`, administração vendo 1 locatário e as APIs anunciando 1.4.2, 1.4.8 e 2.0.7; AssinaFlow, cards, FileNorm, Skillforge (três papéis) e Orders (pedido idempotente) no fluxo básico.
+
 Pendências conhecidas, sem correção disponível ou fora do alcance desta mudança:
 
 - **Keycloak 26.8.1 (cards e Skillforge):** reanalisado em 03/11/2026, já no digest mais recente (`26.8.1-2`), sem versão nova. 1 achado HIGH com correção na biblioteca, Guava 33.6.0 (corrigida na 33.7.2), que só chega com uma versão do Keycloak que a inclua; 3 sem correção do fabricante na base UBI 9 (`sqlite-libs` 2 e OpenJDK 1). Os quatro estão aceitos em `.trivyignore.yaml` até 01/12/2026 e avaliados em `portal/docs/VULNERABILIDADES.md`.
-- **Fluxe, saas-core:** 2 achados da `libexpat` 2.9.0 (corrigida na 2.10.0) vêm da imagem base do Dockerfile do próprio produto, que não executa `apk upgrade`; resolve-se no repositório do spring-saas-core.
 - **Keycloak 26.8:** recusa o token com `Origin` fora de `webOrigins` (403 "Invalid origin"). O `demo.sh` do cards ajusta o cliente `cards-admin` para o endereço público.
 - **VueMind e SpringMind:** desde 03/11/2026 o comprovante do PIX traz o end-to-end no formato do arranjo do Banco Central, com o ISPB fictício `99999999`, e avisa que o PIX é simulado.
 - **FileNorm:** o link de acesso só aparece na resposta com o código de acesso da demonstração; na VPS o modo está desligado e o link vai por e-mail. Destinatário recusado pelo servidor de e-mail responde 500.
@@ -98,7 +103,7 @@ Implantado na VPS em 03/11/2026 (04/11 em UTC), com o volume da 3.13 descartado 
 
 ## ArchLens e AssinaFlow
 
-Nome curto de serviço não é seguro na rede `union-demos`: `backend` responde também pelo ComercialCloud. Por isso o frontend do ArchLens usa o alias `archlens-api`. A versão do ArchLens vem de `ARCHLENS_REF` (tag de release ou commit; `ARCHLENS_COMMIT`, de `.env` antigos, ainda vale). A API do ArchLens não é pública: o navegador fala com a ponte `/bff/v1` do frontend, que confere a sessão e envia a identidade à API com `ARCHLENS_LOCAL_HEADER_AUTH_SECRET`, segredo que só o servidor conhece; sem ele, a API responde 401, e o Caddy devolve 404 para `/api/v1/*`. Para atualizar um `.env` anterior: `sh demo.sh segredos` acrescenta o segredo sem mexer nos outros valores; depois ajuste `ARCHLENS_REF`, rode `instalar` (copia o Caddy novo), reinicie o proxy e rode `subir`.
+Nome curto de serviço não é seguro na rede `union-demos`: `backend` responde também pelo ComercialCloud. Por isso o frontend do ArchLens usa o alias `archlens-api`. A versão do ArchLens vem de `ARCHLENS_REF` (tag de release ou commit; `ARCHLENS_COMMIT`, de `.env` antigos, ainda vale). A API do ArchLens não é pública: o navegador fala com a ponte `/bff/v1` do frontend, que confere a sessão e envia a identidade à API com `ARCHLENS_LOCAL_HEADER_AUTH_SECRET`, segredo que só o servidor conhece; sem ele, a API responde 401, e o Caddy devolve 404 para `/api/v1/*`. Para atualizar um `.env` anterior: `sh demo.sh segredos` acrescenta o segredo sem mexer nos outros valores; depois ajuste `ARCHLENS_REF`, rode `instalar` (copia o Caddy novo), recarregue o proxy (`sh ../proxy/recarregar.sh`) e rode `subir`.
 
 ## Proxy (na VPS, em `/opt/union-solutions/demos/proxy`)
 
@@ -107,13 +112,16 @@ cp .env.example .env && chmod 600 .env
 docker compose --env-file .env -f compose.yaml up -d --build
 ```
 
-Depois de instalar ou alterar um site, reinicie o proxy: as demonstrações ficam indisponíveis por poucos segundos.
+Depois de instalar ou alterar um site, recarregue o proxy com `sh recarregar.sh`, nesta pasta. O script valida a configuração e só então a aplica, pela administração do Caddy num socket Unix dentro do container (`/tmp/caddy-admin.sock`, permissão 0600, sem porta TCP). As outras demonstrações não saem do ar, e uma configuração inválida é recusada sem mudar a que está em execução.
+
+Mudanças no próprio `Caddyfile` pedem reinício (`docker compose --env-file .env restart proxy`): ele é montado como arquivo, e a cópia por `tar` ou `rsync` troca o arquivo, que o container não vê até reiniciar. A pasta `sites/` é montada inteira, então sites novos ou alterados valem com a recarga. A primeira vez que este `Caddyfile` entra na VPS também pede reinício, porque a versão anterior desligava a administração (`admin off`) e não aceitava recarga.
 
 ## Demonstrações do portfólio: o que muda em relação aos produtos
 
 - **Imagens:** `cards`, `orders`, `vuemind`, `springmind` e `skillforge` são construídas numa máquina de trabalho, com `sh demo.sh construir`, e carregadas na VPS. `subir` e `reiniciar-dados` não compilam.
 - **Skillforge:** a API e o front validam o emissor pela URL pública do Keycloak. Eles a alcançam pelo alias do proxy na rede `union-demos`, sem saída para a internet. Ao instalar o site, recrie o proxy com `docker compose --env-file .env -f compose.yaml up -d --no-build proxy`, para o alias valer.
 - **cards-api:** `demo.sh` dá e-mail e senha à conta `admin` do realm, porque o console exige e-mail e a carga do produto não traz nenhum.
+- **Skillforge e cards-api, ordem de subida:** `subir` e `reiniciar-dados` sobem primeiro banco, Keycloak e API, ajustam as contas e o cliente do realm, e só então a interface pública (`web` no Skillforge, `cards-admin` no Cards). Antes, a interface atendia enquanto as contas ainda não estavam ajustadas: em 20 reinícios medidos localmente em 04/11/2026, 14 de 100 tentativas de login no Skillforge feitas durante o reinício viram o erro `Invalid parameter: redirect_uri` do Keycloak ou tiveram a senha recusada, e no Cards, em 5 reinícios, o console atendia com o login recusado (403 "Invalid origin") por 7 a 17 s em cada um. Com a ordem nova, em mais 20 reinícios de cada um, nenhuma tentativa viu esses erros: até o fim, o proxy responde que a demonstração está temporariamente indisponível. Se o ajuste falhar, o script para com erro (e o timer aparece como falho em `systemctl --failed`), em vez de deixar a demonstração sem login até o dia seguinte. A verificação de saúde do Keycloak, e a da API do Cards, só aceitam a resposta 200: a 503 também traz "UP" no corpo.
 - **VueMind e SpringMind:** `SERVER_FORWARD_HEADERS_STRATEGY=framework` faz a API reconhecer a própria origem atrás do proxy; sem isso, o login responde 403 por CORS.
 
 ## Operação (na VPS, em `/opt/union-solutions/demos/<produto>`)
