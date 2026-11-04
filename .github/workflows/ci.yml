@@ -125,7 +125,7 @@ jobs:
           printf 'DEMO_HOST=demo.example\nFILENORM_DB_PASSWORD=x\nDEMO_SMTP_HOST=h\nDEMO_SMTP_USER=u\nDEMO_SMTP_PASSWORD=p\nDEMO_MAIL_FROM=m@e.test\n' > "$RUNNER_TEMP/fn.env"
           docker compose --env-file "$RUNNER_TEMP/fn.env" -f compose.yaml config -q
           cd ../comercialcloud
-          printf 'DEMO_HOST=demo.example\nCOMERCIALCLOUD_DB_PASSWORD=x\n' > "$RUNNER_TEMP/cc.env"
+          sed 's/GERADO/x/g' .env.example > "$RUNNER_TEMP/cc.env"
           docker compose --env-file "$RUNNER_TEMP/cc.env" -f compose.yaml config -q
           cd ../archlens
           sed 's/GERADO/x/g' .env.example > "$RUNNER_TEMP/al.env"
