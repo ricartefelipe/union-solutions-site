@@ -1,0 +1,4 @@
+# Cache de DNS da JVM para containers: o padrão guarda por 10 s a resposta "nome não existe". Depois de o banco ficar
+# fora do ar, o provedor seguia sem achar o banco por até 10 s com ele já de pé, e o login falhava.
+networkaddress.cache.negative.ttl=0
+networkaddress.cache.ttl=5

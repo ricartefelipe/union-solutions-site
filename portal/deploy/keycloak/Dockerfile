@@ -3,6 +3,9 @@ FROM quay.io/keycloak/keycloak:26.8.1@sha256:3f3c5f8e03c614774b4bd9173b88391fefa
 COPY themes/union /opt/keycloak/themes/union
 COPY realm-union-portal.json /opt/keycloak/data/import/realm-union-portal.json
 COPY --chmod=0755 portal-mfa-reset.sh /opt/keycloak/bin/portal-mfa-reset.sh
+COPY quarkus.properties dns.security /opt/keycloak/conf/
+# kc.sh acrescenta JAVA_OPTS_APPEND à linha de comando da JVM.
+ENV JAVA_OPTS_APPEND="-Djava.security.properties=/opt/keycloak/conf/dns.security"
 # O mesmo usuário sem privilégios da imagem oficial, declarado aqui para ficar explícito.
 USER 1000
 
