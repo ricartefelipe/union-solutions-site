@@ -39,17 +39,17 @@ Na versão v1.5.7 o dono de uma conta `admin` lista só o próprio locatário, a
 
 | Sistema | Versão em produção |
 | --- | --- |
-| Fluxe B2B Suite | fluxe-b2b-suite v1.5.8, spring-saas-core v1.4.2, node-b2b-orders v1.4.8, py-payments-ledger v2.0.7, com o RabbitMQ 4.4.0 |
-| ComercialCloud | v1.5.2, com a API só para a sessão da conta de demonstração |
-| ArchLens | v1.0.0, com a API fechada ao público e a ponte `/bff/v1` |
-| Skillforge | v0.16.0, com a API reconstruída com as correções da base |
-| FileNorm | v0.3.1 |
-| SpringMind | springmind v0.4.0, reactmind v0.2.0 e mind-shared v2.2.0 |
-| VueMind | vuemind-api v0.4.0, vuemind v0.2.0 e mind-shared v2.2.0 |
-| cards-api | v1.4.5 |
-| AssinaFlow | v1.0.9, com o RabbitMQ 4.4.0 na imagem do produto |
-| order-service | mesmo commit, imagens reconstruídas com as correções da base |
-| HookGuard | sem mudança de versão |
+| Fluxe B2B Suite | fluxe-b2b-suite v1.5.9, spring-saas-core v1.4.3, node-b2b-orders v1.4.9, py-payments-ledger v2.0.8, com o RabbitMQ 4.4.0 e o Node 22 nas interfaces |
+| ComercialCloud | v1.5.3, com a API só para a sessão da conta de demonstração e o Node 22 no front |
+| ArchLens | v1.0.1, com a API fechada ao público e a ponte `/bff/v1` |
+| Skillforge | v0.16.1, com a interface pública só depois do ajuste das contas e do cliente do realm |
+| FileNorm | v0.3.2 |
+| SpringMind | springmind v0.4.1, reactmind v0.2.0 e mind-shared v2.2.1 |
+| VueMind | vuemind-api v0.4.1, vuemind v0.2.0 e mind-shared v2.2.1 |
+| cards-api | v1.4.6, com o console público só depois do ajuste da conta |
+| AssinaFlow | v1.0.10, com o RabbitMQ 4.4.0 na imagem do produto |
+| order-service | v2.0.2 |
+| HookGuard | v1.0.7, com a API sem root |
 
 Achados HIGH e CRITICAL com correção disponível (Trivy 0.70.0, `--ignore-unfixed`), antes e depois:
 
@@ -81,8 +81,11 @@ Reanalisadas em 04/11/2026, depois da rodada final, as 29 imagens construídas p
 
 Rodada final na VPS em 04/11/2026, conferida pelos endereços públicos: ArchLens com `/api/v1/*` respondendo 404, ponte sem sessão e cabeçalhos de identidade forjados respondendo 401, e login, criação e leitura de avaliação pela interface; ComercialCloud com clientes, usuários, auditoria e configurações respondendo 401 sem sessão, senha errada e token forjado recusados, e login pela interface com a conta de demonstração; VueMind e SpringMind com PIX imediato e agendado (executado depois da data) com end-to-end, data no passado e além de 365 dias recusadas, chave CNPJ com dígito inválido recusada e sem rolagem horizontal em 390 px; Fluxe com pedido até `PAID` e um único pagamento `SETTLED`, administração vendo 1 locatário e as APIs anunciando 1.4.2, 1.4.8 e 2.0.7; AssinaFlow, cards, FileNorm, Skillforge (três papéis) e Orders (pedido idempotente) no fluxo básico.
 
+Última atualização na VPS em 04/11/2026, com as versões da tabela acima, conferida pelos endereços públicos, uma pilha por vez: HookGuard e FileNorm com as rotas de dados respondendo 401 sem credencial; ArchLens com `/api/v1/*` em 404, ponte sem sessão em 401 e login e avaliação criada e lida pela tela; ComercialCloud com clientes, usuários, auditoria e configurações em 401 sem sessão, senha errada e token forjado recusados e cliente criado e lido com a conta pública; AssinaFlow com cadastro, assinatura, troca de plano e cancelamento, e outro usuário recebendo 403; Orders com pedido idempotente; Fluxe com pedido até `PAID` e um único pagamento `SETTLED`, administração vendo uma empresa e as APIs anunciando 1.4.3, 1.4.9 e 2.0.8; VueMind e SpringMind com PIX imediato, agendado executado depois da data, datas fora da janela e CNPJ inválido recusados, e sem rolagem horizontal em 390 px; cards e Skillforge mostrando "indisponível" durante o `reiniciar-dados`; o cards aceita o login na primeira tentativa assim que abre, e o Skillforge também, a não ser no caso da pendência abaixo. As imagens novas não têm achado HIGH ou CRITICAL com correção; o proxy das demonstrações tem 1 HIGH sem correção publicada (`go-jose/v3` 3.0.5, no módulo de PKI interna do Caddy, que o Caddyfile não habilita).
+
 Pendências conhecidas, sem correção disponível ou fora do alcance desta mudança:
 
+- **Skillforge, primeiro login com tudo frio:** o link "Entrar" é um `<Link href="/login">` do Next.js, que dispara a navegação e uma pré-busca (`/login?_rsc=`) da mesma rota; cada resposta grava um `state` e um verificador novos em cookie. Quando a pré-busca responde depois da navegação, o `state` do cookie deixa de bater com o que foi ao Keycloak, e `/callback` volta para a tela inicial sem sessão, sem mensagem. Acontece com o servidor frio (logo depois do `reiniciar-dados` ou de horas parado): falhou nas 3 vezes em que era o primeiro login com o servidor frio (2 logo depois do reinício completo, 1 depois de horas parado) e em nenhuma das 16 com o servidor aquecido, inclusive com só a API ou só a interface reiniciadas. A segunda tentativa funciona. Correção no produto: link comum (`<a href="/login">`) ou `prefetch={false}`, e registrar a falha de `state` em `/callback`.
 - **Keycloak 26.8.1 (cards e Skillforge):** reanalisado em 03/11/2026, já no digest mais recente (`26.8.1-2`), sem versão nova. 1 achado HIGH com correção na biblioteca, Guava 33.6.0 (corrigida na 33.7.2), que só chega com uma versão do Keycloak que a inclua; 3 sem correção do fabricante na base UBI 9 (`sqlite-libs` 2 e OpenJDK 1). Os quatro estão aceitos em `.trivyignore.yaml` até 01/12/2026 e avaliados em `portal/docs/VULNERABILIDADES.md`.
 - **Keycloak 26.8:** recusa o token com `Origin` fora de `webOrigins` (403 "Invalid origin"). O `demo.sh` do cards ajusta o cliente `cards-admin` para o endereço público.
 - **VueMind e SpringMind:** desde 03/11/2026 o comprovante do PIX traz o end-to-end no formato do arranjo do Banco Central, com o ISPB fictício `99999999`, e avisa que o PIX é simulado.
