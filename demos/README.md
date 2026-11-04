@@ -98,7 +98,7 @@ Implantado na VPS em 03/11/2026 (04/11 em UTC), com o volume da 3.13 descartado 
 
 ## ArchLens e AssinaFlow
 
-Nome curto de serviço não é seguro na rede `union-demos`: `backend` responde também pelo ComercialCloud. Por isso o frontend do ArchLens usa o alias `archlens-api`. O ArchLens não publica tags: a versão fica presa ao commit de `.env.example`.
+Nome curto de serviço não é seguro na rede `union-demos`: `backend` responde também pelo ComercialCloud. Por isso o frontend do ArchLens usa o alias `archlens-api`. A versão do ArchLens vem de `ARCHLENS_REF` (tag de release ou commit; `ARCHLENS_COMMIT`, de `.env` antigos, ainda vale). A API do ArchLens não é pública: o navegador fala com a ponte `/bff/v1` do frontend, que confere a sessão e envia a identidade à API com `ARCHLENS_LOCAL_HEADER_AUTH_SECRET`, segredo que só o servidor conhece; sem ele, a API responde 401, e o Caddy devolve 404 para `/api/v1/*`. Para atualizar um `.env` anterior: `sh demo.sh segredos` acrescenta o segredo sem mexer nos outros valores; depois ajuste `ARCHLENS_REF`, rode `instalar` (copia o Caddy novo), reinicie o proxy e rode `subir`.
 
 ## Proxy (na VPS, em `/opt/union-solutions/demos/proxy`)
 
