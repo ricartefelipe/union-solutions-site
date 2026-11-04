@@ -15,7 +15,8 @@
     "check:publish": "node scripts/check-publish.mjs",
     "verify": "npm run check && npm run build && npm run check:links",
     "check:contact": "node scripts/check-contact-states.mjs",
-    "assets:brand": "python3 scripts/prepare-brand-assets.py"
+    "assets:brand": "python3 scripts/prepare-brand-assets.py",
+    "assets:shots": "node scripts/prepare-product-shots.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "3.7.4",
