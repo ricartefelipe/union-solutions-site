@@ -5,6 +5,7 @@ import DirectContact from '../components/DirectContact.astro';
 import PageHero from '../components/PageHero.astro';
 import PendingContact from '../components/PendingContact.astro';
 import { contact, contactMode } from '../config/site';
+import { proposalSteps } from '../data/services';
 
 const hasAlternative = contactMode === 'form' && (contact.email || contact.phone || contact.whatsappUrl);
 ---
@@ -32,7 +33,17 @@ const hasAlternative = contactMode === 'form' && (contact.email || contact.phone
         <aside class="contact__aside">
           <div>
             <h2>O que acontece depois</h2>
-            <p class="muted">Vamos entender sua necessidade e avaliar a solução adequada. Depois, alinhamos escopo, formato de trabalho e próximos passos.</p>
+            <ol class="next-steps">
+              {proposalSteps.map((step, index) => (
+                <li>
+                  <span class="next-steps__number" aria-hidden="true">{index + 1}</span>
+                  <div>
+                    <h3>{step.title}</h3>
+                    <p class="muted">{step.text}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
           </div>
 
           {hasAlternative && (
@@ -77,6 +88,34 @@ const hasAlternative = contactMode === 'form' && (contact.email || contact.phone
 
   .contact__aside li {
     padding-block: var(--space-1);
+  }
+
+  .next-steps {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .next-steps li {
+    display: grid;
+    grid-template-columns: 1.75rem minmax(0, 1fr);
+    gap: var(--space-3);
+  }
+
+  .next-steps__number {
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border: 1px solid var(--brand-ink);
+    border-radius: 50%;
+    color: var(--brand-ink);
+    font-family: var(--font-display);
+    font-size: var(--text-xs);
+  }
+
+  .next-steps h3 {
+    font-size: 1rem;
+    letter-spacing: 0;
   }
 
   .contact__aside a {
