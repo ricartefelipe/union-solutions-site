@@ -39,17 +39,17 @@ Na versão v1.5.7 o dono de uma conta `admin` lista só o próprio locatário, a
 
 | Sistema | Versão em produção |
 | --- | --- |
-| Fluxe B2B Suite | fluxe-b2b-suite v1.5.8, spring-saas-core v1.4.2, node-b2b-orders v1.4.8, py-payments-ledger v2.0.7, com o RabbitMQ 4.4.0 |
-| ComercialCloud | v1.5.2, com a API só para a sessão da conta de demonstração |
-| ArchLens | v1.0.0, com a API fechada ao público e a ponte `/bff/v1` |
-| Skillforge | v0.16.0, com a API reconstruída com as correções da base |
-| FileNorm | v0.3.1 |
-| SpringMind | springmind v0.4.0, reactmind v0.2.0 e mind-shared v2.2.0 |
-| VueMind | vuemind-api v0.4.0, vuemind v0.2.0 e mind-shared v2.2.0 |
-| cards-api | v1.4.5 |
-| AssinaFlow | v1.0.9, com o RabbitMQ 4.4.0 na imagem do produto |
-| order-service | mesmo commit, imagens reconstruídas com as correções da base |
-| HookGuard | sem mudança de versão |
+| Fluxe B2B Suite | fluxe-b2b-suite v1.5.9, spring-saas-core v1.4.3, node-b2b-orders v1.4.9, py-payments-ledger v2.0.8, com o RabbitMQ 4.4.0 e o Node 22 nas interfaces |
+| ComercialCloud | v1.5.3, com a API só para a sessão da conta de demonstração e o Node 22 no front |
+| ArchLens | v1.0.1, com a API fechada ao público e a ponte `/bff/v1` |
+| Skillforge | v0.16.2, com a interface pública só depois do ajuste das contas e do cliente do realm, e o primeiro login com o servidor frio corrigido |
+| FileNorm | v0.3.2 |
+| SpringMind | springmind v0.4.1, reactmind v0.2.0 e mind-shared v2.2.1 |
+| VueMind | vuemind-api v0.4.1, vuemind v0.2.0 e mind-shared v2.2.1 |
+| cards-api | v1.4.6, com o console público só depois do ajuste da conta |
+| AssinaFlow | v1.0.11, com o RabbitMQ 4.4.0 na imagem do produto e as rotas públicas respondendo 4xx, e não 500, a corpo vazio ou JSON inválido |
+| order-service | v2.0.2 |
+| HookGuard | v1.0.7, com a API sem root |
 
 Achados HIGH e CRITICAL com correção disponível (Trivy 0.70.0, `--ignore-unfixed`), antes e depois:
 
@@ -80,6 +80,10 @@ Achados HIGH e CRITICAL com correção disponível (Trivy 0.70.0, `--ignore-unfi
 Reanalisadas em 04/11/2026, depois da rodada final, as 29 imagens construídas para as demonstrações (as dez pilhas acima, menos o HookGuard, que não mudou) não têm nenhum achado HIGH ou CRITICAL, com ou sem correção disponível. O PostgreSQL do AssinaFlow vem da imagem do próprio produto: mantém o `gosu`, recompilado com Go 1.27.3, sem achados.
 
 Rodada final na VPS em 04/11/2026, conferida pelos endereços públicos: ArchLens com `/api/v1/*` respondendo 404, ponte sem sessão e cabeçalhos de identidade forjados respondendo 401, e login, criação e leitura de avaliação pela interface; ComercialCloud com clientes, usuários, auditoria e configurações respondendo 401 sem sessão, senha errada e token forjado recusados, e login pela interface com a conta de demonstração; VueMind e SpringMind com PIX imediato e agendado (executado depois da data) com end-to-end, data no passado e além de 365 dias recusadas, chave CNPJ com dígito inválido recusada e sem rolagem horizontal em 390 px; Fluxe com pedido até `PAID` e um único pagamento `SETTLED`, administração vendo 1 locatário e as APIs anunciando 1.4.2, 1.4.8 e 2.0.7; AssinaFlow, cards, FileNorm, Skillforge (três papéis) e Orders (pedido idempotente) no fluxo básico.
+
+Última atualização na VPS em 04/11/2026, com as versões da tabela acima, conferida pelos endereços públicos, uma pilha por vez: HookGuard e FileNorm com as rotas de dados respondendo 401 sem credencial; ArchLens com `/api/v1/*` em 404, ponte sem sessão em 401 e login e avaliação criada e lida pela tela; ComercialCloud com clientes, usuários, auditoria e configurações em 401 sem sessão, senha errada e token forjado recusados e cliente criado e lido com a conta pública; AssinaFlow com cadastro, assinatura, troca de plano e cancelamento, e outro usuário recebendo 403; Orders com pedido idempotente; Fluxe com pedido até `PAID` e um único pagamento `SETTLED`, administração vendo uma empresa e as APIs anunciando 1.4.3, 1.4.9 e 2.0.8; VueMind e SpringMind com PIX imediato, agendado executado depois da data, datas fora da janela e CNPJ inválido recusados, e sem rolagem horizontal em 390 px; cards e Skillforge mostrando "indisponível" durante o `reiniciar-dados`; o cards aceita o login na primeira tentativa assim que abre, e o Skillforge também, a não ser no caso da pendência abaixo. As imagens novas não têm achado HIGH ou CRITICAL com correção; o proxy das demonstrações tem 1 HIGH sem correção publicada (`go-jose/v3` 3.0.5, no módulo de PKI interna do Caddy, que o Caddyfile não habilita).
+
+Skillforge v0.16.2 e AssinaFlow v1.0.11 na VPS em 04/11/2026, uma pilha por vez, conferidos pelos endereços públicos: no Skillforge, 5 `reiniciar-dados` seguidos, cada um seguido do primeiro login pelo link "Entrar" da página inicial, com o papel que entra primeiro alternando entre aluno, docente e administração: 15 de 15 logins. Antes, o primeiro login com o servidor frio falhava (a navegação e a pré-busca de `/login` gravavam o `state` no mesmo cookie; agora cada login pendente tem o seu, e a pré-busca recebe 204 sem cookies). Também o fluxo básico: a administração cria um curso e abre uma turma com o docente, e o docente vê os dois, abre uma unidade e publica uma aula. No AssinaFlow, login, cadastro e criação de usuário respondem 400 a corpo vazio, JSON inválido e campos faltando, e o webhook do Stripe 404 (no modo simulação a rota não existe); assinatura, troca de plano e cancelamento agendado continuam funcionando, e outro usuário recebe 403. As três imagens novas (API e interface do Skillforge, aplicação do AssinaFlow) não têm achado HIGH/CRITICAL, com ou sem correção.
 
 Pendências conhecidas, sem correção disponível ou fora do alcance desta mudança:
 
