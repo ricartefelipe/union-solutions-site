@@ -10,6 +10,8 @@ Resumo versionado da análise das imagens finais e das dependências. O relatór
 
 **Reavaliação de 03/11/2026** (Trivy 0.70.0, base do dia). Nenhum dos itens aceitos ganhou correção: o Keycloak 26.8.1 já está no digest mais recente (`26.8.1-2`, de 31/10/2026) e não há versão mais nova; a Guava 33.7.2 existe, mas nenhuma versão do Keycloak a inclui; `sqlite-libs` e OpenJDK seguem sem pacote corrigido na UBI 9; `go-jose/v3` segue em 3.0.5, a última da linha v3. PostgreSQL do portal (sem `gosu`), ClamAV 1.5 e SeaweedFS 4.52: sem achados altos ou críticos.
 
+**Correção de 04/11/2026** (Trivy 0.70.0, base do dia). O item 3 saiu da imagem do Keycloak: `deploy/keycloak/Dockerfile` troca a Guava 33.6.0-jre embutida pela 33.7.2-jre, a versão corrigida, porque o Keycloak 26.8.1 continua sendo a última versão publicada (digest `26.8.1-2`) e nenhuma versão dele traz a correção. A troca não tem suporte do fabricante; a avaliação de compatibilidade e o ensaio estão no item 3. A exceção do CVE-2026-102554 saiu de `.trivyignore.yaml`, e a análise da CI volta a reprovar se ele reaparecer. O portal em produção recebe a troca na próxima implantação. Continuam aceitos os itens 1, 4, 5 e 6, no mesmo prazo de **01/12/2026**.
+
 **Critério de reavaliação:** repetir a análise antes de cada implantação e sempre que uma imagem base mudar, ou a cada 30 dias enquanto o portal estiver no ar. Um item volta a exigir ação quando o projeto publicar versão corrigida, ou quando surgir caminho de exploração a partir de dados do cliente.
 
 | Ferramenta | Versão | Base de dados | Escopo |
@@ -55,6 +57,7 @@ Por isso nenhuma atualização suportada foi aplicada naquela rodada além das j
 | PostgreSQL: 61 achados no binário `gosu` | Removido da imagem; o container inicia como `postgres` e nunca o executava |
 | Web: `undici` e `brace-expansion` do `npm` embutido no Node | `npm`, `npx` e `corepack` removidos da imagem final |
 | SeaweedFS: CVE-2026-116587 em `go-jose/v4` 4.1.5 (item 2) | Imagem oficial 4.52, fixada por digest, sem achados altos ou críticos, em 02/11/2026 |
+| Keycloak: CVE-2026-102554 em `com.google.guava:guava` 33.6.0 (item 3) | Guava 33.7.2 no lugar do JAR embutido, conferida pelo SHA-256 no build da imagem, em 04/11/2026 (ver item 3) |
 
 ## Ocorrências altas, uma a uma
 
@@ -75,18 +78,18 @@ Por isso nenhuma atualização suportada foi aplicada naquela rodada além das j
 
 CVE-2026-116587 saiu da imagem do SeaweedFS na versão 4.52; ver "Corrigido anteriormente". O aceite segue só para o item 1, no proxy.
 
-### 3. CVE-2026-102554 em `com.google.guava:guava` 33.6.0, imagem do Keycloak
+### 3. Corrigido em 04/11/2026: CVE-2026-102554 em `com.google.guava:guava` 33.6.0, imagem do Keycloak
 
 | Item | Registro |
 | --- | --- |
-| Imagem e digest | `quay.io/keycloak/keycloak:26.8.1@sha256:3f3c5f8e03c614774b4bd9173b88391fefa4153bfc010d8012d59ad825377332` |
-| Componente | Guava 33.6.0-jre, embutida pelo Keycloak |
-| Versão corrigida | **A dependência tem correção (33.7.2, GHSA-xxph-c9ww-hj94)**; **o Keycloak 26.8.1 ainda não a incorporou**, e não há versão mais nova. Substituir o JAR não é suportado e não foi feito |
-| Condições para exploração | O atacante precisa fazer o processo desserializar bytes dele com `ObjectInputStream.readObject()` (classes `CompactHashMap`, `CompactHashSet`, `MapMakerInternalMap`). Impacto: esgotamento de memória. CVSS 5.9 (o scanner classifica como alta) |
-| Presença e alcance aqui | Presente no JAR. O Keycloak não desserializa objetos Java de requisições HTTP; a desserialização Java existente é a do cache distribuído entre nós (Infinispan), que aqui não existe: instância única, sem porta de cluster publicada (`KC_CACHE` padrão `ispn` local). Dados do cliente chegam como formulários, JSON e tokens |
-| Mitigações e limites | Nenhuma configurável. Limite: a avaliação vale enquanto o Keycloak for instância única |
-| Atualização suportada | Nenhuma; reavaliar a cada versão do Keycloak |
-| Recomendação | **Submeter a aceite explícito**. Reavaliar na próxima versão do Keycloak |
+| Imagem e digest | `quay.io/keycloak/keycloak:26.8.1@sha256:3f3c5f8e03c614774b4bd9173b88391fefa4153bfc010d8012d59ad825377332`, o digest mais recente (`26.8.1-2`); não há 26.8.2 nem versão mais nova em 04/11/2026 |
+| Componente | `/opt/keycloak/lib/lib/main/com.google.guava.guava-33.6.0-jre.jar`, idêntico ao JAR do Maven Central |
+| Condições para exploração | O atacante precisa fazer o processo desserializar bytes dele com `ObjectInputStream.readObject()` (classes `CompactHashMap`, `CompactHashSet`, `MapMakerInternalMap`). Impacto: esgotamento de memória. CVSS 5.9 (o scanner classifica como alta). Aqui não havia caminho: instância única, sem desserialização Java de dados do cliente |
+| Correção | Guava 33.7.2-jre (GHSA-xxph-c9ww-hj94), baixada do Maven Central no build e conferida pelo SHA-256 fixado no Dockerfile (`b5309422…606c`; o mesmo arquivo tem assinatura PGP válida do mantenedor da Guava). O JAR antigo sai, o nome é acertado nos índices do Quarkus (`appmodel.dat`, `deployment-class-path.dat`, `quarkus-application.dat`, texto de mesmo tamanho), e o `kc.sh build` da produção (ou o `start-dev` do ambiente local) refaz o índice a partir deles. As demonstrações usam o mesmo procedimento em `demos/imagens/keycloak.Dockerfile` |
+| Compatibilidade | O Keycloak usa a Guava em `CaseFormat` (nomes das opções de configuração) e em `BloomFilter`/`Funnels` (política de senhas proibidas, inclusive arquivos `.bloom` pré-calculados); gRPC, Micrometer e OpenTelemetry também a referenciam. As 188 referências desses JARs a classes, métodos e campos da Guava resolvem igual nas duas versões (176 resolvem; 12 dependem do `failureaccess`, ausente também na imagem oficial). Notas da 33.7.0 a 33.7.2: acréscimos de API, `module-info.class` na raiz do JAR e a correção; `BloomFilter.readFrom` lê o mesmo formato |
+| Ensaio | `prova.sh` com a imagem nova: suítes 01, 02 e 04, 53 de 53 (login, segundo fator, renovação, logout, provedor e banco fora do ar). Fora do portal, a mesma troca: OIDC com PKCE, renovação, logout, API e console de administração com alteração de configuração, senhas proibidas por texto e por `.bloom` gerado com a 33.6.0, em `start-dev` e em `start` com PostgreSQL, iguais à imagem oficial |
+| Análise depois | Trivy 0.70.0: o CVE-2026-102554 some e nenhum achado novo aparece, em nenhuma gravidade (38 médios e 28 baixos, iguais). Ficam os itens 4 a 6 |
+| Quando remover | Na primeira versão do Keycloak com a Guava 33.7.2 ou mais nova: o `rm` do JAR antigo falha no build, e o bloco sai do Dockerfile |
 
 ### 4 e 5. CVE-2026-119373 e CVE-2026-119586 em `sqlite-libs` 3.34.1-11.el9_8, imagem do Keycloak
 
@@ -122,7 +125,7 @@ CVE-2026-116587 saiu da imagem do SeaweedFS na versão 4.52; ver "Corrigido ante
 
 ## Decisão operacional
 
-Itens 1 a 6 aceitos por Felipe em 01/11/2026, com reavaliação até 01/12/2026 (ver o início deste documento); o item 2 foi corrigido em 02/11/2026 e os demais seguem no aceite. Este item deixou de bloquear a abertura do portal a clientes; `docs/PUBLICACAO.md` mantém as pendências restantes. A análise semanal da CI (`imagens.yml`) e a reavaliação manual a cada implantação continuam, e um achado novo, crítico ou com correção publicada reabre a decisão.
+Itens 1 a 6 aceitos por Felipe em 01/11/2026, com reavaliação até 01/12/2026 (ver o início deste documento); o item 2 foi corrigido em 02/11/2026, o item 3 em 04/11/2026, e os demais seguem no aceite. Este item deixou de bloquear a abertura do portal a clientes; `docs/PUBLICACAO.md` mantém as pendências restantes. A análise semanal da CI (`imagens.yml`) e a reavaliação manual a cada implantação continuam, e um achado novo, crítico ou com correção publicada reabre a decisão.
 
 ## Não coberto
 

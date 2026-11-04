@@ -87,7 +87,7 @@ Skillforge v0.16.2 e AssinaFlow v1.0.11 na VPS em 04/11/2026, uma pilha por vez,
 
 Pendências conhecidas, sem correção disponível ou fora do alcance desta mudança:
 
-- **Keycloak 26.8.1 (cards e Skillforge):** reanalisado em 03/11/2026, já no digest mais recente (`26.8.1-2`), sem versão nova. 1 achado HIGH com correção na biblioteca, Guava 33.6.0 (corrigida na 33.7.2), que só chega com uma versão do Keycloak que a inclua; 3 sem correção do fabricante na base UBI 9 (`sqlite-libs` 2 e OpenJDK 1). Os quatro estão aceitos em `.trivyignore.yaml` até 01/12/2026 e avaliados em `portal/docs/VULNERABILIDADES.md`.
+- **Keycloak 26.8.1 (cards e Skillforge):** reanalisado em 04/11/2026, já no digest mais recente (`26.8.1-2`), sem versão nova. O achado HIGH da Guava 33.6.0 (CVE-2026-102554, corrigida na 33.7.2) sai com `demos/imagens/keycloak.Dockerfile`, que troca só esse JAR (ver "Imagens próprias"); na VPS ele continua até a imagem nova ser construída lá. Restam 3 sem correção do fabricante na base UBI 9 (`sqlite-libs` 2 e OpenJDK 1), aceitos em `.trivyignore.yaml` até 01/12/2026 e avaliados em `portal/docs/VULNERABILIDADES.md`.
 - **Keycloak 26.8:** recusa o token com `Origin` fora de `webOrigins` (403 "Invalid origin"). O `demo.sh` do cards ajusta o cliente `cards-admin` para o endereço público.
 - **VueMind e SpringMind:** desde 03/11/2026 o comprovante do PIX traz o end-to-end no formato do arranjo do Banco Central, com o ISPB fictício `99999999`, e avisa que o PIX é simulado.
 - **FileNorm:** o link de acesso só aparece na resposta com o código de acesso da demonstração; na VPS o modo está desligado e o link vai por e-mail. Destinatário recusado pelo servidor de e-mail responde 500.
@@ -144,19 +144,22 @@ Fluxe B2B Suite: `sh demo.sh construir` numa máquina de trabalho e carregue as 
 
 A API exige a sessão emitida à conta de demonstração. Ao atualizar uma VPS que está na v1.5.0, `sh demo.sh segredos` acrescenta ao `.env` o segredo da sessão (gerado) e a senha da conta, sem mexer no que já existe; depois, troque `COMERCIALCLOUD_TAG` e rode `instalar` e `subir`. Sem o segredo, o backend não sobe.
 
-### Imagens de banco (`demos/imagens`)
+### Imagens próprias (`demos/imagens`)
 
 A imagem oficial do PostgreSQL e a do MariaDB, em todas as versões publicadas até 03/11/2026, trazem o `gosu` 1.19 compilado com Go 1.24.6 (26 achados, 1 crítico). Ele só serve para o entrypoint trocar de root para o usuário do banco. `postgres.Dockerfile` e `mariadb.Dockerfile` removem o binário, e o container inicia direto como `postgres` (uid 70) ou `mysql` (uid 999). Volumes criados pela imagem oficial continuam funcionando, porque o diretório de dados já pertence a esse usuário. Todas as demonstrações com PostgreSQL usam `union-demos-postgres:16`; o cards usa `union-demos-mariadb:10.11`.
 
-Fluxe, Skillforge, Orders, SpringMind e cards sobem e reiniciam os dados com `--no-build`, inclusive pelo timer da madrugada: construa as duas imagens na VPS **antes** de copiar os `compose.yaml` novos.
+O Keycloak 26.8.1 embute a Guava 33.6.0-jre (CVE-2026-102554, HIGH, corrigida na 33.7.2), e o fabricante ainda não publicou versão com a correção. `keycloak.Dockerfile` parte da imagem oficial fixada pelo digest e troca só esse JAR: baixa a 33.7.2 do Maven Central, confere o SHA-256 fixado no arquivo, acerta o nome do JAR nos índices do Quarkus e roda `kc.sh build`, que falha se algo não bater. O Keycloak usa a Guava na conversão de nomes de opções (`CaseFormat`) e na política de senhas proibidas (`BloomFilter`, inclusive arquivos `.bloom` gerados antes); entre as duas versões não mudou nada que ele use. Cards e Skillforge usam `union-demos-keycloak:26.8.1`. Quando sair Keycloak com a Guava corrigida, o build falha no `rm` do JAR antigo: volte para a imagem oficial.
+
+Fluxe, Skillforge, Orders, SpringMind e cards sobem e reiniciam os dados com `--no-build`, inclusive pelo timer da madrugada: construa as imagens na VPS **antes** de copiar os `compose.yaml` novos.
 
 ```bash
 cd /opt/union-solutions/demos/imagens
 docker build -t union-demos-postgres:16 -f postgres.Dockerfile .
 docker build -t union-demos-mariadb:10.11 -f mariadb.Dockerfile .
+docker build -t union-demos-keycloak:26.8.1 -f keycloak.Dockerfile .
 ```
 
-Depois, em cada demonstração, `sh demo.sh reiniciar-dados` troca o banco já com a imagem nova.
+Depois, em cada demonstração, `sh demo.sh reiniciar-dados` troca o banco e o Keycloak já com as imagens novas.
 
 Registro DNS `A` de `demo-<produto>.unionsolutions.tech` para o IP da VPS, antes de `instalar`. Timer diário: copie `systemd/*` para `/etc/systemd/system` e `systemctl enable --now demo-<produto>.timer`.
 
