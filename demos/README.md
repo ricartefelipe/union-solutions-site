@@ -16,7 +16,7 @@ Cada pasta (`demos/<produto>/`) é uma demonstração pública de um produto da 
 | --- | --- | --- | --- | --- |
 | HookGuard | `demo-hookguard.unionsolutions.tech` | Visitante entra com o próprio e-mail (link por SMTP), cria projeto e envia webhooks; entregas reais a destinos HTTPS públicos | cerca de 470 MB | Corpo de 256 KB, 60 eventos/min por projeto, 5 000 eventos/mês por conta |
 | FileNorm | `demo-filenorm.unionsolutions.tech` | Visitante entra com o próprio e-mail, gera uma chave de API e envia OFX, CNAB, CSV ou PDF; recebe eventos padronizados | cerca de 460 MB | Arquivo de 2 MB, 5 000 registros, 10 páginas de PDF |
-| ComercialCloud | `demo-comercialcloud.unionsolutions.tech` | Modo de demonstração do produto: "Entrar em modo demo" abre a loja fictícia com produtos, clientes e vendas da carga inicial; sem Keycloak e com o cadastro público fechado no proxy | cerca de 440 MB | Imagens de 64 MB em memória; sem cobrança, fiscal nem e-mail reais (modos sandbox) |
+| ComercialCloud | `demo-comercialcloud.unionsolutions.tech` | Modo de demonstração do produto: a conta de demonstração (`admin@demo.com`, senha publicada no site) entra na loja fictícia com produtos, clientes e vendas da carga inicial; a API não responde sem a sessão dela. Sem Keycloak e com o cadastro público fechado no proxy | cerca de 440 MB | Imagens de 64 MB em memória; sem cobrança, fiscal nem e-mail reais (modos sandbox) |
 
 | ArchLens | `demo-archlens.unionsolutions.tech` | Conta pública `architect`: cria uma avaliação, importa o arquivo de exemplo (`/amostra/analysis.json`, gerado pelo analisador do próprio produto) e percorre inventário, achados, questionário, dimensões e roteiro; sem Keycloak | cerca de 330 MB | Contas compartilhadas; só a `architect` é pública; corpo de 1 MB; sem LLM e sem saída para a internet |
 | AssinaFlow | `demo-assinaflow.unionsolutions.tech` | Visitante cria conta, contrata, troca e cancela um plano; sem verificação de e-mail e sem envio de e-mail | cerca de 550 MB | Modo `demo` com gateway `simulated`: nada é cobrado, sem Stripe e sem saída para a internet. O painel `/admin` não é oferecido: mostraria os e-mails dos outros visitantes |
@@ -127,6 +127,10 @@ sh demo.sh status
 ```
 
 Fluxe B2B Suite: `sh demo.sh construir` numa máquina de trabalho e carregue as imagens na VPS (`docker save demo-fluxe-... | gzip | ssh ... 'gunzip | docker load'`); `subir` e `reiniciar-dados` não compilam. ArchLens e AssinaFlow podem seguir o mesmo caminho, para poupar o portal da compilação (`docker compose --env-file .env -f compose.yaml up -d --no-build --wait`).
+
+### ComercialCloud: sessão da demonstração (a partir da v1.5.2)
+
+A API exige a sessão emitida à conta de demonstração. Ao atualizar uma VPS que está na v1.5.0, `sh demo.sh segredos` acrescenta ao `.env` o segredo da sessão (gerado) e a senha da conta, sem mexer no que já existe; depois, troque `COMERCIALCLOUD_TAG` e rode `instalar` e `subir`. Sem o segredo, o backend não sobe.
 
 ### Imagens de banco (`demos/imagens`)
 
