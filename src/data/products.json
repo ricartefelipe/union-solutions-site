@@ -290,7 +290,17 @@
     ],
     "liveDemo": {
       "url": "https://demo-comercialcloud.unionsolutions.tech/",
-      "note": "Abra a loja de demonstração com produtos, clientes e vendas fictícios. Os dados são apagados todos os dias, e cobrança e nota fiscal rodam só em modo de teste."
+      "note": "Entre com a conta abaixo na loja de demonstração, com produtos, clientes e vendas fictícios. Os dados são apagados todos os dias, e cobrança e nota fiscal rodam só em modo de teste.",
+      "access": [
+        {
+          "label": "E-mail",
+          "value": "admin@demo.com"
+        },
+        {
+          "label": "Senha",
+          "value": "union-demo"
+        }
+      ]
     }
   },
   {

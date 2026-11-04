@@ -32,8 +32,8 @@ services:
 
   proxy:
     ports: !override
-      - "127.0.0.1:18443:443"
-      - "127.0.0.1:18080:80"
+      - "127.0.0.1:${PROVA_PORTA_HTTPS:-18443}:443"
+      - "127.0.0.1:${PROVA_PORTA_HTTP:-18080}:80"
     volumes:
       - pki:/etc/caddy/conf.d:ro
     networks:

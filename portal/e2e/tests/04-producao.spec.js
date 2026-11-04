@@ -25,7 +25,9 @@ async function signedIn(browser, email, password = state.password) {
 }
 const sessionOf = async (context) => (await context.cookies()).find((c) => c.name.includes('portal_session'));
 
-test.describe.serial('Configuração de produção', () => {
+// Em ordem (um worker, sem paralelismo), mas sem modo serial: cada teste entra com a própria conta e religa no finally o que
+// parou, então uma falha não invalida os seguintes, que continuam rodando e mostram o próprio resultado.
+test.describe('Configuração de produção', () => {
   test('HTTPS real, cookies seguros e emissor público', async ({ browser }) => {
     const { context, page } = await signedIn(browser, state.clientA);
     const cookie = await sessionOf(context);
@@ -237,6 +239,10 @@ test.describe.serial('Configuração de produção', () => {
       expect((await page.request.get('/bff/v1/me')).status()).toBe(200);
     }).toPass({ timeout: 60_000, intervals: [1000] });
     await context.close();
+    // Login novo assim que o banco volta. O provedor guardava por 10 s a resposta "nome não existe" do banco e recusava o login
+    // com o banco já de pé (cache de DNS da JVM).
+    const novo = await signedIn(browser, state.clientA);
+    await novo.context.close();
   });
 
   test('provedor fora do ar: sessão vigente segue, token vencido falha com segurança e novo login não abre', async ({ browser }) => {
@@ -273,7 +279,7 @@ test.describe.serial('Configuração de produção', () => {
     await restartServices('postgres');
     const started = Date.now();
     const statuses = [];
-    // Primeiras ações depois do reinício. O BFF repete chamadas ao provedor em caso de falha temporária.
+    // Primeiras ações depois do reinício. As tentativas seguintes só servem para medir a recuperação, se ela falhar.
     await page.getByRole('button', { name: 'Sair' }).click();
     await expect(page.getByRole('heading', { level: 1, name: 'Você saiu do portal' })).toBeVisible();
     const warned = await page.getByText('O serviço de login não confirmou o encerramento.').count();
@@ -300,6 +306,9 @@ test.describe.serial('Configuração de produção', () => {
     }
     console.log(`Recuperação após reiniciar o banco: logout com aviso=${warned}; tentativas de login: ${attempts.join(' ')}; total ${Math.round((Date.now() - started) / 1000)}s`);
     expect(ok).toBe(true);
+    // O provedor valida as conexões do pool: o logout é confirmado e o login entra na primeira tentativa, sem repetir.
+    expect(warned, 'logout confirmado pelo provedor logo depois do reinício').toBe(0);
+    expect(attempts.length, 'login na primeira tentativa logo depois do reinício').toBe(1);
     await context.close();
   });
 

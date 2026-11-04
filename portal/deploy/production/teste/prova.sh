@@ -32,6 +32,9 @@ criar_env() {
     -e 's|^PORTAL_BACKUP_KEEP_WEEKLY=.*|PORTAL_BACKUP_KEEP_WEEKLY=4|' \
     -e 's|^PORTAL_BACKUP_KEEP_MONTHLY=.*|PORTAL_BACKUP_KEEP_MONTHLY=3|' \
     "$PORTAL_PROD_ENV"
+  # A borda tem sub-rede fixa. A padrão fica dentro das faixas que o Docker distribui às redes sem sub-rede definida e
+  # colide quando o computador já tem muitas redes; o ensaio usa uma faixa fora delas.
+  grep -q '^PORTAL_BORDA_SUBNET=' "$PORTAL_PROD_ENV" || echo 'PORTAL_BORDA_SUBNET=10.251.200.0/24' >> "$PORTAL_PROD_ENV"
 }
 
 iniciar() {

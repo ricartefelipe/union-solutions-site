@@ -8,6 +8,8 @@ Resumo versionado da análise das imagens finais e das dependências. O relatór
 
 **Reavaliação de 02/11/2026** (Trivy 0.70.0, altos e críticos, imagens reconstruídas). O item 2 saiu com a imagem SeaweedFS 4.52, fixada por digest. Continuam aceitos os itens 1, 3, 4, 5 e 6, no mesmo prazo de **01/12/2026**, que não foi prorrogado. Keycloak 26.8.1 segue como última versão publicada, sem imagem corrigida. Foi medido em ambiente de teste que a Guava 33.7.2 no lugar da 33.6.0 elimina o item 3 sem impedir o `kc.sh build`, mas ela não foi aplicada: trocar um JAR dentro da imagem não tem suporte do Keycloak, e o achado não tem caminho de exploração nesta configuração.
 
+**Reavaliação de 03/11/2026** (Trivy 0.70.0, base do dia). Nenhum dos itens aceitos ganhou correção: o Keycloak 26.8.1 já está no digest mais recente (`26.8.1-2`, de 31/10/2026) e não há versão mais nova; a Guava 33.7.2 existe, mas nenhuma versão do Keycloak a inclui; `sqlite-libs` e OpenJDK seguem sem pacote corrigido na UBI 9; `go-jose/v3` segue em 3.0.5, a última da linha v3. PostgreSQL do portal (sem `gosu`), ClamAV 1.5 e SeaweedFS 4.52: sem achados altos ou críticos.
+
 **Critério de reavaliação:** repetir a análise antes de cada implantação e sempre que uma imagem base mudar, ou a cada 30 dias enquanto o portal estiver no ar. Um item volta a exigir ação quando o projeto publicar versão corrigida, ou quando surgir caminho de exploração a partir de dados do cliente.
 
 | Ferramenta | Versão | Base de dados | Escopo |
