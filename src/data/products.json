@@ -3,6 +3,7 @@
     "slug": "hookguard",
     "name": "HookGuard",
     "area": "Integrações por webhook",
+    "need": "integracoes",
     "purpose": "Recebe webhooks, entrega ao seu sistema com novas tentativas em caso de falha e permite reprocessar o que não chegou, com cada tentativa registrada.",
     "screens": [
       {
@@ -38,6 +39,7 @@
     ],
     "goodToKnow": "Um evento pode chegar mais de uma vez ao destino, por isso o seu sistema precisa tratar repetições. O HookGuard não promete entrega exatamente uma vez.",
     "availability": "Disponível para demonstração. O piloto e a forma de implantação, gerenciada ou no seu ambiente, são definidos na proposta.",
+    "ctaLabel": "Conversar sobre um piloto",
     "conversationTopics": [
       "Quais provedores enviam eventos e qual sistema os recebe",
       "Como as falhas de entrega são tratadas hoje",
@@ -46,12 +48,17 @@
     "liveDemo": {
       "url": "https://demo-hookguard.unionsolutions.tech/",
       "note": "Entre com o seu e-mail, crie um projeto e envie webhooks de teste. Os dados são fictícios e apagados todos os dias."
+    },
+    "seo": {
+      "title": "HookGuard: receber webhooks com novas tentativas e reprocessamento",
+      "description": "Gateway de webhooks que recebe eventos, entrega ao seu sistema com novas tentativas em caso de falha e permite reprocessar o que não chegou. Demonstração online e piloto sob proposta."
     }
   },
   {
     "slug": "filenorm",
     "name": "FileNorm",
     "area": "Arquivos financeiros",
+    "need": "financeiro",
     "purpose": "Normaliza arquivos OFX, CNAB 240 de retorno, CSV bancário e PDF com texto em eventos padronizados, indicando o que não pôde ser convertido.",
     "screens": [
       {
@@ -87,6 +94,7 @@
     ],
     "goodToKnow": "O FileNorm não faz conciliação nem integração pronta com ERP, e não lê PDF escaneado. Os formatos da sua operação são confirmados com arquivos reais.",
     "availability": "Disponível para demonstração e piloto com arquivos da sua operação, em instalação dedicada.",
+    "ctaLabel": "Solicitar avaliação de piloto",
     "conversationTopics": [
       "Quais bancos e formatos de arquivo sua operação utiliza",
       "Para onde os dados normalizados precisam seguir",
@@ -95,12 +103,17 @@
     "liveDemo": {
       "url": "https://demo-filenorm.unionsolutions.tech/",
       "note": "Entre com o seu e-mail, gere uma chave e envie um arquivo de teste (até 2 MB) para ver os eventos padronizados. Não envie dados reais: tudo é apagado todos os dias."
+    },
+    "seo": {
+      "title": "FileNorm: normalizar OFX, CNAB 240, CSV bancário e PDF em eventos padronizados",
+      "description": "Converte extratos e retornos bancários em OFX, CNAB 240, CSV e PDF com texto em eventos padronizados, indicando o que não pôde ser convertido. Demonstração online e piloto com arquivos da sua operação."
     }
   },
   {
     "slug": "assinaflow",
     "name": "AssinaFlow",
     "area": "Assinaturas e cobrança",
+    "need": "financeiro",
     "purpose": "Controla o ciclo de assinaturas recorrentes, da contratação ao cancelamento, e aciona o provedor de pagamento para a cobrança.",
     "screens": [
       {
@@ -136,6 +149,7 @@
     ],
     "goodToKnow": "Hoje a cobrança funciona com simulador e com Stripe em ambiente de teste. A cobrança real ainda não está liberada.",
     "availability": "Disponível para demonstração e piloto com dados de teste.",
+    "ctaLabel": "Avaliar piloto técnico",
     "conversationTopics": [
       "Como suas assinaturas e cobranças funcionam ou devem funcionar",
       "Qual provedor de pagamento sua empresa utiliza ou pretende utilizar",
@@ -144,12 +158,17 @@
     "liveDemo": {
       "url": "https://demo-assinaflow.unionsolutions.tech/",
       "note": "Crie uma conta com um e-mail de teste, contrate um plano, troque de plano e cancele. Os pagamentos são simulados, nada é cobrado, nenhum e-mail é enviado e tudo é apagado todos os dias."
+    },
+    "seo": {
+      "title": "AssinaFlow: gestão de assinaturas recorrentes em Java e Spring",
+      "description": "Controla o ciclo de assinaturas recorrentes, da contratação ao cancelamento, e aciona o provedor de pagamento. Cobrança em ambiente de teste. Demonstração online e piloto com dados de teste."
     }
   },
   {
     "slug": "archlens",
     "name": "ArchLens",
     "area": "Diagnóstico de arquitetura",
+    "need": "java",
     "purpose": "Apoia o diagnóstico de aplicações Java legadas: analisa o projeto no seu ambiente, organiza evidências e ajuda a montar um roteiro de modernização.",
     "screens": [
       {
@@ -167,7 +186,7 @@
       "Achados com evidências e revisão de um arquiteto",
       "Roteiro de modernização e relatório"
     ],
-    "onHome": false,
+    "onHome": true,
     "situations": [
       "Uma aplicação Java precisa evoluir e pouca gente ainda conhece o sistema.",
       "O código-fonte não pode sair do ambiente da empresa para ser analisado.",
@@ -189,6 +208,7 @@
     ],
     "goodToKnow": "A análise usa regras e heurísticas, por isso os resultados passam por revisão humana. O ArchLens apoia um diagnóstico assistido e não substitui o trabalho de arquitetura.",
     "availability": "Disponível para demonstração e como apoio a um diagnóstico assistido.",
+    "ctaLabel": "Solicitar diagnóstico de arquitetura",
     "conversationTopics": [
       "Quais aplicações Java precisam ser analisadas",
       "Que decisão de arquitetura ou evolução está em pauta",
@@ -213,12 +233,17 @@
           "url": "https://demo-archlens.unionsolutions.tech/amostra/analysis.json"
         }
       ]
+    },
+    "seo": {
+      "title": "ArchLens: diagnóstico de arquitetura de aplicações Java legadas",
+      "description": "Analisa aplicações Java no seu ambiente, organiza evidências e achados e ajuda a montar o roteiro de modernização, com revisão humana. Demonstração online com projeto de exemplo."
     }
   },
   {
     "slug": "fluxe-b2b-suite",
     "name": "Fluxe B2B Suite",
     "area": "Operações B2B",
+    "need": "comercio",
     "purpose": "Reúne loja, portal de operações e console de administração em uma suíte para empresas que vendem a outras empresas, com dados separados por cliente.",
     "screens": [
       {
@@ -258,6 +283,7 @@
     ],
     "goodToKnow": "A suíte depende de serviços próprios de identidade, pedidos e pagamentos. O uso em produção e a integração com provedores dependem da implantação e da configuração.",
     "availability": "Disponível para demonstração. A implantação é avaliada para o seu ambiente.",
+    "ctaLabel": "Avaliar implantação",
     "conversationTopics": [
       "Como sua operação B2B está organizada",
       "Quais partes da suíte fazem sentido para o seu caso",
@@ -286,12 +312,17 @@
           "url": "https://demo-fluxe.unionsolutions.tech/admin/"
         }
       ]
+    },
+    "seo": {
+      "title": "Fluxe B2B Suite: loja, operação e administração para vendas entre empresas",
+      "description": "Suíte B2B com loja, portal de operações e console de administração, com dados separados por cliente. Demonstração online com empresa fictícia e implantação avaliada para o seu ambiente."
     }
   },
   {
     "slug": "comercialcloud",
     "name": "ComercialCloud",
     "area": "Operações comerciais",
+    "need": "comercio",
     "purpose": "Sistema web de frente de caixa (PDV) e retaguarda para pequenos e médios comércios, com dados separados por cliente.",
     "screens": [
       {
@@ -309,7 +340,7 @@
       "Retaguarda: produtos, estoque, clientes, vendas, caixa e financeiro",
       "Perfis de acesso para administração, gerência e caixa"
     ],
-    "onHome": true,
+    "onHome": false,
     "situations": [
       "Frente de caixa e retaguarda estão desconectadas e exigem repasses manuais.",
       "O estoque não acompanha as vendas sem conferência.",
@@ -331,6 +362,7 @@
     ],
     "goodToKnow": "A emissão de documento fiscal ainda não está homologada e não faz parte desta oferta. As exigências do seu segmento são avaliadas na conversa.",
     "availability": "Disponível para demonstração e avaliação de piloto.",
+    "ctaLabel": "Avaliar piloto",
     "conversationTopics": [
       "Como funciona a rotina do seu caixa e da sua retaguarda",
       "Quais regras e exigências do seu segmento precisam ser consideradas",
@@ -349,12 +381,17 @@
           "value": "union-demo"
         }
       ]
+    },
+    "seo": {
+      "title": "ComercialCloud: PDV web e retaguarda para pequenos e médios comércios",
+      "description": "Frente de caixa (PDV) e retaguarda na web para comércios com venda no balcão, com dados separados por cliente. Emissão fiscal fora da oferta atual. Demonstração online e avaliação de piloto."
     }
   },
   {
     "slug": "skillforge",
     "name": "Skillforge",
     "area": "Ensino a distância",
+    "need": "ensino",
     "purpose": "Reúne cursos, turmas, aulas, práticas, provas e certificado numa escola a distância, com acesso separado para aluno, docente e administração.",
     "screens": [
       {
@@ -394,6 +431,7 @@
     ],
     "goodToKnow": "O acesso usa o Keycloak, configurado na implantação. Cobrança de mensalidades e integração com sistemas acadêmicos que você já usa não fazem parte do que está verificado e entram na conversa sobre o seu caso.",
     "availability": "Disponível para demonstração e avaliação de piloto com dados de teste.",
+    "ctaLabel": "Avaliar piloto",
     "conversationTopics": [
       "Como seus cursos, turmas e docentes estão organizados hoje",
       "Quais regras de nota, presença e certificado a sua instituição usa",
@@ -412,12 +450,17 @@
           "value": "union-demo"
         }
       ]
+    },
+    "seo": {
+      "title": "Skillforge: plataforma de ensino a distância com cursos, turmas, provas e certificado",
+      "description": "Escola a distância com cursos, turmas, aulas, práticas, provas e certificado, e acesso separado para aluno, docente e administração. Demonstração online e piloto com dados de teste."
     }
   },
   {
     "slug": "cards-api",
     "name": "Cards API",
     "area": "Contas e cartões",
+    "need": "financeiro",
     "purpose": "API para gestão de contas, clientes e cartões físicos e virtuais, da emissão à entrega, validação, reemissão e cancelamento.",
     "screens": [
       {
@@ -457,6 +500,7 @@
     ],
     "goodToKnow": "Em produção, a API se recusa a iniciar sem uma processadora e uma transportadora reais contratadas. Os simuladores existem só para desenvolvimento, testes e a demonstração, e nenhum cartão real é emitido por eles. A ligação com o seu parceiro é avaliada na conversa.",
     "availability": "Disponível para demonstração com simuladores e para avaliação técnica.",
+    "ctaLabel": "Solicitar avaliação técnica",
     "conversationTopics": [
       "Qual processadora e qual transportadora a sua operação usa ou pretende usar",
       "Como a emissão, a entrega e a validação funcionam hoje",
@@ -475,6 +519,10 @@
           "value": "union-demo"
         }
       ]
+    },
+    "seo": {
+      "title": "Cards API: emissão e gestão de cartões físicos e virtuais por API",
+      "description": "API para contas, clientes e cartões físicos e virtuais, da emissão à entrega, validação, reemissão e cancelamento, com transportadora e processadora ligadas por webhook. Demonstração com simuladores."
     }
   }
 ]

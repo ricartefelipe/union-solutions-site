@@ -13,15 +13,18 @@ interface Props {
   title?: string;
   description: string;
   noindex?: boolean;
+  /** Imagem de compartilhamento própria da página; sem ela, vale a imagem da marca. */
+  image?: { src: string; width: number; height: number; alt: string };
 }
 
-const { title, description, noindex = false } = Astro.props;
+const { title, description, noindex = false, image } = Astro.props;
 const fullTitle = title ? `${title} | ${site.name}` : `${site.name}: software para operar, integrar e evoluir seu negócio`;
 
 // Tudo o que exige URL absoluta só é publicado com domínio configurado.
 const origin = Astro.site;
 const canonical = origin ? new URL(Astro.url.pathname, origin).href : null;
-const socialImage = origin ? new URL(site.socialImage, origin).href : null;
+const social = image ?? { src: site.socialImage, width: 1200, height: 630, alt: `Logo da ${site.name}` };
+const socialImage = origin ? new URL(social.src, origin).href : null;
 const structuredData = origin
   ? {
       '@context': 'https://schema.org',
@@ -59,9 +62,9 @@ const structuredData = origin
     <meta property="og:description" content={description} />
     {canonical && !noindex && <meta property="og:url" content={canonical} />}
     {socialImage && <meta property="og:image" content={socialImage} />}
-    {socialImage && <meta property="og:image:width" content="1200" />}
-    {socialImage && <meta property="og:image:height" content="630" />}
-    {socialImage && <meta property="og:image:alt" content={`Logo da ${site.name}`} />}
+    {socialImage && <meta property="og:image:width" content={String(social.width)} />}
+    {socialImage && <meta property="og:image:height" content={String(social.height)} />}
+    {socialImage && <meta property="og:image:alt" content={social.alt} />}
     <meta name="twitter:card" content={socialImage ? 'summary_large_image' : 'summary'} />
     {structuredData && <script is:inline type="application/ld+json" set:html={JSON.stringify(structuredData).replace(/</g, '\\u003c')} />}
 
