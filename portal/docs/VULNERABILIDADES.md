@@ -14,6 +14,8 @@ Resumo versionado da análise das imagens finais e das dependências. O relatór
 
 **Correção de 04/11/2026, Keycloak** (Trivy 0.70.0, base do dia). O item 3 saiu da imagem do Keycloak: `deploy/keycloak/Dockerfile` troca a Guava 33.6.0-jre embutida pela 33.7.2-jre, a versão corrigida, porque o Keycloak 26.8.1 continua sendo a última versão publicada (digest `26.8.1-2`) e nenhuma versão dele traz a correção. A troca não tem suporte do fabricante; a avaliação de compatibilidade e o ensaio estão no item 3. A exceção do CVE-2026-102554 saiu de `.trivyignore.yaml`, e a análise da CI volta a reprovar se ele reaparecer. O portal em produção recebe a troca na próxima implantação. Com as duas correções do dia, continuam aceitos só os itens 4, 5 e 6, no mesmo prazo de **01/12/2026**.
 
+**Correção de 09/11/2026, proxy** (análise de imagens da CI, base do dia). Achado novo e alto no binário do Caddy, CVE-2026-78661 em `golang.org/x/net` 0.60.0 (negação de serviço em `x/net/html`), com correção na 0.62.0. O `go.mod` do proxy passa a fixar `golang.org/x/net` 0.62.0, e os demais módulos `golang.org/x` sobem junto para as versões que ela exige (`crypto` 0.58.0, `sync` 0.24.0, `sys` 0.49.0, `term` 0.47.0, `text` 0.43.0). Caddy 2.11.7 e Go 1.27 inalterados; compilação conferida com a mesma imagem Go do Dockerfile. Continuam aceitos os itens 4, 5 e 6, no prazo de **01/12/2026**.
+
 **Critério de reavaliação:** repetir a análise antes de cada implantação e sempre que uma imagem base mudar, ou a cada 30 dias enquanto o portal estiver no ar. Um item volta a exigir ação quando o projeto publicar versão corrigida, ou quando surgir caminho de exploração a partir de dados do cliente.
 
 | Ferramenta | Versão | Base de dados | Escopo |
