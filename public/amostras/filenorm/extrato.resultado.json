@@ -1,0 +1,61 @@
+{
+  "gerado_com": "FileNorm 0.3.3, em 09/11/2026, com dados fictícios",
+  "job": {
+    "jobId": "81d80a4e-085f-4c2b-a1e6-c5e6dd0522b7",
+    "status": "succeeded",
+    "format": "ofx",
+    "preset": null,
+    "originalFilename": "sample.ofx",
+    "byteSize": 625,
+    "pages": null,
+    "creditsCharged": 1,
+    "attempts": 1,
+    "eventCount": 2,
+    "rejectedCount": 0,
+    "skippedCount": 0,
+    "warningCount": 0,
+    "balanceCheck": {
+      "status": "unavailable",
+      "source": "ofx_ledgerbal",
+      "reason": "balances_not_found",
+      "openingBalance": null,
+      "closingBalance": null,
+      "computedClosingBalance": null,
+      "difference": null
+    },
+    "errorCode": null,
+    "errorMessage": null,
+    "createdAt": "2026-11-09T21:28:48.973384Z",
+    "startedAt": "2026-11-09T21:28:49.609339Z",
+    "finishedAt": "2026-11-09T21:28:49.705190Z"
+  },
+  "events": [
+    {
+      "externalId": "20250710001",
+      "idempotencyKey": "6eda8c3375f3512e27a303fb55bc27f7ebf874b47461bc1baa154d465c6cd37c",
+      "postedAt": "2025-07-10",
+      "amount": "42.50",
+      "currency": "BRL",
+      "direction": "debit",
+      "counterparty": "Padaria Central",
+      "description": "Compra debito",
+      "rawRef": "<TRNTYPE>DEBIT\n<DTPOSTED>20250710\n<TRNAMT>-42.50\n<FITID>20250710001\n<NAME>Padaria Central\n<MEMO>Compra debito",
+      "confidence": 0.95,
+      "ordinal": 0
+    },
+    {
+      "externalId": "20250715001",
+      "idempotencyKey": "abd9da4f58c3a65fc491da287ca37142ba0be3fc3ed4746405eda01be603c84c",
+      "postedAt": "2025-07-15",
+      "amount": "1500.00",
+      "currency": "BRL",
+      "direction": "credit",
+      "counterparty": "Empresa XYZ",
+      "description": "Salario",
+      "rawRef": "<TRNTYPE>CREDIT\n<DTPOSTED>20250715\n<TRNAMT>1500.00\n<FITID>20250715001\n<NAME>Empresa XYZ\n<MEMO>Salario",
+      "confidence": 0.95,
+      "ordinal": 1
+    }
+  ],
+  "issues": []
+}
