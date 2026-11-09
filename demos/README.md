@@ -15,7 +15,7 @@ Cada pasta (`demos/<produto>/`) é uma demonstração pública de um produto da 
 | Produto | Endereço | Como funciona | Memória medida | Limites |
 | --- | --- | --- | --- | --- |
 | HookGuard | `demo-hookguard.unionsolutions.tech` | Visitante entra com o próprio e-mail (link por SMTP), cria projeto e envia webhooks; entregas reais a destinos HTTPS públicos | cerca de 470 MB | Corpo de 256 KB, 60 eventos/min por projeto, 5 000 eventos/mês por conta |
-| FileNorm | `demo-filenorm.unionsolutions.tech` | Visitante entra com o próprio e-mail, gera uma chave de API e envia OFX, CNAB, CSV ou PDF; recebe eventos padronizados | cerca de 460 MB | Arquivo de 2 MB, 5 000 registros, 10 páginas de PDF |
+| FileNorm | `demo-filenorm.unionsolutions.tech` | Visitante informa o próprio e-mail e o código público da demonstração (`FILENORM_DEMO_ACCESS_CODE`, publicado no site) e o link de entrada aparece na tela; sem o código, vai por e-mail. Gera uma chave de API e envia OFX, CNAB, CSV ou PDF; recebe eventos padronizados | cerca de 460 MB | Arquivo de 2 MB, 5 000 registros, 10 páginas de PDF |
 | ComercialCloud | `demo-comercialcloud.unionsolutions.tech` | Modo de demonstração do produto: a conta de demonstração (`admin@demo.com`, senha publicada no site) entra na loja fictícia com produtos, clientes e vendas da carga inicial; a API não responde sem a sessão dela. Sem Keycloak e com o cadastro público fechado no proxy | cerca de 440 MB | Imagens de 64 MB em memória; sem cobrança, fiscal nem e-mail reais (modos sandbox) |
 
 | ArchLens | `demo-archlens.unionsolutions.tech` | Conta pública `architect`: cria uma avaliação, importa o arquivo de exemplo (`/amostra/analysis.json`, gerado pelo analisador do próprio produto) e percorre inventário, achados, questionário, dimensões e roteiro; sem Keycloak | cerca de 330 MB | Contas compartilhadas; só a `architect` é pública; corpo de 1 MB; sem LLM e sem saída para a internet |
@@ -43,13 +43,13 @@ Na versão v1.5.7 o dono de uma conta `admin` lista só o próprio locatário, a
 | ComercialCloud | v1.5.3, com a API só para a sessão da conta de demonstração e o Node 22 no front |
 | ArchLens | v1.0.1, com a API fechada ao público e a ponte `/bff/v1` |
 | Skillforge | v0.16.2, com a interface pública só depois do ajuste das contas e do cliente do realm, e o primeiro login com o servidor frio corrigido |
-| FileNorm | v0.3.2 |
+| FileNorm | v0.3.3 |
 | SpringMind | springmind v0.4.1, reactmind v0.2.0 e mind-shared v2.2.1 |
 | VueMind | vuemind-api v0.4.1, vuemind v0.2.0 e mind-shared v2.2.1 |
 | cards-api | v1.4.6, com o console público só depois do ajuste da conta |
 | AssinaFlow | v1.0.11, com o RabbitMQ 4.4.0 na imagem do produto e as rotas públicas respondendo 4xx, e não 500, a corpo vazio ou JSON inválido |
 | order-service | v2.0.2 |
-| HookGuard | v1.0.7, com a API sem root |
+| HookGuard | v1.0.8, com a API sem root |
 
 Achados HIGH e CRITICAL com correção disponível (Trivy 0.70.0, `--ignore-unfixed`), antes e depois:
 
@@ -80,6 +80,8 @@ Achados HIGH e CRITICAL com correção disponível (Trivy 0.70.0, `--ignore-unfi
 Reanalisadas em 04/11/2026, depois da rodada final, as 29 imagens construídas para as demonstrações (as dez pilhas acima, menos o HookGuard, que não mudou) não têm nenhum achado HIGH ou CRITICAL, com ou sem correção disponível. O PostgreSQL do AssinaFlow vem da imagem do próprio produto: mantém o `gosu`, recompilado com Go 1.27.3, sem achados.
 
 Rodada final na VPS em 04/11/2026, conferida pelos endereços públicos: ArchLens com `/api/v1/*` respondendo 404, ponte sem sessão e cabeçalhos de identidade forjados respondendo 401, e login, criação e leitura de avaliação pela interface; ComercialCloud com clientes, usuários, auditoria e configurações respondendo 401 sem sessão, senha errada e token forjado recusados, e login pela interface com a conta de demonstração; VueMind e SpringMind com PIX imediato e agendado (executado depois da data) com end-to-end, data no passado e além de 365 dias recusadas, chave CNPJ com dígito inválido recusada e sem rolagem horizontal em 390 px; Fluxe com pedido até `PAID` e um único pagamento `SETTLED`, administração vendo 1 locatário e as APIs anunciando 1.4.2, 1.4.8 e 2.0.7; AssinaFlow, cards, FileNorm, Skillforge (três papéis) e Orders (pedido idempotente) no fluxo básico.
+
+Atualização de 09/11/2026 na VPS: FileNorm v0.3.3 e HookGuard v1.0.8 (correção do go-jose em ambos), com as imagens construídas numa máquina de trabalho, carregadas na VPS e aproveitadas por `up -d` sem `--build`, porque a VPS tinha 1,5 GB de RAM livre. A demo do FileNorm passou a mostrar o link de entrada na tela para quem informa o código público (`FILENORM_DEMO_ACCESS_CODE`); conferido pelo endereço público: sem código, a resposta só confirma o envio por e-mail; com código, devolve o link, e o link cria a sessão. O HookGuard continua só por e-mail: a chave `exposeMagicLink` dele revela o link a qualquer um, sem código, e a demo entrega webhooks a destinos públicos.
 
 Última atualização na VPS em 04/11/2026, com as versões da tabela acima, conferida pelos endereços públicos, uma pilha por vez: HookGuard e FileNorm com as rotas de dados respondendo 401 sem credencial; ArchLens com `/api/v1/*` em 404, ponte sem sessão em 401 e login e avaliação criada e lida pela tela; ComercialCloud com clientes, usuários, auditoria e configurações em 401 sem sessão, senha errada e token forjado recusados e cliente criado e lido com a conta pública; AssinaFlow com cadastro, assinatura, troca de plano e cancelamento, e outro usuário recebendo 403; Orders com pedido idempotente; Fluxe com pedido até `PAID` e um único pagamento `SETTLED`, administração vendo uma empresa e as APIs anunciando 1.4.3, 1.4.9 e 2.0.8; VueMind e SpringMind com PIX imediato, agendado executado depois da data, datas fora da janela e CNPJ inválido recusados, e sem rolagem horizontal em 390 px; cards e Skillforge mostrando "indisponível" durante o `reiniciar-dados`; o cards aceita o login na primeira tentativa assim que abre, e o Skillforge também, a não ser no caso da pendência abaixo. As imagens novas não têm achado HIGH ou CRITICAL com correção; o proxy das demonstrações tem 1 HIGH sem correção publicada (`go-jose/v3` 3.0.5, no módulo de PKI interna do Caddy, que o Caddyfile não habilita).
 
