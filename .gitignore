@@ -54,5 +54,5 @@ demos/proxy/.env
 demos/*/.env
 demos/*/src/
 
-# Permissões pessoais do Claude Code, fora do repositório.
+# Permissões pessoais do editor, fora do repositório.
 .claude/settings.local.json
