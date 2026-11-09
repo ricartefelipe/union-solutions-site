@@ -18,9 +18,33 @@ const { product } = Astro.props;
 const contactUrl = productContactUrl(product.slug);
 const [mainScreen, ...moreScreens] = product.screens;
 const others = products.filter((item) => item.slug !== product.slug);
+const origin = Astro.site?.href ?? '/';
+const pageUrl = new URL(`/produtos/${product.slug}/`, origin).href;
+const structuredData = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Produtos', item: new URL('/produtos/', origin).href },
+      { '@type': 'ListItem', position: 2, name: product.name, item: pageUrl },
+    ],
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: product.name,
+    description: product.purpose,
+    applicationCategory: 'BusinessApplication',
+    operatingSystem: 'Web',
+    url: pageUrl,
+    image: new URL(productSocialImage(product).src, origin).href,
+    ...(product.liveDemo ? { installUrl: product.liveDemo.url } : {}),
+    provider: { '@type': 'Organization', name: 'Union Solutions', url: origin },
+  },
+];
 ---
 
-<BaseLayout title={product.seo.title} description={product.seo.description} image={productSocialImage(product)}>
+<BaseLayout title={product.seo.title} description={product.seo.description} image={productSocialImage(product)} structuredData={structuredData}>
   <PageHero
     title={product.name}
     intro={product.purpose}
@@ -103,7 +127,17 @@ const others = products.filter((item) => item.slug !== product.slug);
               </div>
               <div class="sample__out">
                 <span class="eyebrow">Saída</span>
-                <div class="sample__table" tabindex="0">
+                {item.rows && (
+                  <dl class="sample__rows">
+                    {item.rows.map((row) => (
+                      <div>
+                        <dt>{row.label}</dt>
+                        <dd>{row.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
+                {item.events && <div class="sample__table" tabindex="0">
                   <table>
                     <caption class="sr-only">Eventos normalizados de {item.input.label}</caption>
                     <thead>
@@ -121,7 +155,7 @@ const others = products.filter((item) => item.slug !== product.slug);
                       ))}
                     </tbody>
                   </table>
-                </div>
+                </div>}
                 <ul class="node-list sample__findings">
                   {item.findings.map((finding) => <li>{finding}</li>)}
                 </ul>
@@ -328,6 +362,43 @@ const others = products.filter((item) => item.slug !== product.slug);
     font-size: var(--text-sm);
     line-height: 1.6;
     white-space: pre;
+  }
+
+  .sample__rows {
+    display: grid;
+    gap: 0;
+    margin-bottom: var(--space-3);
+    border: 1px solid var(--card-line);
+    border-radius: var(--radius-card);
+    background: var(--mist);
+    font-size: var(--text-sm);
+  }
+
+  /* Em telas estreitas, rótulo em cima e valor embaixo; em telas largas, lado a lado. */
+  .sample__rows > div {
+    display: grid;
+    gap: var(--space-1) var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--card-line);
+  }
+
+  @media (min-width: 48rem) {
+    .sample__rows > div {
+      grid-template-columns: minmax(7rem, 11rem) minmax(0, 1fr);
+    }
+  }
+
+  .sample__rows > div:last-child {
+    border-bottom: 0;
+  }
+
+  .sample__rows dt {
+    color: var(--ink-soft);
+    font-weight: 600;
+  }
+
+  .sample__rows dd {
+    overflow-wrap: anywhere;
   }
 
   .sample__table table {

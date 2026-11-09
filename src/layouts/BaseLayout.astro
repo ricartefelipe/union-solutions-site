@@ -15,9 +15,11 @@ interface Props {
   noindex?: boolean;
   /** Imagem de compartilhamento própria da página; sem ela, vale a imagem da marca. */
   image?: { src: string; width: number; height: number; alt: string };
+  /** Dados estruturados próprios da página (schema.org), publicados além dos da organização. */
+  structuredData?: Record<string, unknown>[];
 }
 
-const { title, description, noindex = false, image } = Astro.props;
+const { title, description, noindex = false, image, structuredData: pageData = [] } = Astro.props;
 const fullTitle = title ? `${title} | ${site.name}` : `${site.name}: software para operar, integrar e evoluir seu negócio`;
 
 // Tudo o que exige URL absoluta só é publicado com domínio configurado.
@@ -67,6 +69,7 @@ const structuredData = origin
     {socialImage && <meta property="og:image:alt" content={social.alt} />}
     <meta name="twitter:card" content={socialImage ? 'summary_large_image' : 'summary'} />
     {structuredData && <script is:inline type="application/ld+json" set:html={JSON.stringify(structuredData).replace(/</g, '\\u003c')} />}
+    {origin && pageData.map((data) => <script is:inline type="application/ld+json" set:html={JSON.stringify(data).replace(/</g, '\\u003c')} />)}
 
     {/* Marca a presença de JavaScript para o menu móvel: sem ele, a navegação fica sempre visível. */}
     <script is:inline>document.documentElement.classList.add('js');</script>
