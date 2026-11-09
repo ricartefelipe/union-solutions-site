@@ -18,9 +18,11 @@ const { product } = Astro.props;
 const contactUrl = productContactUrl(product.slug);
 const [mainScreen, ...moreScreens] = product.screens;
 const others = products.filter((item) => item.slug !== product.slug);
-const origin = Astro.site?.href ?? '/';
-const pageUrl = new URL(`/produtos/${product.slug}/`, origin).href;
-const structuredData = [
+// Sem domínio configurado não há URL absoluta, e os dados estruturados ficam de fora, como no layout.
+const origin = Astro.site?.href;
+const pageUrl = origin ? new URL(`/produtos/${product.slug}/`, origin).href : undefined;
+const structuredData = origin
+  ? [
   {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -41,7 +43,8 @@ const structuredData = [
     ...(product.liveDemo ? { installUrl: product.liveDemo.url } : {}),
     provider: { '@type': 'Organization', name: 'Union Solutions', url: origin },
   },
-];
+]
+  : [];
 ---
 
 <BaseLayout title={product.seo.title} description={product.seo.description} image={productSocialImage(product)} structuredData={structuredData}>
