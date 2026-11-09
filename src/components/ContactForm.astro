@@ -1,9 +1,9 @@
 ---
 import { contactForm } from '../config/site';
-import { interests, productOptions } from '../lib/contact-options';
+import { interests, messageGuidance, productOptions } from '../lib/contact-options';
 ---
 
-<form class="contact-form" data-contact-form data-endpoint={contactForm.endpoint ?? undefined}>
+<form class="contact-form" data-contact-form data-endpoint={contactForm.endpoint ?? undefined} data-guidance={JSON.stringify(messageGuidance)}>
   <noscript>
     <p class="contact-form__noscript">Este formulário precisa de JavaScript para funcionar. Ative o JavaScript no navegador para enviar sua mensagem.</p>
   </noscript>
@@ -53,8 +53,9 @@ import { interests, productOptions } from '../lib/contact-options';
     </div>
 
     <div class="field field--full">
-      <label for="mensagem">Descreva sua necessidade</label>
-      <textarea id="mensagem" name="mensagem" rows="5" required minlength="10" maxlength="4000" aria-describedby="mensagem-ajuda mensagem-erro"></textarea>
+      <label for="mensagem" data-message-label>Descreva sua necessidade</label>
+      <textarea id="mensagem" name="mensagem" rows="5" required minlength="10" maxlength="4000" aria-describedby="mensagem-contexto mensagem-ajuda mensagem-erro"></textarea>
+      <p class="field__help" id="mensagem-contexto" data-message-hint hidden></p>
       <p class="field__help" id="mensagem-ajuda">Não envie senhas, credenciais ou dados confidenciais por este formulário. Veja a <a href="/privacidade/">política de privacidade</a>.</p>
       <p class="field__error" id="mensagem-erro" hidden></p>
     </div>
@@ -92,6 +93,10 @@ import { interests, productOptions } from '../lib/contact-options';
     const interest = form.elements.namedItem('interesse') as HTMLSelectElement;
     const product = form.elements.namedItem('produto') as HTMLSelectElement;
     const productField = form.querySelector<HTMLElement>('[data-product-field]')!;
+    const messageLabel = form.querySelector<HTMLElement>('[data-message-label]')!;
+    const messageHint = form.querySelector<HTMLElement>('[data-message-hint]')!;
+    const defaultMessageLabel = messageLabel.textContent ?? '';
+    const guidance: Record<string, { label: string; hint: string }> = JSON.parse(form.dataset.guidance ?? '{}');
     const status = form.querySelector<HTMLElement>('[data-status]')!;
     const submit = form.querySelector<HTMLButtonElement>('[data-submit]')!;
     const idleLabel = submit.textContent ?? '';
@@ -115,7 +120,24 @@ import { interests, productOptions } from '../lib/contact-options';
         product.value = '';
         setFieldError(product, '');
       }
+      syncMessageGuidance();
     };
+
+    // O título e a orientação do campo de mensagem acompanham o interesse e o produto escolhidos.
+    function syncMessageGuidance() {
+      const entry = guidance[interest.value];
+      if (!entry) {
+        messageLabel.textContent = defaultMessageLabel;
+        messageHint.hidden = true;
+        messageHint.textContent = '';
+        return;
+      }
+      const chosen = product.selectedOptions[0];
+      const productName = chosen && chosen.value && chosen.value !== 'ainda-nao-sei' ? `o ${chosen.textContent?.trim()}` : 'o produto';
+      messageLabel.textContent = entry.label;
+      messageHint.textContent = entry.hint.replace('{produto}', productName);
+      messageHint.hidden = false;
+    }
 
     // As opções do formulário são a lista de valores conhecidos.
     const knownValues = (select: HTMLSelectElement) => Array.from(select.options, (option) => option.value).filter(Boolean);
@@ -131,6 +153,7 @@ import { interests, productOptions } from '../lib/contact-options';
       context.hidden = false;
     }
     interest.addEventListener('change', syncProductField);
+    product.addEventListener('change', syncMessageGuidance);
 
     function errorFor(field: Field): string {
       const validity = field.validity;
