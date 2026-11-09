@@ -48,7 +48,10 @@ services:
       HOOKGUARD_APP_BASE_URL: https://${DEMO_HOST:?}
       HOOKGUARD_API_BASE_URL: https://${DEMO_HOST:?}
       HOOKGUARD_DELIVERY_ALLOW_HTTP: "false"
-      HOOKGUARD_EXPOSE_MAGIC_LINK: "false"
+      # Preparado para o código de acesso da demonstração, igual ao do FileNorm: fica desligado até o HookGuard
+      # publicar a versão com HOOKGUARD_DEMO_ACCESS_CODE. Só então ligue os dois no .env e publique o código no site.
+      HOOKGUARD_EXPOSE_MAGIC_LINK: ${HOOKGUARD_EXPOSE_MAGIC_LINK:-false}
+      HOOKGUARD_DEMO_ACCESS_CODE: ${HOOKGUARD_DEMO_ACCESS_CODE:-}
       HOOKGUARD_TRUST_FORWARDED_HOST: "false"
       HOOKGUARD_INGEST_RATE_LIMIT: ${HOOKGUARD_INGEST_RATE_LIMIT:-60}
       HOOKGUARD_MAX_BODY_BYTES: ${HOOKGUARD_MAX_BODY_BYTES:-262144}
