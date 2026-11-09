@@ -1,6 +1,6 @@
 # Mesma base, tema e realm nos dois ambientes.
-FROM quay.io/keycloak/keycloak:26.8.1@sha256:3f3c5f8e03c614774b4bd9173b88391fefa4153bfc010d8012d59ad825377332 AS base
-# O Keycloak 26.8.1 embute a Guava 33.6.0-jre (CVE-2026-102554, alta, corrigida na 33.7.2) e ainda não há versão
+FROM quay.io/keycloak/keycloak:26.8.2@sha256:723b1d6e254c0fc96d5cffec860c7e0744d6a3277822b865bb538cf891575e41 AS base
+# O Keycloak 26.8.2 embute a Guava 33.6.0-jre (CVE-2026-102554, alta, corrigida na 33.7.2) e ainda não há versão
 # dele com a correção. Só esse JAR muda: o novo vem do Maven Central, conferido pelo SHA-256, e o nome dele é acertado
 # nos índices do Quarkus (mesmo tamanho de texto). O `kc.sh build` da produção e o `start-dev` do local refazem o
 # índice a partir deles. Quando o Keycloak publicar versão com a Guava corrigida, o `rm` falha: tire este bloco.
