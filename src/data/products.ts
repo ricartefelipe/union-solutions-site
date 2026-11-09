@@ -34,6 +34,8 @@ export interface ProductScreen {
   id: string;
   /** Descreve o que a tela mostra, para quem não a vê. */
   alt: string;
+  /** Legenda curta, até 50 caracteres, exibida junto do nome do produto no topo da home. */
+  caption?: string;
 }
 
 /** Necessidades do comprador, na ordem do catálogo. Cada produto pertence a uma. */
@@ -59,6 +61,37 @@ export interface ProductSeo {
   /** Título da página, sem o nome da empresa, com os termos que o comprador usa para procurar. */
   title: string;
   description: string;
+}
+
+/** Evento normalizado exibido no exemplo, já formatado para leitura. */
+export interface SampleEvent {
+  date: string;
+  direction: 'Crédito' | 'Débito';
+  amount: string;
+  description: string;
+  /** Linha ou registro de origem no arquivo enviado. */
+  source: string;
+}
+
+/** Um arquivo de entrada e a saída real que o produto gerou para ele. */
+export interface SampleCase {
+  title: string;
+  /** O que o arquivo tem e o que vale observar na saída. */
+  text: string;
+  input: { label: string; href: string; preview: string[] };
+  output: { label: string; href: string };
+  events: SampleEvent[];
+  /** Resultado da prova de fechamento e dos registros não convertidos, uma frase por item. */
+  findings: string[];
+}
+
+/** Exemplo reproduzível: entrada fictícia, saída gerada pelo produto e como repetir na demonstração. */
+export interface ProductSample {
+  title: string;
+  intro: string;
+  cases: SampleCase[];
+  /** Versão do produto e data em que a saída foi gerada. */
+  provenance: string;
 }
 
 export interface FlowStep {
@@ -98,6 +131,8 @@ export interface Product {
   /** Demonstração pública no ar, quando existir: endereço HTTPS e o que o visitante encontra lá. */
   liveDemo?: { url: string; note: string; access?: DemoAccess[]; links?: { label: string; url: string }[] };
   seo: ProductSeo;
+  /** Exemplo com entrada e saída reais, quando o produto permite publicar um. Os arquivos ficam em public/amostras/<slug>/. */
+  sample?: ProductSample;
 }
 
 /** Os dados ficam em `products.json`: o catálogo é declarativo, e cada produto tem a mesma forma por definição. */

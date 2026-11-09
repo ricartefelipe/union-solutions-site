@@ -81,6 +81,60 @@ const others = products.filter((item) => item.slug !== product.slug);
     </div>
   </section>
 
+  {product.sample && (
+    <section class="section" id="exemplo" aria-labelledby="exemplo-titulo">
+      <div class="wrap">
+        <div class="section-head">
+          <h2 id="exemplo-titulo">{product.sample.title} <span class="title-soft">com dados fictícios.</span></h2>
+          {product.liveDemo && <a class="text-link" href={productDemoUrl(product.slug)}>Repetir na demonstração<Arrow /></a>}
+        </div>
+        <p class="lede muted sample-intro">{product.sample.intro}</p>
+        {product.sample.cases.map((item) => (
+          <article class="card sample">
+            <div class="sample__head">
+              <h3>{item.title}</h3>
+              <p class="muted">{item.text}</p>
+            </div>
+            <div class="sample__io">
+              <div class="sample__in">
+                <span class="eyebrow">Entrada</span>
+                <pre class="sample__code" tabindex="0"><code>{item.input.preview.join('\n')}</code></pre>
+                <a class="text-link" href={item.input.href} download>Baixar {item.input.label}</a>
+              </div>
+              <div class="sample__out">
+                <span class="eyebrow">Saída</span>
+                <div class="sample__table" tabindex="0">
+                  <table>
+                    <caption class="sr-only">Eventos normalizados de {item.input.label}</caption>
+                    <thead>
+                      <tr><th scope="col">Data</th><th scope="col">Tipo</th><th scope="col">Valor</th><th scope="col">Descrição</th><th scope="col">Origem</th></tr>
+                    </thead>
+                    <tbody>
+                      {item.events.map((event) => (
+                        <tr>
+                          <td>{event.date}</td>
+                          <td>{event.direction}</td>
+                          <td class="sample__amount">{event.amount}</td>
+                          <td>{event.description}</td>
+                          <td>{event.source}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <ul class="node-list sample__findings">
+                  {item.findings.map((finding) => <li>{finding}</li>)}
+                </ul>
+                <a class="text-link" href={item.output.href} download>Baixar {item.output.label}</a>
+              </div>
+            </div>
+          </article>
+        ))}
+        <p class="muted sample__provenance">{product.sample.provenance}</p>
+      </div>
+    </section>
+  )}
+
   {moreScreens.length > 0 && (
     <section class="section" aria-labelledby="na-demonstracao">
       <div class="wrap">
@@ -210,6 +264,111 @@ const others = products.filter((item) => item.slug !== product.slug);
 
   .know .small-title {
     margin-bottom: var(--space-2);
+  }
+
+  .sample-intro {
+    max-width: var(--measure);
+    margin-bottom: var(--space-6);
+  }
+
+  .sample {
+    padding: var(--space-5);
+  }
+
+  .sample + .sample {
+    margin-top: var(--space-5);
+  }
+
+  .sample__head h3 {
+    font-size: var(--text-xl);
+  }
+
+  .sample__head p {
+    max-width: var(--measure);
+    margin-top: var(--space-2);
+  }
+
+  .sample__io {
+    display: grid;
+    gap: var(--space-5);
+    margin-top: var(--space-5);
+  }
+
+  @media (min-width: 62rem) {
+    .sample__io {
+      grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    }
+  }
+
+  /* Colunas da grade não podem crescer além da página por causa do trecho e da tabela. */
+  .sample__in,
+  .sample__out {
+    min-width: 0;
+  }
+
+  .sample__in .eyebrow,
+  .sample__out .eyebrow {
+    display: block;
+    margin-bottom: var(--space-3);
+  }
+
+  /* Trechos do arquivo e tabela rolam na horizontal em vez de quebrar a página. */
+  .sample__code,
+  .sample__table {
+    overflow-x: auto;
+    margin-bottom: var(--space-3);
+    border: 1px solid var(--card-line);
+    border-radius: var(--radius-card);
+    background: var(--mist);
+  }
+
+  .sample__code {
+    padding: var(--space-4);
+    font-family: ui-monospace, 'Cascadia Mono', 'Fira Mono', Menlo, Consolas, monospace;
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    white-space: pre;
+  }
+
+  .sample__table table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-sm);
+  }
+
+  .sample__table th,
+  .sample__table td {
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--card-line);
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .sample__table th {
+    color: var(--ink-soft);
+    font-weight: 600;
+  }
+
+  .sample__table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .sample__amount {
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+
+  .sample__findings {
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+    font-size: var(--text-sm);
+    line-height: 1.5;
+  }
+
+  .sample__provenance {
+    max-width: var(--measure);
+    margin-top: var(--space-5);
+    font-size: var(--text-sm);
   }
 
   .gallery {
