@@ -53,3 +53,6 @@ demos/proxy/.env
 # Demonstrações: configuração e código do produto ficam só no servidor
 demos/*/.env
 demos/*/src/
+
+# Permissões pessoais do Claude Code, fora do repositório.
+.claude/settings.local.json
