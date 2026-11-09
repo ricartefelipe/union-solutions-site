@@ -11,9 +11,11 @@ interface Props {
 const { service } = Astro.props;
 const others = services.filter((item) => item.slug !== service.slug);
 const contactUrl = serviceContactUrl(service.slug);
-const origin = Astro.site?.href ?? '/';
-const pageUrl = new URL(`/servicos/${service.slug}/`, origin).href;
-const structuredData = [
+// Sem domínio configurado não há URL absoluta, e os dados estruturados ficam de fora, como no layout.
+const origin = Astro.site?.href;
+const pageUrl = origin ? new URL(`/servicos/${service.slug}/`, origin).href : undefined;
+const structuredData = origin
+  ? [
   {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -32,7 +34,8 @@ const structuredData = [
     areaServed: 'BR',
     provider: { '@type': 'Organization', name: 'Union Solutions', url: origin },
   },
-];
+]
+  : [];
 ---
 
 <BaseLayout title={service.name} description={service.metaDescription} structuredData={structuredData}>
