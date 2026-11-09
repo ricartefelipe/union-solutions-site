@@ -4,7 +4,7 @@ import Arrow from '../../components/Arrow.astro';
 import CtaBand from '../../components/CtaBand.astro';
 import PageHero from '../../components/PageHero.astro';
 import ProductShot from '../../components/ProductShot.astro';
-import { allHaveDemo, productDemoUrl, products } from '../../data/products';
+import { allHaveDemo, catalog, productDemoUrl } from '../../data/products';
 ---
 
 <BaseLayout
@@ -14,36 +14,47 @@ import { allHaveDemo, productDemoUrl, products } from '../../data/products';
   <PageHero
     title="Produtos para testar antes de decidir."
     intro={allHaveDemo
-      ? 'Integrações, arquivos financeiros, assinaturas, operações comerciais e B2B, ensino a distância e cartões. Todos têm demonstração online, com dados fictícios.'
-      : 'Integrações, arquivos financeiros, assinaturas, operações comerciais e B2B, ensino a distância e cartões. Os marcados com demonstração online podem ser testados no navegador.'}
-  />
+      ? 'Os produtos estão organizados pela necessidade que resolvem. Todos têm demonstração online, com dados fictícios.'
+      : 'Os produtos estão organizados pela necessidade que resolvem. Os marcados com demonstração online podem ser testados no navegador.'}
+  >
+    <nav slot="actions" class="needs-nav" aria-label="Necessidades">
+      {catalog.map(({ need }) => <a href={`#${need.slug}`}>{need.title}</a>)}
+    </nav>
+  </PageHero>
 
-  <section class="section catalog-section" aria-label="Catálogo de produtos">
-    <div class="wrap">
-      <ul class="catalog">
-        {products.map((product, index) => (
-          <li class="card card--link product reveal" id={product.slug}>
-            <ProductShot screen={product.screens[0]} sizes="(min-width: 62rem) 38vw, 92vw" priority={index < 2} />
-            <div class="product__body">
-              <span class="eyebrow">{product.area}</span>
-              <h2><a class="card__link" href={`/produtos/${product.slug}/`}>{product.name}</a></h2>
-              {!allHaveDemo && product.liveDemo && <p><span class="badge-demo">Demonstração online</span></p>}
-              <p class="product__purpose">{product.purpose}</p>
-              <ul class="node-list product__capabilities">
-                {product.capabilities.slice(0, 3).map((capability) => <li>{capability}</li>)}
-              </ul>
-            </div>
-            <div class="product__foot">
-              <span class="product__more" aria-hidden="true">Conhecer o produto<Arrow /></span>
-              {product.liveDemo && (
-                <a class="text-link card__above" href={productDemoUrl(product.slug)}>Testar a demonstração<span class="sr-only"> do {product.name}</span></a>
-              )}
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
-  </section>
+  {catalog.map(({ need, products: group }, groupIndex) => (
+    <section class:list={['section', 'catalog-section', { 'surface-mist': groupIndex % 2 === 1 }]} id={need.slug} aria-labelledby={`${need.slug}-titulo`}>
+      <div class="wrap">
+        <div class="need-head">
+          <h2 id={`${need.slug}-titulo`}>{need.title}</h2>
+          <p class="lede muted">{need.text}</p>
+        </div>
+        <ul class="catalog">
+          {group.map((product) => (
+            <li class="card card--link product reveal" id={product.slug}>
+              <ProductShot screen={product.screens[0]} sizes="(min-width: 62rem) 38vw, 92vw" priority={groupIndex === 0} />
+              <div class="product__body">
+                <span class="eyebrow">{product.area}</span>
+                <h3><a class="card__link" href={`/produtos/${product.slug}/`}>{product.name}</a></h3>
+                {!allHaveDemo && product.liveDemo && <p><span class="badge-demo">Demonstração online</span></p>}
+                <p class="product__purpose">{product.purpose}</p>
+                <p class="product__context muted">{product.context}</p>
+                <ul class="node-list product__capabilities">
+                  {product.capabilities.slice(0, 3).map((capability) => <li>{capability}</li>)}
+                </ul>
+              </div>
+              <div class="product__foot">
+                <span class="product__more" aria-hidden="true">Conhecer o produto<Arrow /></span>
+                {product.liveDemo && (
+                  <a class="text-link card__above" href={productDemoUrl(product.slug)}>Testar a demonstração<span class="sr-only"> do {product.name}</span></a>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  ))}
 
   <CtaBand
     title="Nenhum produto atende ao seu caso?"
@@ -55,7 +66,47 @@ import { allHaveDemo, productDemoUrl, products } from '../../data/products';
 
 <style>
   .catalog-section {
-    padding-top: clamp(2rem, 1.5rem + 2vw, 3.5rem);
+    padding-block: clamp(2rem, 1.5rem + 2vw, 3.5rem);
+  }
+
+  .catalog-section:first-of-type {
+    padding-top: clamp(2.5rem, 2rem + 2vw, 4rem);
+  }
+
+  /* Atalhos para cada necessidade, no topo da página. */
+  .needs-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .needs-nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding-inline: var(--space-4);
+    border: 1px solid rgb(255 255 255 / 0.25);
+    border-radius: var(--radius-pill);
+    color: var(--on-dark);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    text-decoration: none;
+    transition: border-color var(--transition), background-color var(--transition);
+  }
+
+  .needs-nav a:hover,
+  .needs-nav a:focus-visible {
+    border-color: rgb(255 255 255 / 0.6);
+    background: rgb(255 255 255 / 0.08);
+  }
+
+  .need-head {
+    margin-bottom: var(--space-5);
+  }
+
+  .need-head .lede {
+    max-width: var(--measure);
+    margin-top: var(--space-2);
   }
 
   .catalog {
@@ -74,19 +125,26 @@ import { allHaveDemo, productDemoUrl, products } from '../../data/products';
     padding: var(--space-5) var(--space-3) var(--space-3);
   }
 
-  .product h2 {
+  .product h3 {
     font-size: var(--text-h2);
   }
 
-  .product h2 a {
+  .product h3 a {
     text-decoration: none;
   }
 
   .product__purpose {
     max-width: var(--measure);
-    margin-block: var(--space-3) var(--space-4);
+    margin-block: var(--space-3) var(--space-2);
     font-size: var(--text-lg);
     line-height: 1.45;
+  }
+
+  .product__context {
+    max-width: var(--measure);
+    margin-bottom: var(--space-4);
+    font-size: var(--text-sm);
+    line-height: 1.5;
   }
 
   .product__capabilities {

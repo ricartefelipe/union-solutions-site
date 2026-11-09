@@ -66,6 +66,21 @@ const contactUrl = serviceContactUrl(service.slug);
     </div>
   </section>
 
+  {service.related && (
+    <section class="section surface-mist" aria-labelledby="apoio">
+      <div class="wrap">
+        <div class="card related">
+          <div>
+            <span class="eyebrow">Produto próprio</span>
+            <h2 id="apoio">{service.related.title}</h2>
+            <p class="muted">{service.related.text}</p>
+          </div>
+          <a class="btn btn--ghost" href={service.related.href}>{service.related.label}<Arrow /></a>
+        </div>
+      </div>
+    </section>
+  )}
+
   <section class="section surface-dark proposal">
     <div class="wrap proposal__inner">
       <div>
@@ -95,6 +110,29 @@ const contactUrl = serviceContactUrl(service.slug);
   .side-note {
     max-width: 34ch;
     margin-top: var(--space-3);
+  }
+
+  .related {
+    display: grid;
+    gap: var(--space-5) var(--space-7);
+    align-items: center;
+    padding: var(--space-6);
+  }
+
+  .related h2 {
+    margin-top: var(--space-2);
+    font-size: var(--text-xl);
+  }
+
+  .related p {
+    max-width: var(--measure);
+    margin-top: var(--space-3);
+  }
+
+  @media (min-width: 62rem) {
+    .related {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
   }
 
   .proposal__inner {

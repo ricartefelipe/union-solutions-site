@@ -4,7 +4,7 @@ import Arrow from '../../components/Arrow.astro';
 import PageHero from '../../components/PageHero.astro';
 import ProductGlyph from '../../components/ProductGlyph.astro';
 import ProductShot from '../../components/ProductShot.astro';
-import { productContactUrl, productDemoUrl, products, type Product } from '../../data/products';
+import { productContactUrl, productDemoUrl, productSocialImage, products, type Product } from '../../data/products';
 
 export function getStaticPaths() {
   return products.map((product) => ({ params: { slug: product.slug }, props: { product } }));
@@ -18,10 +18,9 @@ const { product } = Astro.props;
 const contactUrl = productContactUrl(product.slug);
 const [mainScreen, ...moreScreens] = product.screens;
 const others = products.filter((item) => item.slug !== product.slug);
-const title = `${product.name}: ${product.area.charAt(0).toLowerCase()}${product.area.slice(1)}`;
 ---
 
-<BaseLayout title={title} description={`${product.purpose} Solicite uma demonstração à Union Solutions.`}>
+<BaseLayout title={product.seo.title} description={product.seo.description} image={productSocialImage(product)}>
   <PageHero
     title={product.name}
     intro={product.purpose}
@@ -29,7 +28,8 @@ const title = `${product.name}: ${product.area.charAt(0).toLowerCase()}${product
     crumbs={[{ label: 'Produtos', href: '/produtos/' }, { label: product.name }]}
   >
     {product.liveDemo && <a slot="actions" class="btn" href={productDemoUrl(product.slug)}>Testar a demonstração<Arrow /></a>}
-    <a slot="actions" class={product.liveDemo ? 'btn btn--ghost' : 'btn'} href={contactUrl}>{product.liveDemo ? 'Falar com a Union' : 'Solicitar demonstração'}</a>
+    <a slot="actions" class={product.liveDemo ? 'btn btn--ghost' : 'btn'} href={contactUrl}>{product.ctaLabel}</a>
+    <Fragment slot="note">{product.availability}</Fragment>
     <div slot="art" class="product-art">
       <ProductShot screen={mainScreen} priority sizes="(min-width: 62rem) 46vw, 92vw" />
     </div>
@@ -101,12 +101,14 @@ const title = `${product.name}: ${product.area.charAt(0).toLowerCase()}${product
   <section class="section surface-deep" id="demonstracao" aria-labelledby="avaliar">
     <div class="wrap split">
       <div>
-        <span class="eyebrow">Avaliação</span>
+        <span class="eyebrow">Como contratar</span>
         <h2 id="avaliar">Avaliar o {product.name} no seu cenário</h2>
-        <p class="demo-availability">{product.availability}</p>
-        <p class="muted demo-text">A conversa parte do seu cenário: avaliamos se o produto atende à sua operação e, se não atender, quais outros caminhos fazem sentido.</p>
+        <p class="hiring">Sob proposta.</p>
+        <p class="muted demo-text">
+          A primeira conversa valida se o produto atende à sua operação e o que depende do seu ambiente, dos seus sistemas e de parceiros. Se não atender, dizemos quais outros caminhos fazem sentido. A proposta descreve objetivo, entregáveis, limites, prazos e valores.
+        </p>
         <div class="btn-row">
-          <a class="btn" href={contactUrl}>Conversar sobre o seu cenário<Arrow /></a>
+          <a class="btn" href={contactUrl}>{product.ctaLabel}<Arrow /></a>
           {product.liveDemo && <a class="text-link" href={productDemoUrl(product.slug)}>Como entrar na demonstração</a>}
         </div>
       </div>
@@ -220,8 +222,7 @@ const title = `${product.name}: ${product.area.charAt(0).toLowerCase()}${product
     font-size: var(--text-sm);
   }
 
-  .demo-availability {
-    max-width: 48ch;
+  .hiring {
     margin-top: var(--space-4);
     font-size: var(--text-lg);
     font-weight: 500;
