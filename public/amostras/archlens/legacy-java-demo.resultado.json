@@ -1,0 +1,170 @@
+{
+  "gerado_com": "ArchLens 1.0.1, demonstração pública, em 09/11/2026, a partir do analysis.json do projeto fictício legacy-java-demo. Achados e dimensões são automáticos; a revisão do achado e o item do roteiro foram escritos pelo arquiteto.",
+  "findings": [
+    {
+      "id": "58b7390a-12c3-41c8-bd6d-abca054d70b9",
+      "ruleId": "legacy-ejb-detected",
+      "title": "EJB legado detectado",
+      "description": "Regra automática: EJB legado detectado",
+      "severity": "CRITICAL",
+      "status": "APPROVED",
+      "evidenceIds": [
+        "src:src/main/java/com/demo/billing/BillingService.java:ejb",
+        "src:src/main/java/com/demo/billing/InvoiceProcessor.java:ejb",
+        "src:src/main/java/com/demo/orders/OrderNotifier.java:ejb"
+      ],
+      "dimensionKey": "TECHNICAL_DEBT",
+      "reviewNote": "Confirmado na revisão: os três EJBs concentram o faturamento e a notificação de pedidos, sem testes. Entra como primeira etapa do roteiro, antes da migração do namespace javax.",
+      "reviewedBy": "architect",
+      "reviewedAt": "2026-11-09T22:22:50.244758Z",
+      "createdAt": "2026-11-09T22:20:23.982983Z",
+      "updatedAt": "2026-11-09T22:22:50.244763Z"
+    },
+    {
+      "id": "8fea3aad-78ab-4b63-aa95-c6afa732148a",
+      "ruleId": "secret-password",
+      "title": "Senha hardcoded detectada",
+      "description": "Regra automática: Senha hardcoded detectada",
+      "severity": "CRITICAL",
+      "status": "OPEN",
+      "evidenceIds": [
+        "secret:src/main/java/com/demo/config/LegacyConfig.java:5"
+      ],
+      "dimensionKey": "SECURITY_POSTURE",
+      "reviewNote": null,
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "createdAt": "2026-11-09T22:20:23.982983Z",
+      "updatedAt": "2026-11-09T22:20:23.982983Z"
+    },
+    {
+      "id": "523c968c-6ae9-4851-8278-2a17a72bc85d",
+      "ruleId": "package-cycle",
+      "title": "Ciclo entre pacotes detectado",
+      "description": "Regra automática: Ciclo entre pacotes detectado",
+      "severity": "HIGH",
+      "status": "OPEN",
+      "evidenceIds": [
+        "cycle:src/main/java/com/demo/billing/BillingService.java:com.demo.billing",
+        "cycle:src/main/java/com/demo/billing/InvoiceProcessor.java:com.demo.billing",
+        "cycle:src/main/java/com/demo/orders/Order.java:com.demo.orders",
+        "cycle:src/main/java/com/demo/orders/OrderNotifier.java:com.demo.orders",
+        "cycle:src/main/java/com/demo/orders/OrderResource.java:com.demo.orders"
+      ],
+      "dimensionKey": "TECHNICAL_DEBT",
+      "reviewNote": null,
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "createdAt": "2026-11-09T22:20:23.982983Z",
+      "updatedAt": "2026-11-09T22:20:23.982983Z"
+    },
+    {
+      "id": "c0c75444-678c-4264-97b0-2a00c30fa628",
+      "ruleId": "jax-rs-present",
+      "title": "JAX-RS detectado",
+      "description": "Regra automática: JAX-RS detectado",
+      "severity": "LOW",
+      "status": "OPEN",
+      "evidenceIds": [
+        "endpoint:src/main/java/com/demo/orders/OrderResource.java:jaxrs"
+      ],
+      "dimensionKey": "MODERNIZATION_READINESS",
+      "reviewNote": null,
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "createdAt": "2026-11-09T22:20:23.982983Z",
+      "updatedAt": "2026-11-09T22:20:23.982983Z"
+    },
+    {
+      "id": "71ebee82-2aa5-455f-8b2a-3b453722f3ee",
+      "ruleId": "jms-messaging",
+      "title": "JMS em uso",
+      "description": "Regra automática: JMS em uso",
+      "severity": "LOW",
+      "status": "OPEN",
+      "evidenceIds": [
+        "dep:javax.jms:javax.jms-api:2.0.1",
+        "src:src/main/java/com/demo/messaging/OrderQueueListener.java:jms"
+      ],
+      "dimensionKey": "OPERATIONAL_COMPLEXITY",
+      "reviewNote": null,
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "createdAt": "2026-11-09T22:20:23.982983Z",
+      "updatedAt": "2026-11-09T22:20:23.982983Z"
+    },
+    {
+      "id": "c477ca6c-0224-4d9c-bd3b-163fec634850",
+      "ruleId": "soap-endpoint",
+      "title": "Endpoint SOAP legado",
+      "description": "Regra automática: Endpoint SOAP legado",
+      "severity": "MEDIUM",
+      "status": "OPEN",
+      "evidenceIds": [
+        "src:src/main/java/com/demo/integration/LegacySoapService.java:soap"
+      ],
+      "dimensionKey": "MODERNIZATION_READINESS",
+      "reviewNote": null,
+      "reviewedBy": null,
+      "reviewedAt": null,
+      "createdAt": "2026-11-09T22:20:23.982983Z",
+      "updatedAt": "2026-11-09T22:20:23.982983Z"
+    }
+  ],
+  "dimensions": [
+    {
+      "dimensionKey": "BUSINESS_CRITICALITY",
+      "score": 50.0,
+      "rationale": "Fatores técnicos: legacy-ejb-detected(CRITICAL) secret-password(CRITICAL) package-cycle(HIGH) jax-rs-present(LOW) jms-messaging(LOW) soap-endpoint(MEDIUM) | Scores apoiam decisão; não são precisão científica.",
+      "updatedAt": "2026-11-09T22:20:24.054797Z"
+    },
+    {
+      "dimensionKey": "MODERNIZATION_READINESS",
+      "score": 59.0,
+      "rationale": "Fatores técnicos: legacy-ejb-detected(CRITICAL) secret-password(CRITICAL) package-cycle(HIGH) jax-rs-present(LOW) jms-messaging(LOW) soap-endpoint(MEDIUM) | Scores apoiam decisão; não são precisão científica.",
+      "updatedAt": "2026-11-09T22:20:24.054797Z"
+    },
+    {
+      "dimensionKey": "OPERATIONAL_COMPLEXITY",
+      "score": 53.0,
+      "rationale": "Fatores técnicos: legacy-ejb-detected(CRITICAL) secret-password(CRITICAL) package-cycle(HIGH) jax-rs-present(LOW) jms-messaging(LOW) soap-endpoint(MEDIUM) | Scores apoiam decisão; não são precisão científica.",
+      "updatedAt": "2026-11-09T22:20:24.054797Z"
+    },
+    {
+      "dimensionKey": "RISK_TOLERANCE",
+      "score": 50.0,
+      "rationale": "Fatores técnicos: legacy-ejb-detected(CRITICAL) secret-password(CRITICAL) package-cycle(HIGH) jax-rs-present(LOW) jms-messaging(LOW) soap-endpoint(MEDIUM) | Scores apoiam decisão; não são precisão científica.",
+      "updatedAt": "2026-11-09T22:20:24.054797Z"
+    },
+    {
+      "dimensionKey": "SECURITY_POSTURE",
+      "score": 70.0,
+      "rationale": "Fatores técnicos: legacy-ejb-detected(CRITICAL) secret-password(CRITICAL) package-cycle(HIGH) jax-rs-present(LOW) jms-messaging(LOW) soap-endpoint(MEDIUM) | Scores apoiam decisão; não são precisão científica.",
+      "updatedAt": "2026-11-09T22:20:24.054797Z"
+    },
+    {
+      "dimensionKey": "TEAM_SKILL",
+      "score": 50.0,
+      "rationale": "Fatores técnicos: legacy-ejb-detected(CRITICAL) secret-password(CRITICAL) package-cycle(HIGH) jax-rs-present(LOW) jms-messaging(LOW) soap-endpoint(MEDIUM) | Scores apoiam decisão; não são precisão científica.",
+      "updatedAt": "2026-11-09T22:20:24.054797Z"
+    },
+    {
+      "dimensionKey": "TECHNICAL_DEBT",
+      "score": 82.0,
+      "rationale": "Fatores técnicos: legacy-ejb-detected(CRITICAL) secret-password(CRITICAL) package-cycle(HIGH) jax-rs-present(LOW) jms-messaging(LOW) soap-endpoint(MEDIUM) | Scores apoiam decisão; não são precisão científica.",
+      "updatedAt": "2026-11-09T22:20:24.054797Z"
+    }
+  ],
+  "roadmap": [
+    {
+      "id": "2f8d492a-e8c2-4560-9e86-fd513f4151fc",
+      "title": "Tirar o faturamento do EJB",
+      "description": "Extrair BillingService e InvoiceProcessor para serviços Spring com a mesma interface, mantendo o contrato de OrderNotifier até o fim da transição. Entrega verificável: faturamento rodando fora do contêiner EJB com os testes de regressão que hoje não existem (achado de testes insuficientes).",
+      "phase": "SHORT_TERM",
+      "sortOrder": 1,
+      "modernizationOptionId": null,
+      "createdAt": "2026-11-09T22:21:35.139176Z",
+      "updatedAt": "2026-11-09T22:21:35.139176Z"
+    }
+  ]
+}

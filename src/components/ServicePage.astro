@@ -11,9 +11,31 @@ interface Props {
 const { service } = Astro.props;
 const others = services.filter((item) => item.slug !== service.slug);
 const contactUrl = serviceContactUrl(service.slug);
+const origin = Astro.site?.href ?? '/';
+const pageUrl = new URL(`/servicos/${service.slug}/`, origin).href;
+const structuredData = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Serviços', item: new URL('/servicos/', origin).href },
+      { '@type': 'ListItem', position: 2, name: service.name, item: pageUrl },
+    ],
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    name: service.name,
+    description: service.summary,
+    serviceType: service.name,
+    url: pageUrl,
+    areaServed: 'BR',
+    provider: { '@type': 'Organization', name: 'Union Solutions', url: origin },
+  },
+];
 ---
 
-<BaseLayout title={service.name} description={service.metaDescription}>
+<BaseLayout title={service.name} description={service.metaDescription} structuredData={structuredData}>
   <PageHero
     title={service.h1}
     intro={service.intro}
