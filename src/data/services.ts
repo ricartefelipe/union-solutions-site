@@ -21,6 +21,8 @@ export interface Service {
   scope: ScopeItem[];
   deliverables: ScopeItem[];
   ctaLabel: string;
+  /** Produto próprio que apoia o serviço em determinado cenário, quando houver. */
+  related?: { title: string; text: string; href: string; label: string };
 }
 
 export const engagementModels: ScopeItem[] = [
@@ -131,6 +133,12 @@ export const services: Service[] = [
       { title: 'Roteiro de evolução', text: 'As etapas para levar a arquitetura à construção e à evolução do sistema.' },
     ],
     ctaLabel: 'Conversar sobre arquitetura',
+    related: {
+      title: 'Aplicações Java: diagnóstico com o ArchLens',
+      text: 'Quando o cenário envolve uma aplicação Java pouco documentada, o diagnóstico e o roteiro de modernização podem partir do ArchLens, que analisa o projeto no seu ambiente e organiza inventário, evidências e achados para a revisão do arquiteto.',
+      href: '/produtos/archlens/',
+      label: 'Conhecer o ArchLens',
+    },
   },
   {
     slug: 'desenvolvimento',
