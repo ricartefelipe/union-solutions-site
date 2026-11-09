@@ -107,6 +107,102 @@
     "seo": {
       "title": "FileNorm: normalizar OFX, CNAB 240, CSV bancário e PDF em eventos padronizados",
       "description": "Converte extratos e retornos bancários em OFX, CNAB 240, CSV e PDF com texto em eventos padronizados, indicando o que não pôde ser convertido. Demonstração online e piloto com arquivos da sua operação."
+    },
+    "sample": {
+      "title": "Exemplo reproduzível",
+      "intro": "Dois arquivos fictícios e a saída que o FileNorm gerou para cada um. Baixe o arquivo, envie na demonstração e compare o resultado.",
+      "cases": [
+        {
+          "title": "CSV bancário com coluna de saldo",
+          "text": "Quatro linhas no padrão de extrato brasileiro: data, descrição, valor e saldo, com separador ponto e vírgula, vírgula decimal e uma descrição entre aspas que contém ponto e vírgula. A primeira linha só traz o saldo anterior.",
+          "input": {
+            "label": "extrato-com-saldo.csv",
+            "href": "/amostras/filenorm/extrato-com-saldo.csv",
+            "preview": [
+              "Data;Descrição;Valor;Saldo",
+              "01/08/2025;SALDO ANTERIOR;;1.000,00",
+              "02/08/2025;PIX RECEBIDO CLIENTE A;1.500,00;2.500,00",
+              "02/08/2025;TARIFA PACOTE;-29,90;2.470,10",
+              "05/08/2025;\"BOLETO FORNECEDOR X; LTDA\";-470,10;2.000,00"
+            ]
+          },
+          "output": {
+            "label": "extrato-com-saldo.resultado.json",
+            "href": "/amostras/filenorm/extrato-com-saldo.resultado.json"
+          },
+          "events": [
+            {
+              "date": "02/08/2025",
+              "direction": "Crédito",
+              "amount": "1.500,00",
+              "description": "PIX RECEBIDO CLIENTE A",
+              "source": "linha 3"
+            },
+            {
+              "date": "02/08/2025",
+              "direction": "Débito",
+              "amount": "29,90",
+              "description": "TARIFA PACOTE",
+              "source": "linha 4"
+            },
+            {
+              "date": "05/08/2025",
+              "direction": "Débito",
+              "amount": "470,10",
+              "description": "BOLETO FORNECEDOR X; LTDA",
+              "source": "linha 5"
+            }
+          ],
+          "findings": [
+            "Prova de fechamento verificada: saldo inicial 1.000,00 mais os movimentos resulta em 2.000,00, igual ao saldo final informado.",
+            "A linha 2 foi marcada como ignorada, com o motivo csv_balance_only_row: traz só o saldo anterior, sem movimento.",
+            "Três eventos, nenhum rejeitado, cada um com chave de idempotência e a linha de origem."
+          ]
+        },
+        {
+          "title": "OFX de extrato",
+          "text": "Arquivo OFX 1.02 com dois lançamentos, um débito e um crédito, no formato que os bancos exportam para programas de finanças.",
+          "input": {
+            "label": "extrato.ofx",
+            "href": "/amostras/filenorm/extrato.ofx",
+            "preview": [
+              "<STMTTRN>",
+              "<TRNTYPE>DEBIT",
+              "<DTPOSTED>20250710",
+              "<TRNAMT>-42.50",
+              "<FITID>20250710001",
+              "<NAME>Padaria Central",
+              "<MEMO>Compra debito",
+              "</STMTTRN>"
+            ]
+          },
+          "output": {
+            "label": "extrato.resultado.json",
+            "href": "/amostras/filenorm/extrato.resultado.json"
+          },
+          "events": [
+            {
+              "date": "10/07/2025",
+              "direction": "Débito",
+              "amount": "42,50",
+              "description": "Padaria Central · Compra debito",
+              "source": "FITID 20250710001"
+            },
+            {
+              "date": "15/07/2025",
+              "direction": "Crédito",
+              "amount": "1.500,00",
+              "description": "Empresa XYZ · Salario",
+              "source": "FITID 20250715001"
+            }
+          ],
+          "findings": [
+            "Dois eventos, com o identificador do banco preservado e a contraparte separada da descrição.",
+            "Prova de fechamento indisponível: este OFX não traz saldo inicial nem final, e o resultado diz isso em vez de presumir."
+          ]
+        }
+      ],
+      "provenance": "Saída gerada pelo FileNorm 0.3.3 em 9 de novembro de 2026, a partir dos arquivos de teste do próprio produto. Os arquivos JSON são a resposta da API sem edição."
     }
   },
   {
@@ -248,7 +344,8 @@
     "screens": [
       {
         "id": "fluxe-operacao",
-        "alt": "Painel do portal de operações da Fluxe B2B Suite numa empresa fictícia: receita dos últimos sete dias, ticket médio, total de pedidos e pedidos por status."
+        "alt": "Painel do portal de operações da Fluxe B2B Suite numa empresa fictícia: receita dos últimos sete dias, ticket médio, total de pedidos e pedidos por status.",
+        "caption": "Painel de operações com receita, pedidos e status"
       },
       {
         "id": "fluxe-pedidos",
@@ -327,7 +424,8 @@
     "screens": [
       {
         "id": "comercialcloud-pdv",
-        "alt": "Frente de caixa do ComercialCloud numa loja fictícia: busca de produtos, atalhos de produtos, carrinho com três itens e total da venda."
+        "alt": "Frente de caixa do ComercialCloud numa loja fictícia: busca de produtos, atalhos de produtos, carrinho com três itens e total da venda.",
+        "caption": "Frente de caixa com carrinho e total da venda"
       },
       {
         "id": "comercialcloud-produtos",
@@ -465,7 +563,8 @@
     "screens": [
       {
         "id": "cards-api-fisicos",
-        "alt": "Console da Cards API com os cartões físicos emitidos na demonstração: código de rastreio, situação da entrega e do cartão."
+        "alt": "Console da Cards API com os cartões físicos emitidos na demonstração: código de rastreio, situação da entrega e do cartão.",
+        "caption": "Cartões físicos emitidos, com rastreio e situação"
       },
       {
         "id": "cards-api-painel",

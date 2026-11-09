@@ -1,0 +1,81 @@
+{
+  "gerado_com": "FileNorm 0.3.3, em 09/11/2026, com dados fictícios",
+  "job": {
+    "jobId": "e7406228-52b7-49b3-819d-b21d9b68dbd0",
+    "status": "succeeded",
+    "format": "csv",
+    "preset": null,
+    "originalFilename": "extrato-com-saldo.csv",
+    "byteSize": 222,
+    "pages": null,
+    "creditsCharged": 1,
+    "attempts": 1,
+    "eventCount": 3,
+    "rejectedCount": 0,
+    "skippedCount": 1,
+    "warningCount": 0,
+    "balanceCheck": {
+      "status": "verified",
+      "source": "csv_running_balance",
+      "reason": null,
+      "openingBalance": "1000.00",
+      "closingBalance": "2000.00",
+      "computedClosingBalance": "2000.00",
+      "difference": "0.00"
+    },
+    "errorCode": null,
+    "errorMessage": null,
+    "createdAt": "2026-11-09T21:28:49.008916Z",
+    "startedAt": "2026-11-09T21:28:49.609339Z",
+    "finishedAt": "2026-11-09T21:28:49.752291Z"
+  },
+  "events": [
+    {
+      "externalId": "csv-L3",
+      "idempotencyKey": "eaccfc63403f50e40e7641fd3d2feea31548b240cd55a2e963956bd7ed7a7a43",
+      "postedAt": "2025-08-02",
+      "amount": "1500.00",
+      "currency": "BRL",
+      "direction": "credit",
+      "counterparty": null,
+      "description": "PIX RECEBIDO CLIENTE A",
+      "rawRef": "02/08/2025;PIX RECEBIDO CLIENTE A;1.500,00;2.500,00",
+      "confidence": 0.8,
+      "ordinal": 0
+    },
+    {
+      "externalId": "csv-L4",
+      "idempotencyKey": "bc3ae147ab65315c3b0bcc08173438f6ecb5ada844c29d90fc919eb65b8bfef4",
+      "postedAt": "2025-08-02",
+      "amount": "29.90",
+      "currency": "BRL",
+      "direction": "debit",
+      "counterparty": null,
+      "description": "TARIFA PACOTE",
+      "rawRef": "02/08/2025;TARIFA PACOTE;-29,90;2.470,10",
+      "confidence": 0.8,
+      "ordinal": 1
+    },
+    {
+      "externalId": "csv-L5",
+      "idempotencyKey": "8c29184613e9e4e6d17b7b009eddc3f1ffb04fa04ec8dd786153b2c2ffc248ed",
+      "postedAt": "2025-08-05",
+      "amount": "470.10",
+      "currency": "BRL",
+      "direction": "debit",
+      "counterparty": null,
+      "description": "BOLETO FORNECEDOR X; LTDA",
+      "rawRef": "05/08/2025;\"BOLETO FORNECEDOR X; LTDA\";-470,10;2.000,00",
+      "confidence": 0.8,
+      "ordinal": 2
+    }
+  ],
+  "issues": [
+    {
+      "severity": "skipped",
+      "code": "csv_balance_only_row",
+      "record": "line 2",
+      "detail": null
+    }
+  ]
+}
