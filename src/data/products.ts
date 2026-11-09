@@ -80,8 +80,11 @@ export interface SampleCase {
   text: string;
   input: { label: string; href: string; preview: string[] };
   output: { label: string; href: string };
-  events: SampleEvent[];
-  /** Resultado da prova de fechamento e dos registros não convertidos, uma frase por item. */
+  /** Saída tabular, quando o produto devolve registros. */
+  events?: SampleEvent[];
+  /** Saída em pares, quando o produto devolve um achado ou um item. */
+  rows?: { label: string; value: string }[];
+  /** O que observar na saída, uma frase por item. */
   findings: string[];
 }
 

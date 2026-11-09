@@ -63,7 +63,7 @@
     "screens": [
       {
         "id": "filenorm-entrada",
-        "alt": "Tela de entrada da demonstração do FileNorm, que recebe OFX, CSV, CNAB ou PDF e devolve eventos financeiros normalizados."
+        "alt": "Tela de entrada da demonstração do FileNorm, que recebe OFX, CSV, CNAB ou PDF e devolve eventos financeiros normalizados; com o código de acesso da demonstração, o link de entrada aparece na tela."
       }
     ],
     "context": "Para empresas e software houses que recebem extratos em formatos diferentes.",
@@ -102,7 +102,13 @@
     ],
     "liveDemo": {
       "url": "https://demo-filenorm.unionsolutions.tech/",
-      "note": "Entre com o seu e-mail, gere uma chave e envie um arquivo de teste (até 2 MB) para ver os eventos padronizados. Não envie dados reais: tudo é apagado todos os dias."
+      "note": "Informe seu e-mail e o código de acesso abaixo: o link de entrada aparece na tela, sem esperar e-mail. Gere uma chave e envie um arquivo de teste (até 2 MB) para ver os eventos padronizados. Não envie dados reais: tudo é apagado todos os dias.",
+      "access": [
+        {
+          "label": "Código de acesso",
+          "value": "union-demo"
+        }
+      ]
     },
     "seo": {
       "title": "FileNorm: normalizar OFX, CNAB 240, CSV bancário e PDF em eventos padronizados",
@@ -333,6 +339,105 @@
     "seo": {
       "title": "ArchLens: diagnóstico de arquitetura de aplicações Java legadas",
       "description": "Analisa aplicações Java no seu ambiente, organiza evidências e achados e ajuda a montar o roteiro de modernização, com revisão humana. Demonstração online com projeto de exemplo."
+    },
+    "sample": {
+      "title": "Exemplo reproduzível",
+      "intro": "Um projeto Java fictício analisado pelo ArchLens na demonstração: o achado que a regra automática levantou, com as evidências, e a etapa do roteiro que o arquiteto escreveu na revisão. Importe o mesmo arquivo na demonstração e compare.",
+      "cases": [
+        {
+          "title": "Achado crítico com evidência",
+          "text": "O analisador rodou no projeto legacy-java-demo (8 classes Java, Maven, Java 8) e gerou o analysis.json, sem enviar código-fonte. Importado na demonstração, ele vira seis achados; este é o de maior severidade.",
+          "input": {
+            "label": "analysis.json",
+            "href": "https://demo-archlens.unionsolutions.tech/amostra/analysis.json",
+            "preview": [
+              "\"signals\": [{",
+              "  \"id\": \"ee.ejb\",",
+              "  \"category\": \"EE\",",
+              "  \"name\": \"EJB\",",
+              "  \"confidence\": \"HIGH\",",
+              "  \"evidenceIds\": [",
+              "    \"src:src/main/java/com/demo/billing/BillingService.java:ejb\",",
+              "    \"src:src/main/java/com/demo/billing/InvoiceProcessor.java:ejb\",",
+              "    \"src:src/main/java/com/demo/orders/OrderNotifier.java:ejb\"",
+              "  ]",
+              "}]"
+            ]
+          },
+          "output": {
+            "label": "legacy-java-demo.resultado.json",
+            "href": "/amostras/archlens/legacy-java-demo.resultado.json"
+          },
+          "rows": [
+            {
+              "label": "Achado",
+              "value": "EJB legado detectado"
+            },
+            {
+              "label": "Regra",
+              "value": "legacy-ejb-detected"
+            },
+            {
+              "label": "Severidade",
+              "value": "Crítica"
+            },
+            {
+              "label": "Dimensão",
+              "value": "Dívida técnica, pontuação 82 de 100"
+            },
+            {
+              "label": "Evidências",
+              "value": "BillingService.java, InvoiceProcessor.java e OrderNotifier.java, em src/main/java/com/demo"
+            },
+            {
+              "label": "Revisão",
+              "value": "Aprovado pelo arquiteto em 09/11/2026: Confirmado na revisão: os três EJBs concentram o faturamento e a notificação de pedidos, sem testes. Entra como primeira etapa do roteiro, antes da migração do namespace javax."
+            }
+          ],
+          "findings": [
+            "A regra usa heurísticas: o achado nasce como \"aberto\" e só vale depois que o arquiteto o aprova, edita, aceita o risco ou descarta. A revisão fica registrada com autor e data.",
+            "As pontuações por dimensão apoiam a decisão e não são medida científica, como o próprio resultado avisa.",
+            "Os outros cinco achados estão no arquivo de saída: senha fixa no código, ciclo entre pacotes, endpoint SOAP, JAX-RS e JMS."
+          ]
+        },
+        {
+          "title": "Etapa do roteiro escrita na revisão",
+          "text": "O roteiro de modernização não é gerado automaticamente: o arquiteto o escreve a partir dos achados revisados, por fase. Esta é a primeira etapa do projeto fictício.",
+          "input": {
+            "label": "achado aprovado",
+            "href": "/amostras/archlens/legacy-java-demo.resultado.json",
+            "preview": [
+              "legacy-ejb-detected · CRITICAL · APPROVED",
+              "BillingService.java",
+              "InvoiceProcessor.java",
+              "OrderNotifier.java"
+            ]
+          },
+          "output": {
+            "label": "legacy-java-demo.resultado.json",
+            "href": "/amostras/archlens/legacy-java-demo.resultado.json"
+          },
+          "rows": [
+            {
+              "label": "Fase",
+              "value": "Curto prazo"
+            },
+            {
+              "label": "Etapa",
+              "value": "Tirar o faturamento do EJB"
+            },
+            {
+              "label": "Descrição",
+              "value": "Extrair BillingService e InvoiceProcessor para serviços Spring com a mesma interface, mantendo o contrato de OrderNotifier até o fim da transição. Entrega verificável: faturamento rodando fora do contêiner EJB com os testes de regressão que hoje não existem (achado de testes insuficientes)."
+            }
+          ],
+          "findings": [
+            "Cada etapa aponta uma entrega verificável, para que o roteiro possa ser cobrado e não só lido.",
+            "Num diagnóstico contratado, o roteiro completo é revisado com a sua equipe antes de virar plano."
+          ]
+        }
+      ],
+      "provenance": "Resultado lido da demonstração pública do ArchLens 1.0.1 em 9 de novembro de 2026, com a conta de arquiteto, a partir do analysis.json do projeto fictício legacy-java-demo. Achados e pontuações são automáticos; a revisão e o item do roteiro foram escritos pelo arquiteto. O JSON é a resposta da API sem edição."
     }
   },
   {
