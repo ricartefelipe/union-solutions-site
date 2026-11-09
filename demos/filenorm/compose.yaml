@@ -47,7 +47,9 @@ services:
       FILENORM_CORS_ORIGINS: https://${DEMO_HOST:?}
       FILENORM_APP_BASE_URL: https://${DEMO_HOST:?}
       FILENORM_API_BASE_URL: https://${DEMO_HOST:?}
-      FILENORM_EXPOSE_MAGIC_LINK: "false"
+      # O link de acesso aparece na tela para quem informa o código público da demonstração; sem o código, vai por e-mail.
+      FILENORM_EXPOSE_MAGIC_LINK: "true"
+      FILENORM_DEMO_ACCESS_CODE: ${FILENORM_DEMO_ACCESS_CODE:?}
       FILENORM_TRUST_FORWARDED_HOST: "true"
       FILENORM_SMTP_HOST: ${DEMO_SMTP_HOST:?}
       FILENORM_SMTP_PORT: ${DEMO_SMTP_PORT:-587}
