@@ -8,7 +8,7 @@
     "screens": [
       {
         "id": "hookguard-entrada",
-        "alt": "Tela de entrada da demonstração do HookGuard, com acesso por link enviado ao e-mail."
+        "alt": "Tela de entrada da demonstração do HookGuard; com o código de acesso da demonstração, o link de entrada aparece na tela."
       }
     ],
     "context": "Para equipes que recebem webhooks e não querem operar fila e novas tentativas.",
@@ -47,7 +47,13 @@
     ],
     "liveDemo": {
       "url": "https://demo-hookguard.unionsolutions.tech/",
-      "note": "Entre com o seu e-mail, crie um projeto e envie webhooks de teste. Os dados são fictícios e apagados todos os dias."
+      "note": "Informe seu e-mail e o código de acesso abaixo: o link de entrada aparece na tela, sem esperar e-mail. Crie um projeto e envie webhooks de teste. Os dados são fictícios e apagados todos os dias.",
+      "access": [
+        {
+          "label": "Código de acesso",
+          "value": "union-demo"
+        }
+      ]
     },
     "seo": {
       "title": "HookGuard: receber webhooks com novas tentativas e reprocessamento",
