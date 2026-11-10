@@ -107,6 +107,12 @@
     "availability": "Disponível para demonstração e piloto com arquivos da sua operação, em instalação dedicada.",
     "ctaLabel": "Solicitar avaliação de piloto",
     "objective": "piloto",
+    "hiring": [
+      "Piloto em instalação dedicada, com arquivos reais da sua operação.",
+      "Confirmação dos formatos que chegam: OFX, CNAB 240 de retorno, CSV bancário e PDF com texto.",
+      "Conferência do que não pôde ser convertido e do fechamento de saldo nos formatos que trazem saldo.",
+      "Definição de para onde os eventos normalizados seguem. Conciliação e integração pronta com ERP ficam fora do escopo."
+    ],
     "contact": {
       "subject": "Avaliação de piloto do FileNorm",
       "hint": "Quais formatos chegam (OFX, CNAB 240, CSV, PDF), de quais bancos, e para onde os dados normalizados devem seguir?"
@@ -334,6 +340,12 @@
     "availability": "Disponível para demonstração e como apoio a um diagnóstico assistido.",
     "ctaLabel": "Solicitar diagnóstico de arquitetura",
     "objective": "diagnostico",
+    "hiring": [
+      "Diagnóstico assistido por aplicação: o analisador roda no seu ambiente e nada do código-fonte sai dele.",
+      "Evidências revisadas por arquiteto, com cada achado aprovado, editado, aceito como risco ou descartado.",
+      "Roteiro de modernização priorizado por fase, com entregas verificáveis.",
+      "Devolutiva com a sua equipe antes de o roteiro virar plano."
+    ],
     "contact": {
       "subject": "Diagnóstico de modernização Java com ArchLens",
       "hint": "Qual aplicação precisa evoluir e que decisão sua equipe precisa tomar?"

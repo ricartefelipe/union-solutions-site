@@ -142,6 +142,8 @@ export interface Product {
   ctaLabel: string;
   /** Intenção que o botão comercial carrega para o contato. */
   objective: ContactObjective;
+  /** O que a oferta inclui ou o que o piloto avalia, uma frase por item; aparece em "Como contratar". */
+  hiring?: string[];
   /** Assunto e orientação do contato para essa intenção. */
   contact: ProductContact;
   /** O que vale levar para a conversa sobre demonstração. */
