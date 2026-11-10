@@ -1,9 +1,9 @@
 ---
 import { contactForm } from '../config/site';
-import { interests, messageGuidance, productOptions } from '../lib/contact-options';
+import { interests, messageGuidance, objectivesByProduct, productContactCatalog, productOptions } from '../lib/contact-options';
 ---
 
-<form class="contact-form" data-contact-form data-endpoint={contactForm.endpoint ?? undefined} data-guidance={JSON.stringify(messageGuidance)}>
+<form class="contact-form" data-contact-form data-endpoint={contactForm.endpoint ?? undefined} data-guidance={JSON.stringify(messageGuidance)} data-catalog={JSON.stringify(productContactCatalog)} data-objectives={JSON.stringify(objectivesByProduct)}>
   <noscript>
     <p class="contact-form__noscript">Este formulário precisa de JavaScript para funcionar. Ative o JavaScript no navegador para enviar sua mensagem.</p>
   </noscript>
@@ -51,6 +51,7 @@ import { interests, messageGuidance, productOptions } from '../lib/contact-optio
       </select>
       <p class="field__error" id="produto-erro" hidden></p>
     </div>
+    <input type="hidden" name="objetivo" value="" data-objective />
 
     <div class="field field--full">
       <label for="mensagem" data-message-label>Descreva sua necessidade</label>
@@ -79,8 +80,8 @@ import { interests, messageGuidance, productOptions } from '../lib/contact-optio
 
 <script>
   import { createContactAdapter, type ContactFailure, type ContactSubmission } from '../lib/contact-adapter';
-  import { readPreselection } from '../lib/contact-preselection';
-  import { buildContactMessage } from '../lib/contact-links';
+  import { readPreselection, validObjective } from '../lib/contact-preselection';
+  import { buildContactMessage, type ProductContactInfo } from '../lib/contact-links';
 
   type Field = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
 
@@ -97,6 +98,10 @@ import { interests, messageGuidance, productOptions } from '../lib/contact-optio
     const messageHint = form.querySelector<HTMLElement>('[data-message-hint]')!;
     const defaultMessageLabel = messageLabel.textContent ?? '';
     const guidance: Record<string, { label: string; hint: string }> = JSON.parse(form.dataset.guidance ?? '{}');
+    const catalog: Record<string, ProductContactInfo & { hint: string }> = JSON.parse(form.dataset.catalog ?? '{}');
+    const objectivesByProduct: Record<string, string[]> = JSON.parse(form.dataset.objectives ?? '{}');
+    const objective = form.querySelector<HTMLInputElement>('[data-objective]')!;
+    const context = form.querySelector<HTMLElement>('[data-context]');
     const status = form.querySelector<HTMLElement>('[data-status]')!;
     const submit = form.querySelector<HTMLButtonElement>('[data-submit]')!;
     const idleLabel = submit.textContent ?? '';
@@ -120,16 +125,40 @@ import { interests, messageGuidance, productOptions } from '../lib/contact-optio
         product.value = '';
         setFieldError(product, '');
       }
-      syncMessageGuidance();
+      syncObjective();
     };
 
-    // O título e a orientação do campo de mensagem acompanham o interesse e o produto escolhidos.
+    // A intenção só sobrevive enquanto o produto escolhido a oferece; trocar o produto descarta a incompatível.
+    function syncObjective() {
+      objective.value = interest.value === 'produto' ? validObjective(product.value, objective.value, objectivesByProduct) : '';
+      syncContext();
+      syncMessageGuidance();
+    }
+
+    // Frase de contexto com o assunto que o e-mail recebido vai trazer.
+    function syncContext() {
+      if (!context) return;
+      const selection = { interest: interest.value, product: product.value, objective: objective.value };
+      const info = interest.value === 'produto' ? catalog[product.value] : undefined;
+      const message = selection.interest ? buildContactMessage(selection, info) : null;
+      context.textContent = message ? `Assunto: ${message.subject}.` : '';
+      context.hidden = !message;
+    }
+
+    // O título e a orientação do campo de mensagem acompanham o interesse, o produto e a intenção.
     function syncMessageGuidance() {
       const entry = guidance[interest.value];
       if (!entry) {
         messageLabel.textContent = defaultMessageLabel;
         messageHint.hidden = true;
         messageHint.textContent = '';
+        return;
+      }
+      const info = catalog[product.value];
+      if (interest.value === 'produto' && info && objective.value === info.objective) {
+        messageLabel.textContent = entry.label;
+        messageHint.textContent = info.hint;
+        messageHint.hidden = false;
         return;
       }
       const chosen = product.selectedOptions[0];
@@ -141,19 +170,13 @@ import { interests, messageGuidance, productOptions } from '../lib/contact-optio
 
     // As opções do formulário são a lista de valores conhecidos.
     const knownValues = (select: HTMLSelectElement) => Array.from(select.options, (option) => option.value).filter(Boolean);
-    const preselection = readPreselection(window.location.search, knownValues(interest), knownValues(product));
+    const preselection = readPreselection(window.location.search, knownValues(interest), knownValues(product), objectivesByProduct);
     interest.value = preselection.interest;
     product.value = preselection.product;
+    objective.value = preselection.objective;
     syncProductField();
-    // Mesma frase de contexto dos outros modos de contato: quem vem de um produto ou serviço vê o assunto já definido.
-    const context = form.querySelector<HTMLElement>('[data-context]');
-    if (context && preselection.interest) {
-      const productName = product.selectedOptions[0]?.value ? product.selectedOptions[0].textContent?.trim() : undefined;
-      context.textContent = `Assunto: ${buildContactMessage(preselection, productName).subject}.`;
-      context.hidden = false;
-    }
     interest.addEventListener('change', syncProductField);
-    product.addEventListener('change', syncMessageGuidance);
+    product.addEventListener('change', syncObjective);
 
     function errorFor(field: Field): string {
       const validity = field.validity;
@@ -245,6 +268,7 @@ import { interests, messageGuidance, productOptions } from '../lib/contact-optio
         telefone: value('telefone'),
         interesse: value('interesse'),
         produto: value('produto'),
+        objetivo: value('objetivo'),
         mensagem: value('mensagem'),
       };
 

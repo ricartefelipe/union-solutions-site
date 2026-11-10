@@ -1,11 +1,9 @@
 ---
 import Arrow from './Arrow.astro';
 import { contact } from '../config/site';
-import { products } from '../data/products';
 import { defaultMessage, mailtoUrl, whatsappUrl } from '../lib/contact-links';
-import { interests } from '../lib/contact-options';
+import { interests, productContactCatalog } from '../lib/contact-options';
 
-const productNames = Object.fromEntries(products.map((product) => [product.slug, product.name]));
 const interestValues = interests.map((item) => item.value);
 ---
 
@@ -14,7 +12,7 @@ const interestValues = interests.map((item) => item.value);
   data-direct-contact
   data-email={contact.email ?? undefined}
   data-whatsapp={contact.whatsappUrl ?? undefined}
-  data-products={JSON.stringify(productNames)}
+  data-products={JSON.stringify(productContactCatalog)}
   data-interests={JSON.stringify(interestValues)}
 >
   <h2>Fale diretamente com a Union Solutions</h2>
@@ -45,14 +43,14 @@ const interestValues = interests.map((item) => item.value);
 </div>
 
 <script>
-  import { mailtoUrl, readContactContext, whatsappUrl } from '../lib/contact-links';
+  import { mailtoUrl, readContactContext, whatsappUrl, type ProductContactInfo } from '../lib/contact-links';
 
   const panel = document.querySelector<HTMLElement>('[data-direct-contact]');
 
   if (panel) {
-    const productNames = JSON.parse(panel.dataset.products ?? '{}') as Record<string, string>;
+    const productCatalog = JSON.parse(panel.dataset.products ?? '{}') as Record<string, ProductContactInfo>;
     const interestValues = JSON.parse(panel.dataset.interests ?? '[]') as string[];
-    const message = readContactContext(window.location.search, interestValues, productNames);
+    const message = readContactContext(window.location.search, interestValues, productCatalog);
 
     if (message) {
       const { email, whatsapp } = panel.dataset;

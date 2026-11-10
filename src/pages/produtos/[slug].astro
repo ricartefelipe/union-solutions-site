@@ -54,8 +54,16 @@ const structuredData = origin
     eyebrow={product.area}
     crumbs={[{ label: 'Produtos', href: '/produtos/' }, { label: product.name }]}
   >
-    {product.liveDemo && <a slot="actions" class="btn" href={productDemoUrl(product.slug)}>Testar a demonstração<Arrow /></a>}
-    <a slot="actions" class={product.liveDemo ? 'btn btn--ghost' : 'btn'} href={contactUrl}>{product.ctaLabel}</a>
+    {/* Ação comercial preenchida; prova (exemplo) ou demonstração em contorno; demonstração como link quando há exemplo. */}
+    <Fragment slot="actions">
+      <a class="btn" href={contactUrl}>{product.ctaLabel}<Arrow /></a>
+      {product.sample ? (
+        <a class="btn btn--ghost" href="#exemplo">{product.sample.ctaLabel}</a>
+      ) : (
+        product.liveDemo && <a class="btn btn--ghost" href={productDemoUrl(product.slug)}>Testar a demonstração</a>
+      )}
+      {product.sample && product.liveDemo && <a class="text-link hero-link" href={productDemoUrl(product.slug)}>Abrir demonstração</a>}
+    </Fragment>
     <Fragment slot="note">{product.availability}</Fragment>
     <div slot="art" class="product-art">
       <ProductShot screen={mainScreen} priority sizes="(min-width: 62rem) 46vw, 92vw" />
@@ -224,6 +232,12 @@ const structuredData = origin
 </BaseLayout>
 
 <style>
+  /* Terceira ação do topo, em texto, alinhada aos botões. */
+  .hero-link {
+    align-self: center;
+    color: var(--on-dark);
+  }
+
   .product-art :global(.shot) {
     box-shadow: 0 30px 60px -28px rgb(0 0 0 / 0.75);
   }

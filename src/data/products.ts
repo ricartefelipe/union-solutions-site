@@ -56,6 +56,17 @@ export const needs: Need[] = [
   { slug: 'java', title: 'Modernização Java', text: 'Entender uma aplicação Java pouco documentada antes de decidir como evoluí-la.' },
 ];
 
+/** Intenção comercial que o botão da ficha leva ao contato. `demo` é a intenção de testar, válida para todos. */
+export type ContactObjective = 'diagnostico' | 'piloto' | 'avaliacao';
+
+/** Como o contato é apresentado quando o visitante vem do botão comercial. */
+export interface ProductContact {
+  /** Assunto mostrado no formulário e recebido no e-mail. */
+  subject: string;
+  /** Pergunta que orienta a descrição. */
+  hint: string;
+}
+
 /** Metadados da ficha do produto para busca e compartilhamento. */
 export interface ProductSeo {
   /** Título da página, sem o nome da empresa, com os termos que o comprador usa para procurar. */
@@ -92,6 +103,8 @@ export interface SampleCase {
 export interface ProductSample {
   title: string;
   intro: string;
+  /** Rótulo do botão da ficha que leva ao exemplo, como "Ver exemplo de conversão". */
+  ctaLabel: string;
   cases: SampleCase[];
   /** Versão do produto e data em que a saída foi gerada. */
   provenance: string;
@@ -129,6 +142,10 @@ export interface Product {
   availability: string;
   /** Rótulo do botão comercial da ficha: piloto, diagnóstico, avaliação ou implantação, conforme a oferta. */
   ctaLabel: string;
+  /** Intenção que o botão comercial carrega para o contato. */
+  objective: ContactObjective;
+  /** Assunto e orientação do contato para essa intenção. */
+  contact: ProductContact;
   /** O que vale levar para a conversa sobre demonstração. */
   conversationTopics: string[];
   /** Demonstração pública no ar, quando existir: endereço HTTPS e o que o visitante encontra lá. */
@@ -168,6 +185,8 @@ export function productDemoUrl(slug: ProductSlug): string {
   return `/demonstracoes/#${slug}`;
 }
 
-export function productContactUrl(slug: ProductSlug): string {
-  return `/contato/?interesse=produto&produto=${slug}`;
+/** Endereço do contato com a intenção comercial do produto. Sem `objective`, usa a do catálogo. */
+export function productContactUrl(slug: ProductSlug, objective?: ContactObjective | 'demo'): string {
+  const chosen = objective ?? products.find((product) => product.slug === slug)?.objective;
+  return `/contato/?interesse=produto&produto=${slug}${chosen ? `&objetivo=${chosen}` : ''}`;
 }
