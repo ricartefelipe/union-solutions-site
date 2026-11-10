@@ -2,7 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Arrow from './Arrow.astro';
 import PageHero from './PageHero.astro';
-import { serviceContactUrl, services, type Service } from '../data/services';
+import { proposalSteps, serviceContactUrl, services, type Service } from '../data/services';
 
 interface Props {
   service: Service;
@@ -48,23 +48,14 @@ const structuredData = origin
     <a slot="actions" class="btn" href={contactUrl}>{service.ctaLabel}<Arrow /></a>
   </PageHero>
 
-  <section class="section">
-    <div class="wrap split">
-      <h2>Quando contratar</h2>
-      <ul class="situations">
-        {service.situations.map((item) => <li class="reveal">{item}</li>)}
-      </ul>
-    </div>
-  </section>
-
   <section class="section surface-mist">
     <div class="wrap split">
       <div class="split__sticky">
-        <h2>O que pode fazer parte do trabalho</h2>
-        <p class="muted side-note">O escopo é definido a partir do seu contexto.</p>
+        <h2>O que você recebe</h2>
+        <p class="muted side-note">Entregáveis que podem ser acordados. Cada contrato define quais fazem parte do trabalho.</p>
       </div>
       <ul class="rows">
-        {service.scope.map((item) => (
+        {service.deliverables.map((item) => (
           <li>
             <h3>{item.title}</h3>
             <p class="muted">{item.text}</p>
@@ -74,14 +65,41 @@ const structuredData = origin
     </div>
   </section>
 
+  <section class="section" aria-labelledby="como-comeca">
+    <div class="wrap split">
+      <div class="split__sticky">
+        <h2 id="como-comeca">Como o trabalho começa</h2>
+        <p class="muted side-note">Da primeira mensagem à proposta, sem compromisso até você decidir.</p>
+      </div>
+      <ol class="steps">
+        {proposalSteps.map((step, index) => (
+          <li>
+            <span class="steps__number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+            <h3>{step.title}</h3>
+            <p class="muted">{step.text}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <section class="section surface-mist">
+    <div class="wrap split">
+      <h2>Quando contratar</h2>
+      <ul class="situations">
+        {service.situations.map((item) => <li class="reveal">{item}</li>)}
+      </ul>
+    </div>
+  </section>
+
   <section class="section">
     <div class="wrap split">
       <div class="split__sticky">
-        <h2>Entregáveis que podem ser acordados</h2>
-        <p class="muted side-note">Cada contrato define quais destes entregáveis fazem parte do trabalho.</p>
+        <h2>O que pode fazer parte do trabalho</h2>
+        <p class="muted side-note">O escopo é definido a partir do seu contexto.</p>
       </div>
       <ul class="rows">
-        {service.deliverables.map((item) => (
+        {service.scope.map((item) => (
           <li>
             <h3>{item.title}</h3>
             <p class="muted">{item.text}</p>
@@ -132,6 +150,35 @@ const structuredData = origin
 </BaseLayout>
 
 <style>
+  .steps {
+    display: grid;
+    gap: var(--space-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .steps li {
+    padding: var(--space-4) var(--space-5);
+    border: 1px solid var(--card-line);
+    border-radius: var(--radius-card);
+    background: var(--card);
+  }
+
+  .steps__number {
+    display: block;
+    margin-bottom: var(--space-2);
+    color: var(--eyebrow-ink);
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 600;
+  }
+
+  .steps h3 {
+    margin-bottom: var(--space-1);
+    font-size: var(--text-lg);
+  }
+
   .side-note {
     max-width: 34ch;
     margin-top: var(--space-3);
