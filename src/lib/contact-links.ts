@@ -19,11 +19,25 @@ export const defaultMessage: ContactMessage = {
   opening: 'Olá! Gostaria de conversar sobre um projeto.',
 };
 
-export function buildContactMessage(selection: Preselection, productName?: string): ContactMessage {
-  if (productName) {
+/** Assunto e orientação do contato comercial de um produto. */
+export interface ProductContactInfo {
+  name: string;
+  objective: string;
+  subject: string;
+}
+
+/**
+ * Com a intenção comercial do produto, o assunto é o da oferta (diagnóstico, piloto, avaliação).
+ * Com a intenção de demonstração, ou nos links antigos sem intenção, o assunto é a demonstração.
+ */
+export function buildContactMessage(selection: Preselection, product?: ProductContactInfo): ContactMessage {
+  if (product) {
+    if (selection.objective && selection.objective === product.objective) {
+      return { subject: product.subject, opening: `Olá! Gostaria de conversar sobre: ${product.subject.toLowerCase()}.` };
+    }
     return {
-      subject: `Demonstração do ${productName}`,
-      opening: `Olá! Gostaria de solicitar uma demonstração do ${productName}.`,
+      subject: `Demonstração do ${product.name}`,
+      opening: `Olá! Gostaria de solicitar uma demonstração do ${product.name}.`,
     };
   }
   return interestMessages[selection.interest] ?? defaultMessage;
@@ -33,10 +47,11 @@ export function buildContactMessage(selection: Preselection, productName?: strin
 export function readContactContext(
   search: string,
   interestValues: string[],
-  productNames: Record<string, string>,
+  productCatalog: Record<string, ProductContactInfo>,
 ): ContactMessage | null {
-  const selection = readPreselection(search, interestValues, Object.keys(productNames));
-  return selection.interest ? buildContactMessage(selection, productNames[selection.product]) : null;
+  const objectives = Object.fromEntries(Object.entries(productCatalog).map(([slug, info]) => [slug, [info.objective, 'demo']]));
+  const selection = readPreselection(search, interestValues, Object.keys(productCatalog), objectives);
+  return selection.interest ? buildContactMessage(selection, productCatalog[selection.product]) : null;
 }
 
 export function mailtoUrl(email: string, message: ContactMessage): string {

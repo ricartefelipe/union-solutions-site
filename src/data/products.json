@@ -40,6 +40,11 @@
     "goodToKnow": "Um evento pode chegar mais de uma vez ao destino, por isso o seu sistema precisa tratar repetições. O HookGuard não promete entrega exatamente uma vez.",
     "availability": "Disponível para demonstração. O piloto e a forma de implantação, gerenciada ou no seu ambiente, são definidos na proposta.",
     "ctaLabel": "Conversar sobre um piloto",
+    "objective": "piloto",
+    "contact": {
+      "subject": "Piloto do HookGuard",
+      "hint": "De onde vêm os webhooks, para onde devem ser entregues e qual é o problema de entrega hoje?"
+    },
     "conversationTopics": [
       "Quais provedores enviam eventos e qual sistema os recebe",
       "Como as falhas de entrega são tratadas hoje",
@@ -101,6 +106,17 @@
     "goodToKnow": "O FileNorm não faz conciliação nem integração pronta com ERP, e não lê PDF escaneado. Os formatos da sua operação são confirmados com arquivos reais.",
     "availability": "Disponível para demonstração e piloto com arquivos da sua operação, em instalação dedicada.",
     "ctaLabel": "Solicitar avaliação de piloto",
+    "objective": "piloto",
+    "hiring": [
+      "Piloto em instalação dedicada, com arquivos reais da sua operação.",
+      "Confirmação dos formatos que chegam: OFX, CNAB 240 de retorno, CSV bancário e PDF com texto.",
+      "Conferência do que não pôde ser convertido e do fechamento de saldo nos formatos que trazem saldo.",
+      "Definição de para onde os eventos normalizados seguem. Conciliação e integração pronta com ERP ficam fora do escopo."
+    ],
+    "contact": {
+      "subject": "Avaliação de piloto do FileNorm",
+      "hint": "Quais formatos chegam (OFX, CNAB 240, CSV, PDF), de quais bancos, e para onde os dados normalizados devem seguir?"
+    },
     "conversationTopics": [
       "Quais bancos e formatos de arquivo sua operação utiliza",
       "Para onde os dados normalizados precisam seguir",
@@ -123,6 +139,7 @@
     "sample": {
       "title": "Exemplo reproduzível",
       "intro": "Dois arquivos fictícios e a saída que o FileNorm gerou para cada um. Baixe o arquivo, envie na demonstração e compare o resultado.",
+      "ctaLabel": "Ver exemplo de conversão",
       "cases": [
         {
           "title": "CSV bancário com coluna de saldo",
@@ -258,6 +275,11 @@
     "goodToKnow": "Hoje a cobrança funciona com simulador e com Stripe em ambiente de teste. A cobrança real ainda não está liberada.",
     "availability": "Disponível para demonstração e piloto com dados de teste.",
     "ctaLabel": "Avaliar piloto técnico",
+    "objective": "piloto",
+    "contact": {
+      "subject": "Piloto técnico do AssinaFlow",
+      "hint": "Quais planos e ciclos de cobrança existem, qual provedor de pagamento é usado e como a base técnica atual está montada?"
+    },
     "conversationTopics": [
       "Como suas assinaturas e cobranças funcionam ou devem funcionar",
       "Qual provedor de pagamento sua empresa utiliza ou pretende utilizar",
@@ -317,6 +339,17 @@
     "goodToKnow": "A análise usa regras e heurísticas, por isso os resultados passam por revisão humana. O ArchLens apoia um diagnóstico assistido e não substitui o trabalho de arquitetura.",
     "availability": "Disponível para demonstração e como apoio a um diagnóstico assistido.",
     "ctaLabel": "Solicitar diagnóstico de arquitetura",
+    "objective": "diagnostico",
+    "hiring": [
+      "Diagnóstico assistido por aplicação: o analisador roda no seu ambiente e nada do código-fonte sai dele.",
+      "Evidências revisadas por arquiteto, com cada achado aprovado, editado, aceito como risco ou descartado.",
+      "Roteiro de modernização priorizado por fase, com entregas verificáveis.",
+      "Devolutiva com a sua equipe antes de o roteiro virar plano."
+    ],
+    "contact": {
+      "subject": "Diagnóstico de modernização Java com ArchLens",
+      "hint": "Qual aplicação precisa evoluir e que decisão sua equipe precisa tomar?"
+    },
     "conversationTopics": [
       "Quais aplicações Java precisam ser analisadas",
       "Que decisão de arquitetura ou evolução está em pauta",
@@ -349,6 +382,7 @@
     "sample": {
       "title": "Exemplo reproduzível",
       "intro": "Um projeto Java fictício analisado pelo ArchLens na demonstração: o achado que a regra automática levantou, com as evidências, e a etapa do roteiro que o arquiteto escreveu na revisão. Importe o mesmo arquivo na demonstração e compare.",
+      "ctaLabel": "Ver exemplo de diagnóstico",
       "cases": [
         {
           "title": "Achado crítico com evidência",
@@ -455,8 +489,7 @@
     "screens": [
       {
         "id": "fluxe-operacao",
-        "alt": "Painel do portal de operações da Fluxe B2B Suite numa empresa fictícia: receita dos últimos sete dias, ticket médio, total de pedidos e pedidos por status.",
-        "caption": "Painel de operações com receita, pedidos e status"
+        "alt": "Painel do portal de operações da Fluxe B2B Suite numa empresa fictícia: receita dos últimos sete dias, ticket médio, total de pedidos e pedidos por status."
       },
       {
         "id": "fluxe-pedidos",
@@ -492,6 +525,11 @@
     "goodToKnow": "A suíte depende de serviços próprios de identidade, pedidos e pagamentos. O uso em produção e a integração com provedores dependem da implantação e da configuração.",
     "availability": "Disponível para demonstração. A implantação é avaliada para o seu ambiente.",
     "ctaLabel": "Avaliar implantação",
+    "objective": "avaliacao",
+    "contact": {
+      "subject": "Avaliação de implantação da Fluxe B2B Suite",
+      "hint": "Como a operação B2B funciona hoje, quais sistemas de identidade, pedidos e pagamentos existem e o que precisa entrar primeiro?"
+    },
     "conversationTopics": [
       "Como sua operação B2B está organizada",
       "Quais partes da suíte fazem sentido para o seu caso",
@@ -535,8 +573,7 @@
     "screens": [
       {
         "id": "comercialcloud-pdv",
-        "alt": "Frente de caixa do ComercialCloud numa loja fictícia: busca de produtos, atalhos de produtos, carrinho com três itens e total da venda.",
-        "caption": "Frente de caixa com carrinho e total da venda"
+        "alt": "Frente de caixa do ComercialCloud numa loja fictícia: busca de produtos, atalhos de produtos, carrinho com três itens e total da venda."
       },
       {
         "id": "comercialcloud-produtos",
@@ -572,6 +609,11 @@
     "goodToKnow": "A emissão de documento fiscal ainda não está homologada e não faz parte desta oferta. As exigências do seu segmento são avaliadas na conversa.",
     "availability": "Disponível para demonstração e avaliação de piloto.",
     "ctaLabel": "Avaliar piloto",
+    "objective": "piloto",
+    "contact": {
+      "subject": "Avaliação de piloto do ComercialCloud",
+      "hint": "Quantas lojas e caixas, como a venda é registrada hoje e quais exigências do seu segmento entram na conversa?"
+    },
     "conversationTopics": [
       "Como funciona a rotina do seu caixa e da sua retaguarda",
       "Quais regras e exigências do seu segmento precisam ser consideradas",
@@ -641,6 +683,11 @@
     "goodToKnow": "O acesso usa o Keycloak, configurado na implantação. Cobrança de mensalidades e integração com sistemas acadêmicos que você já usa não fazem parte do que está verificado e entram na conversa sobre o seu caso.",
     "availability": "Disponível para demonstração e avaliação de piloto com dados de teste.",
     "ctaLabel": "Avaliar piloto",
+    "objective": "piloto",
+    "contact": {
+      "subject": "Avaliação de piloto do Skillforge",
+      "hint": "Quantos cursos e turmas, quem acessa como aluno, docente e administração, e quais sistemas acadêmicos já existem?"
+    },
     "conversationTopics": [
       "Como seus cursos, turmas e docentes estão organizados hoje",
       "Quais regras de nota, presença e certificado a sua instituição usa",
@@ -674,8 +721,7 @@
     "screens": [
       {
         "id": "cards-api-fisicos",
-        "alt": "Console da Cards API com os cartões físicos emitidos na demonstração: código de rastreio, situação da entrega e do cartão.",
-        "caption": "Cartões físicos emitidos, com rastreio e situação"
+        "alt": "Console da Cards API com os cartões físicos emitidos na demonstração: código de rastreio, situação da entrega e do cartão."
       },
       {
         "id": "cards-api-painel",
@@ -711,6 +757,11 @@
     "goodToKnow": "Em produção, a API se recusa a iniciar sem uma processadora e uma transportadora reais contratadas. Os simuladores existem só para desenvolvimento, testes e a demonstração, e nenhum cartão real é emitido por eles. A ligação com o seu parceiro é avaliada na conversa.",
     "availability": "Disponível para demonstração com simuladores e para avaliação técnica.",
     "ctaLabel": "Solicitar avaliação técnica",
+    "objective": "avaliacao",
+    "contact": {
+      "subject": "Avaliação técnica da Cards API",
+      "hint": "Qual processadora e transportadora atendem a operação, que fluxos de cartão precisam existir e como o seu produto consumiria a API?"
+    },
     "conversationTopics": [
       "Qual processadora e qual transportadora a sua operação usa ou pretende usar",
       "Como a emissão, a entrega e a validação funcionam hoje",

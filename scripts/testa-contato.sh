@@ -36,7 +36,8 @@ check() {
   if [ "$obtido" = "$esperado" ]; then ok=$((ok+1)); echo "OK     $descricao ($obtido)"; else falhas=$((falhas+1)); echo "FALHA  $descricao (esperado $esperado, obtido $obtido)"; fi
 }
 post() { curl -s -o /tmp/contato-resp.$$ -w "$CODIGO_HTTP" -H "$H" -H "$O" -H 'Content-Type: application/json' "$@" "$B"; }
-VALIDO='{"nome":"Ana Teste","empresa":"Empresa Teste","email":"ana@exemplo.com.br","telefone":"(11) 90000-0000","interesse":"produto","produto":"filenorm","mensagem":"Quero conhecer o produto em detalhes."}'
+VALIDO='{"nome":"Ana Teste","empresa":"Empresa Teste","email":"ana@exemplo.com.br","telefone":"(11) 90000-0000","interesse":"produto","produto":"filenorm","objetivo":"piloto","mensagem":"Quero conhecer o produto em detalhes."}'
+SKILLFORGE='{"nome":"Bia Teste","email":"bia@exemplo.com.br","interesse":"produto","produto":"skillforge","objetivo":"diagnostico","mensagem":"Objetivo fora da lista do produto deve ser descartado."}'
 
 check "$(curl -s -o /dev/null -w "$CODIGO_HTTP" -H "$H" "$B")" 405 "GET é recusado"
 check "$(curl -s -o /dev/null -w "$CODIGO_HTTP" -H "$H" -H 'Origin: https://site-malicioso.example' -H 'Content-Type: application/json' -d "$VALIDO" "$B")" 403 "outra origem é recusada"
@@ -59,10 +60,15 @@ printf '%s' "$MAIL" | grep -q '^To: contato@unionsolutions.tech' && c=1 || c=0; 
 printf '%s' "$MAIL" | grep -q 'Reply-To: Ana Teste <ana@exemplo.com.br>' && c=1 || c=0; check "$c" 1 "Reply-To é quem escreveu"
 printf '%s' "$MAIL" | grep -q 'Quero conhecer o produto' && c=1 || c=0; check "$c" 1 "mensagem no corpo"
 printf '%s' "$MAIL" | grep -q 'Produto: filenorm' && c=1 || c=0; check "$c" 1 "produto no corpo"
+printf '%s' "$MAIL" | grep -q 'Objetivo: piloto' && c=1 || c=0; check "$c" 1 "objetivo válido no corpo"
+# O assunto vai codificado em base64 (=?UTF-8?B?...?=): decodifica antes de conferir.
+printf '%s' "$MAIL" | grep '^Subject:' | sed 's/.*=?UTF-8?B?//; s/?=.*//' | base64 -d 2>/dev/null | grep -q 'produto (filenorm, piloto)' && c=1 || c=0; check "$c" 1 "objetivo no assunto"
 check "$(post -d '{"nome":"Injeção\r\nBcc: alvo@exemplo.com","email":"a@b.co","interesse":"consultoria","produto":"","mensagem":"tentativa de injetar cabecalho"}')" 200 "nome com quebra de linha é aceito e saneado"
 docker exec "$NAME" grep -q '^Bcc:' /tmp/emails.txt && c=1 || c=0; check "$c" 0 "nenhum cabeçalho injetado"
 # Limite: 5 por hora por endereço. Já foram 2 envios válidos; mais 3 passam e o 6º recebe 429.
-for i in 1 2 3; do post -d "$VALIDO" >/dev/null; done
+check "$(post -d "$SKILLFORGE")" 200 "skillforge é produto válido"
+docker exec "$NAME" grep -q 'Objetivo: diagnostico' /tmp/emails.txt && c=1 || c=0; check "$c" 0 "objetivo incompatível com o produto é descartado"
+for i in 1 2; do post -d "$VALIDO" >/dev/null; done
 check "$(post -d "$VALIDO")" 429 "sexto envio na hora é recusado"
 check "$(docker exec "$NAME" sh -c 'ls /var/www/contato-limite /tmp/contato-limite 2>/dev/null | grep -c json')" 1 "limite gravado fora da raiz pública (pasta acima de public_html ou temporária)"
 check "$(curl -s -o /dev/null -w "$CODIGO_HTTP" -H "$H" "http://127.0.0.1:$PORT/contato-limite/")" 404 "pasta do limite não é servida"

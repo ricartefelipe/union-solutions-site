@@ -19,7 +19,20 @@ const LIMITE_ENVIOS = 5;          // por endereço IP
 const JANELA_SEGUNDOS = 3600;     // na última hora
 const TAMANHO_MAXIMO = 16 * 1024; // bytes do corpo JSON
 const INTERESSES = ['produto', 'consultoria', 'arquitetura', 'desenvolvimento', 'parceria'];
-const PRODUTOS = ['hookguard', 'filenorm', 'assinaflow', 'archlens', 'fluxe-b2b-suite', 'comercialcloud', 'ainda-nao-sei'];
+const PRODUTOS = ['hookguard', 'filenorm', 'assinaflow', 'archlens', 'fluxe-b2b-suite', 'comercialcloud', 'skillforge', 'cards-api', 'ainda-nao-sei'];
+// Intenção que o visitante escolheu: a comercial de cada produto (src/data/products.json) ou a demonstração.
+// Valor fora da lista é descartado, nunca recusado: links antigos seguem funcionando.
+const OBJETIVOS_POR_PRODUTO = [
+    'hookguard' => ['piloto', 'demo'],
+    'filenorm' => ['piloto', 'demo'],
+    'assinaflow' => ['piloto', 'demo'],
+    'archlens' => ['diagnostico', 'demo'],
+    'fluxe-b2b-suite' => ['avaliacao', 'demo'],
+    'comercialcloud' => ['piloto', 'demo'],
+    'skillforge' => ['piloto', 'demo'],
+    'cards-api' => ['avaliacao', 'demo'],
+    'ainda-nao-sei' => ['demo'],
+];
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -161,6 +174,7 @@ $email = texto($dados, 'email', 160);
 $telefone = texto($dados, 'telefone', 40);
 $interesse = texto($dados, 'interesse', 40);
 $produto = texto($dados, 'produto', 40);
+$objetivo = texto($dados, 'objetivo', 20);
 $mensagem = texto($dados, 'mensagem', 4000, false);
 
 if ($nome === '' || $email === '' || $mensagem === '' || $interesse === '') {
@@ -178,6 +192,9 @@ if ($interesse === 'produto' && !in_array($produto, PRODUTOS, true)) {
 if ($interesse !== 'produto') {
     $produto = '';
 }
+if ($produto === '' || !in_array($objetivo, OBJETIVOS_POR_PRODUTO[$produto] ?? [], true)) {
+    $objetivo = '';
+}
 if (mb_strlen($mensagem) < 10) {
     responder(422, ['ok' => false, 'erro' => 'Mensagem muito curta.']);
 }
@@ -186,7 +203,8 @@ if (excedeuLimite()) {
     responder(429, ['ok' => false, 'erro' => 'Muitos envios em pouco tempo. Tente de novo mais tarde ou escreva para ' . DESTINATARIO . '.']);
 }
 
-$assunto = 'Contato pelo site: ' . $interesse . ($produto !== '' ? " ($produto)" : '') . ' - ' . $nome;
+$detalhe = $produto !== '' ? ' (' . $produto . ($objetivo !== '' ? ', ' . $objetivo : '') . ')' : '';
+$assunto = 'Contato pelo site: ' . $interesse . $detalhe . ' - ' . $nome;
 $linhas = [
     'Nova mensagem pelo formulário do site.',
     '',
@@ -196,6 +214,7 @@ $linhas = [
     'Telefone: ' . ($telefone !== '' ? $telefone : '-'),
     'Interesse: ' . $interesse,
     'Produto: ' . ($produto !== '' ? $produto : '-'),
+    'Objetivo: ' . ($objetivo !== '' ? $objetivo : '-'),
     '',
     'Mensagem:',
     $mensagem,

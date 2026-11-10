@@ -21,6 +21,8 @@ export interface Service {
   scope: ScopeItem[];
   deliverables: ScopeItem[];
   ctaLabel: string;
+  /** Exemplo concreto de contratação, mostrado na home. */
+  homeExample: string;
   /** Produto próprio que apoia o serviço em determinado cenário, quando houver. */
   related?: { title: string; text: string; href: string; label: string };
 }
@@ -100,6 +102,7 @@ export const services: Service[] = [
       { title: 'Acompanhamento', text: 'Apoio durante a execução do plano.' },
     ],
     ctaLabel: 'Conversar sobre consultoria',
+    homeExample: 'Diagnóstico de um sistema lento ou instável, com a causa apurada e um plano de ação em ordem de prioridade.',
   },
   {
     slug: 'arquitetura',
@@ -133,6 +136,7 @@ export const services: Service[] = [
       { title: 'Roteiro de evolução', text: 'As etapas para levar a arquitetura à construção e à evolução do sistema.' },
     ],
     ctaLabel: 'Conversar sobre arquitetura',
+    homeExample: 'Projeto de integração entre sistemas, com contratos definidos, requisitos de qualidade e roteiro de evolução.',
     related: {
       title: 'Aplicações Java: diagnóstico com o ArchLens',
       text: 'Quando o cenário envolve uma aplicação Java pouco documentada, o diagnóstico e o roteiro de modernização podem partir do ArchLens, que analisa o projeto no seu ambiente e organiza inventário, evidências e achados para a revisão do arquiteto.',
@@ -173,6 +177,7 @@ export const services: Service[] = [
       { title: 'Transferência de conhecimento', text: 'O repasse para quem vai cuidar do sistema.' },
     ],
     ctaLabel: 'Conversar sobre desenvolvimento',
+    homeExample: 'Implementação por etapas de um portal ou de uma API, com validação, documentação e implantação a cada entrega.',
   },
 ];
 

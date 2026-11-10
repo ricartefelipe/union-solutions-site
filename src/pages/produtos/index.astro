@@ -39,6 +39,7 @@ import { allHaveDemo, catalog, productDemoUrl } from '../../data/products';
                 {!allHaveDemo && product.liveDemo && <p><span class="badge-demo">Demonstração online</span></p>}
                 <p class="product__purpose">{product.purpose}</p>
                 <p class="product__context muted">{product.context}</p>
+                <p class="product__stage"><span class="eyebrow">Hoje</span>{product.availability}</p>
                 <ul class="node-list product__capabilities">
                   {product.capabilities.slice(0, 3).map((capability) => <li>{capability}</li>)}
                 </ul>
@@ -141,6 +142,15 @@ import { allHaveDemo, catalog, productDemoUrl } from '../../data/products';
   }
 
   .product__context {
+    max-width: var(--measure);
+    margin-bottom: var(--space-3);
+    font-size: var(--text-sm);
+    line-height: 1.5;
+  }
+
+  .product__stage {
+    display: grid;
+    gap: var(--space-1);
     max-width: var(--measure);
     margin-bottom: var(--space-4);
     font-size: var(--text-sm);

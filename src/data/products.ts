@@ -34,8 +34,6 @@ export interface ProductScreen {
   id: string;
   /** Descreve o que a tela mostra, para quem não a vê. */
   alt: string;
-  /** Legenda curta, até 50 caracteres, exibida junto do nome do produto no topo da home. */
-  caption?: string;
 }
 
 /** Necessidades do comprador, na ordem do catálogo. Cada produto pertence a uma. */
@@ -55,6 +53,17 @@ export const needs: Need[] = [
   { slug: 'ensino', title: 'Ensino a distância', text: 'Ministrar cursos online e acompanhar turmas, notas, presença e certificados.' },
   { slug: 'java', title: 'Modernização Java', text: 'Entender uma aplicação Java pouco documentada antes de decidir como evoluí-la.' },
 ];
+
+/** Intenção comercial que o botão da ficha leva ao contato. `demo` é a intenção de testar, válida para todos. */
+export type ContactObjective = 'diagnostico' | 'piloto' | 'avaliacao';
+
+/** Como o contato é apresentado quando o visitante vem do botão comercial. */
+export interface ProductContact {
+  /** Assunto mostrado no formulário e recebido no e-mail. */
+  subject: string;
+  /** Pergunta que orienta a descrição. */
+  hint: string;
+}
 
 /** Metadados da ficha do produto para busca e compartilhamento. */
 export interface ProductSeo {
@@ -92,6 +101,8 @@ export interface SampleCase {
 export interface ProductSample {
   title: string;
   intro: string;
+  /** Rótulo do botão da ficha que leva ao exemplo, como "Ver exemplo de conversão". */
+  ctaLabel: string;
   cases: SampleCase[];
   /** Versão do produto e data em que a saída foi gerada. */
   provenance: string;
@@ -129,6 +140,12 @@ export interface Product {
   availability: string;
   /** Rótulo do botão comercial da ficha: piloto, diagnóstico, avaliação ou implantação, conforme a oferta. */
   ctaLabel: string;
+  /** Intenção que o botão comercial carrega para o contato. */
+  objective: ContactObjective;
+  /** O que a oferta inclui ou o que o piloto avalia, uma frase por item; aparece em "Como contratar". */
+  hiring?: string[];
+  /** Assunto e orientação do contato para essa intenção. */
+  contact: ProductContact;
   /** O que vale levar para a conversa sobre demonstração. */
   conversationTopics: string[];
   /** Demonstração pública no ar, quando existir: endereço HTTPS e o que o visitante encontra lá. */
@@ -154,8 +171,43 @@ export function productSocialImage(product: Product) {
   return { src: `/capturas/${screen.id}-1024.jpg`, width: 1024, height: 576, alt: screen.alt };
 }
 
-/** Produtos cujas telas aparecem em camadas no topo da home (atrás, na frente e ao lado), pela primeira captura. */
-export const heroSlugs: ProductSlug[] = ['fluxe-b2b-suite', 'comercialcloud', 'cards-api'];
+/** Caminhos de entrada da home: a necessidade que o visitante reconhece e o produto que responde a ela. */
+export interface HomePath {
+  need: string;
+  text: string;
+  slug: ProductSlug;
+  label: string;
+}
+
+export const homePaths: HomePath[] = [
+  {
+    need: 'Preciso decidir como modernizar um legado Java',
+    text: 'O ArchLens analisa a aplicação no seu ambiente e organiza evidências para um roteiro de modernização revisado por arquiteto.',
+    slug: 'archlens',
+    label: 'Ver o ArchLens',
+  },
+  {
+    need: 'Preciso integrar sistemas ou padronizar dados',
+    text: 'O FileNorm transforma OFX, CNAB 240, CSV e PDF bancários em eventos padronizados; o HookGuard recebe e reprocessa webhooks.',
+    slug: 'filenorm',
+    label: 'Ver o FileNorm',
+  },
+];
+
+/** Prova do topo da home: o achado, a evidência e a etapa do roteiro do exemplo do ArchLens. */
+export function heroProof() {
+  const archlens = products.find((product) => product.slug === 'archlens');
+  const cases = archlens?.sample?.cases ?? [];
+  const row = (index: number, label: string) => cases[index]?.rows?.find((item) => item.label === label)?.value ?? '';
+  return {
+    finding: row(0, 'Achado'),
+    severity: row(0, 'Severidade'),
+    evidence: row(0, 'Evidências'),
+    phase: row(1, 'Fase'),
+    step: row(1, 'Etapa'),
+    href: '/produtos/archlens/#exemplo',
+  };
+}
 
 /** Produtos com demonstração pública no ar, na ordem do catálogo. */
 export const demoProducts = products.filter((product) => product.liveDemo);
@@ -168,6 +220,8 @@ export function productDemoUrl(slug: ProductSlug): string {
   return `/demonstracoes/#${slug}`;
 }
 
-export function productContactUrl(slug: ProductSlug): string {
-  return `/contato/?interesse=produto&produto=${slug}`;
+/** Endereço do contato com a intenção comercial do produto. Sem `objective`, usa a do catálogo. */
+export function productContactUrl(slug: ProductSlug, objective?: ContactObjective | 'demo'): string {
+  const chosen = objective ?? products.find((product) => product.slug === slug)?.objective;
+  return `/contato/?interesse=produto&produto=${slug}${chosen ? `&objetivo=${chosen}` : ''}`;
 }

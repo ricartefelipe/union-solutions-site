@@ -1,42 +1,47 @@
 ---
 import Arrow from './Arrow.astro';
 import Meander from './Meander.astro';
-import ProductShot from './ProductShot.astro';
-import { heroSlugs, products } from '../data/products';
+import { heroProof, productContactUrl } from '../data/products';
 
-// Três telas reais das demonstrações, em camadas: atrás, na frente e ao lado. Só a da frente carrega com prioridade.
-const places = ['back', 'front', 'side'];
-const layers = heroSlugs.map((slug, index) => ({ slug, place: places[index] }));
-const shots = layers.map(({ slug, place }) => {
-  const product = products.find((item) => item.slug === slug)!;
-  return { product, place, screen: product.screens[0] };
-});
+// A prova vem do exemplo do ArchLens no catálogo: achado automático, evidência e etapa escrita pelo arquiteto.
+const proof = heroProof();
+const diagnosisUrl = productContactUrl('archlens', 'diagnostico');
 ---
 
 <section class="hero surface-dark">
   <Meander class="hero__line" turns={5} radius={110} height={320} gap={26} nodes={false} />
   <div class="wrap hero__inner">
     <div class="hero__copy">
-      <span class="eyebrow">Produtos próprios e software sob medida</span>
-      <h1>Software para operar, integrar e <span class="hero__accent">evoluir seu negócio.</span></h1>
-      <p class="lede hero__lede">Produtos que você testa no navegador, com dados fictícios, e sistemas construídos para a sua operação.</p>
+      <span class="eyebrow">Diagnóstico Java, integrações e sistemas sob medida</span>
+      <h1>Modernização de sistemas Java e <span class="hero__accent">integrações críticas.</span></h1>
+      <p class="lede hero__lede">A Union Solutions analisa aplicações Java no seu ambiente e desenvolve integrações e sistemas sob medida.</p>
       <div class="btn-row">
-        <a class="btn" href="#produtos">Conhecer os produtos<Arrow /></a>
-        <a class="btn btn--ghost" href="/demonstracoes/">Testar uma demonstração</a>
+        <a class="btn" href={diagnosisUrl}>Solicitar diagnóstico Java<Arrow /></a>
+        <a class="btn btn--ghost" href={proof.href}>Ver exemplo de diagnóstico</a>
       </div>
     </div>
 
-    <div class="hero__art" role="group" aria-label="Telas das demonstrações">
-      {shots.map(({ product, place, screen }) => (
-        <figure class:list={['hero__layer', `hero__layer--${place}`]}>
-          <ProductShot screen={screen} priority={place === 'front'} sizes={place === 'front' ? '(min-width: 62rem) 36vw, 88vw' : '(min-width: 62rem) 26vw, 60vw'} />
-          <figcaption>
-            <strong>{product.name}</strong>
-            {screen.caption && <span class="hero__caption"> · {screen.caption}</span>}
-          </figcaption>
-        </figure>
-      ))}
-    </div>
+    <aside class="proof" aria-labelledby="prova-titulo">
+      <p class="proof__tag" id="prova-titulo">Exemplo com dados fictícios</p>
+      <ol class="proof__steps">
+        <li>
+          <span class="proof__label">Achado</span>
+          <strong>{proof.finding}</strong>
+          <span class="proof__meta">Severidade {proof.severity.toLowerCase()}, levantado por regra automática</span>
+        </li>
+        <li>
+          <span class="proof__label">Evidência</span>
+          <strong>{proof.evidence}</strong>
+          <span class="proof__meta">Analisado no ambiente do cliente, sem enviar o código-fonte</span>
+        </li>
+        <li>
+          <span class="proof__label">Etapa do roteiro</span>
+          <strong>{proof.step}</strong>
+          <span class="proof__meta">{proof.phase}, escrita pelo arquiteto na revisão</span>
+        </li>
+      </ol>
+      <a class="text-link proof__link" href={proof.href}>Ver o exemplo completo<Arrow /></a>
+    </aside>
   </div>
 </section>
 
@@ -48,7 +53,7 @@ const shots = layers.map(({ slug, place }) => {
     padding-block: clamp(2.75rem, 1.5rem + 5vw, 6rem) clamp(3rem, 2rem + 5vw, 6.5rem);
   }
 
-  /* Brilho discreto atrás das telas, na cor da marca. */
+  /* Brilho discreto atrás da prova, na cor da marca. */
   .hero::before {
     content: '';
     position: absolute;
@@ -79,11 +84,11 @@ const shots = layers.map(({ slug, place }) => {
   }
 
   h1 {
-    max-width: 14ch;
-    font-size: var(--text-display);
+    max-width: 16ch;
+    font-size: var(--text-h1-home);
     font-weight: 500;
-    line-height: 1.02;
-    letter-spacing: -0.035em;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
   }
 
   .hero__accent {
@@ -93,98 +98,93 @@ const shots = layers.map(({ slug, place }) => {
   .hero__lede {
     max-width: 44ch;
     margin-block: var(--space-5) var(--space-6);
-    color: var(--on-dark-soft);
   }
 
-  /* Telas em camadas: a de trás espia por cima, a lateral cruza a borda inferior. */
-  .hero__art {
+  /* Prova em HTML: lê-se sem imagem, em qualquer tema, e não muda o layout ao carregar. */
+  .proof {
     position: relative;
-    display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    padding-bottom: 12%;
-  }
-
-  .hero__layer {
-    position: relative;
-    margin: 0;
-  }
-
-  .hero__layer--back {
-    z-index: 0;
-    grid-area: 1 / 4 / 2 / 13;
-  }
-
-  .hero__layer--front {
-    z-index: 1;
-    grid-area: 1 / 1 / 2 / 11;
-    margin-top: 16%;
-  }
-
-  .hero__layer--side {
-    position: absolute;
-    z-index: 2;
-    right: 0;
-    bottom: 0;
-    width: 46%;
-  }
-
-  .hero__layer :global(.shot) {
+    padding: var(--space-5);
+    border: 1px solid rgb(255 255 255 / 0.18);
+    border-radius: var(--radius-card);
+    background: rgb(255 255 255 / 0.06);
     box-shadow: 0 30px 60px -28px rgb(0 0 0 / 0.75);
   }
 
-  figcaption {
-    position: absolute;
-    top: 0.3125rem;
-    right: 0.625rem;
-    padding: 0 0.5rem;
+  .proof__tag {
+    display: inline-block;
+    margin-bottom: var(--space-4);
+    padding: 0.125rem 0.625rem;
     border-radius: var(--radius-pill);
     background: rgb(255 255 255 / 0.14);
-    color: var(--on-dark);
     font-size: var(--text-xs);
-    font-weight: 500;
-    line-height: 1.3;
-    white-space: nowrap;
-  }
-
-  figcaption strong {
     font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
   }
 
-  /* A captura lateral fica parcialmente coberta pela da frente, e em telas estreitas todas são pequenas: fica só o nome. */
-  .hero__layer--side .hero__caption {
-    display: none;
+  .proof__steps {
+    display: grid;
+    gap: var(--space-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: etapa;
   }
 
-  @media (max-width: 61.99rem) {
-    .hero__caption {
-      display: none;
-    }
+  .proof__steps li {
+    position: relative;
+    display: grid;
+    gap: var(--space-1);
+    padding-left: 2.5rem;
+    counter-increment: etapa;
+  }
+
+  .proof__steps li::before {
+    content: counter(etapa);
+    position: absolute;
+    top: 0.1rem;
+    left: 0;
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--brand-deep);
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 700;
+  }
+
+  .proof__label {
+    color: var(--accent);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .proof__steps strong {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+
+  .proof__meta {
+    color: var(--on-dark-soft);
+    font-size: var(--text-sm);
+    line-height: 1.5;
+  }
+
+  .proof__link {
+    margin-top: var(--space-4);
+    color: var(--on-dark);
   }
 
   @media (min-width: 62rem) {
     .hero__inner {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    }
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
-    .hero__layer {
-      animation: layer-in 0.9s var(--ease) both;
-    }
-
-    .hero__layer--back {
-      animation-delay: 0.1s;
-    }
-
-    .hero__layer--side {
-      animation-delay: 0.25s;
-    }
-
-    @keyframes layer-in {
-      from {
-        opacity: 0;
-        transform: translateY(1.25rem);
-      }
+      grid-template-columns: minmax(0, 11fr) minmax(0, 9fr);
     }
   }
 </style>

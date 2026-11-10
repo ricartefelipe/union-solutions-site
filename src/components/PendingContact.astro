@@ -1,9 +1,7 @@
 ---
 import Arrow from './Arrow.astro';
-import { products } from '../data/products';
-import { interests } from '../lib/contact-options';
+import { interests, productContactCatalog } from '../lib/contact-options';
 
-const productNames = Object.fromEntries(products.map((product) => [product.slug, product.name]));
 const interestValues = interests.map((item) => item.value);
 ---
 
@@ -11,7 +9,7 @@ const interestValues = interests.map((item) => item.value);
   class="pending"
   role="note"
   data-config-pending
-  data-products={JSON.stringify(productNames)}
+  data-products={JSON.stringify(productContactCatalog)}
   data-interests={JSON.stringify(interestValues)}
 >
   <h2>Contato ainda não disponível</h2>
@@ -25,14 +23,14 @@ const interestValues = interests.map((item) => item.value);
 </div>
 
 <script>
-  import { readContactContext } from '../lib/contact-links';
+  import { readContactContext, type ProductContactInfo } from '../lib/contact-links';
 
   const panel = document.querySelector<HTMLElement>('[data-config-pending]');
 
   if (panel) {
-    const productNames = JSON.parse(panel.dataset.products ?? '{}') as Record<string, string>;
+    const productCatalog = JSON.parse(panel.dataset.products ?? '{}') as Record<string, ProductContactInfo>;
     const interestValues = JSON.parse(panel.dataset.interests ?? '[]') as string[];
-    const message = readContactContext(window.location.search, interestValues, productNames);
+    const message = readContactContext(window.location.search, interestValues, productCatalog);
     const context = panel.querySelector<HTMLElement>('[data-context]');
     if (message && context) {
       context.textContent = `Assunto: ${message.subject}.`;
