@@ -113,6 +113,6 @@ export const nav = [
 ] as const;
 
 export const primaryCta = {
-  label: 'Conversar sobre meu projeto',
+  label: 'Falar com a Union',
   href: '/contato/',
 } as const;
