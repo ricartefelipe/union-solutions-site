@@ -13,6 +13,8 @@ export interface ContactSubmission {
   telefone: string;
   interesse: string;
   produto: string;
+  /** Intenção validada no formulário: diagnostico, piloto, avaliacao, demo ou vazio. */
+  objetivo: string;
   mensagem: string;
 }
 

@@ -118,6 +118,13 @@ import { demoProducts } from '../../data/products';
     padding: var(--space-2) var(--space-3) var(--space-3);
   }
 
+  /* Em telas estreitas, cenário, acesso e ação vêm antes da imagem. */
+  @media (max-width: 61.99rem) {
+    .demo__body {
+      order: -1;
+    }
+  }
+
   .demo h2 {
     margin-bottom: var(--space-3);
     font-size: var(--text-h2);

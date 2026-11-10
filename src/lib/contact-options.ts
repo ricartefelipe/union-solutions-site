@@ -13,6 +13,29 @@ export const productOptions = [
   { value: 'ainda-nao-sei', label: 'Ainda não sei qual produto' },
 ];
 
+/** Intenção de testar, válida para qualquer produto; as comerciais vêm do catálogo. */
+export const demoObjective = 'demo';
+
+/** O que cada produto aceita como intenção no contato, e como apresenta a comercial. */
+export interface ProductContactEntry {
+  name: string;
+  objective: string;
+  subject: string;
+  hint: string;
+}
+
+export const productContactCatalog: Record<string, ProductContactEntry> = Object.fromEntries(
+  products.map((product) => [
+    product.slug,
+    { name: product.name, objective: product.objective, subject: product.contact.subject, hint: product.contact.hint },
+  ]),
+);
+
+/** Intenções válidas por produto: a comercial do catálogo e a demonstração. */
+export const objectivesByProduct: Record<string, string[]> = Object.fromEntries(
+  products.map((product) => [product.slug, [product.objective, demoObjective]]),
+);
+
 /** Orientação do campo de mensagem conforme o interesse. `{produto}` é trocado pelo nome do produto escolhido. */
 export const messageGuidance: Record<(typeof interests)[number]['value'], { label: string; hint: string }> = {
   produto: {
