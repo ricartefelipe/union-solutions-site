@@ -34,8 +34,6 @@ export interface ProductScreen {
   id: string;
   /** Descreve o que a tela mostra, para quem não a vê. */
   alt: string;
-  /** Legenda curta, até 50 caracteres, exibida junto do nome do produto no topo da home. */
-  caption?: string;
 }
 
 /** Necessidades do comprador, na ordem do catálogo. Cada produto pertence a uma. */
@@ -171,8 +169,43 @@ export function productSocialImage(product: Product) {
   return { src: `/capturas/${screen.id}-1024.jpg`, width: 1024, height: 576, alt: screen.alt };
 }
 
-/** Produtos cujas telas aparecem em camadas no topo da home (atrás, na frente e ao lado), pela primeira captura. */
-export const heroSlugs: ProductSlug[] = ['fluxe-b2b-suite', 'comercialcloud', 'cards-api'];
+/** Caminhos de entrada da home: a necessidade que o visitante reconhece e o produto que responde a ela. */
+export interface HomePath {
+  need: string;
+  text: string;
+  slug: ProductSlug;
+  label: string;
+}
+
+export const homePaths: HomePath[] = [
+  {
+    need: 'Preciso decidir como modernizar um legado Java',
+    text: 'O ArchLens analisa a aplicação no seu ambiente e organiza evidências para um roteiro de modernização revisado por arquiteto.',
+    slug: 'archlens',
+    label: 'Ver o ArchLens',
+  },
+  {
+    need: 'Preciso integrar sistemas ou padronizar dados',
+    text: 'O FileNorm transforma OFX, CNAB 240, CSV e PDF bancários em eventos padronizados; o HookGuard recebe e reprocessa webhooks.',
+    slug: 'filenorm',
+    label: 'Ver o FileNorm',
+  },
+];
+
+/** Prova do topo da home: o achado, a evidência e a etapa do roteiro do exemplo do ArchLens. */
+export function heroProof() {
+  const archlens = products.find((product) => product.slug === 'archlens');
+  const cases = archlens?.sample?.cases ?? [];
+  const row = (index: number, label: string) => cases[index]?.rows?.find((item) => item.label === label)?.value ?? '';
+  return {
+    finding: row(0, 'Achado'),
+    severity: row(0, 'Severidade'),
+    evidence: row(0, 'Evidências'),
+    phase: row(1, 'Fase'),
+    step: row(1, 'Etapa'),
+    href: '/produtos/archlens/#exemplo',
+  };
+}
 
 /** Produtos com demonstração pública no ar, na ordem do catálogo. */
 export const demoProducts = products.filter((product) => product.liveDemo);

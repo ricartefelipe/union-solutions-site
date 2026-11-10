@@ -477,8 +477,7 @@
     "screens": [
       {
         "id": "fluxe-operacao",
-        "alt": "Painel do portal de operações da Fluxe B2B Suite numa empresa fictícia: receita dos últimos sete dias, ticket médio, total de pedidos e pedidos por status.",
-        "caption": "Painel de operações com receita, pedidos e status"
+        "alt": "Painel do portal de operações da Fluxe B2B Suite numa empresa fictícia: receita dos últimos sete dias, ticket médio, total de pedidos e pedidos por status."
       },
       {
         "id": "fluxe-pedidos",
@@ -562,8 +561,7 @@
     "screens": [
       {
         "id": "comercialcloud-pdv",
-        "alt": "Frente de caixa do ComercialCloud numa loja fictícia: busca de produtos, atalhos de produtos, carrinho com três itens e total da venda.",
-        "caption": "Frente de caixa com carrinho e total da venda"
+        "alt": "Frente de caixa do ComercialCloud numa loja fictícia: busca de produtos, atalhos de produtos, carrinho com três itens e total da venda."
       },
       {
         "id": "comercialcloud-produtos",
@@ -711,8 +709,7 @@
     "screens": [
       {
         "id": "cards-api-fisicos",
-        "alt": "Console da Cards API com os cartões físicos emitidos na demonstração: código de rastreio, situação da entrega e do cartão.",
-        "caption": "Cartões físicos emitidos, com rastreio e situação"
+        "alt": "Console da Cards API com os cartões físicos emitidos na demonstração: código de rastreio, situação da entrega e do cartão."
       },
       {
         "id": "cards-api-painel",
