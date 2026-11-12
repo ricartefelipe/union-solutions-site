@@ -84,7 +84,7 @@ Cada afirmação precisa de evidência no repositório do produto. Limites e dis
 
 **Fundador e links.** Edite `src/config/site.ts`.
 
-**Design.** Cores, tipografia, espaçamento, bordas, larguras e estados de interação estão em `src/styles/tokens.css`. O tema escuro é só do site e fica em `src/styles/tema.css`, aplicado por `data-theme` em `<html>`: segue `prefers-color-scheme`, a escolha do botão do cabeçalho fica no `localStorage` (chave `tema`, sem cookie) e um script no `<head>` evita o lampejo ao carregar.
+**Design.** Cores, tipografia, espaçamento, bordas, larguras e estados de interação estão em `src/styles/tokens.css`. O tema escuro do site fica em `src/styles/tema.css` (o portal tem o seu, em `portal/frontend/src/styles/tema.css`, com a mesma lógica e os mesmos valores de cor), aplicado por `data-theme` em `<html>`: segue `prefers-color-scheme`, a escolha do botão do cabeçalho fica no `localStorage` (chave `tema`, sem cookie) e um script no `<head>` evita o lampejo ao carregar.
 
 **Marca.** Os assets são derivados de `brand/originais/` com `npm run assets:brand` (requer Python com Pillow): `Logo-01.png` é a marca completa e `Logo-06.png`, o símbolo. O fundo dos arquivos é `#1A1360`, igual a `--brand`. Se essa variável mudar, a logo passará a mostrar um retângulo de outra cor.
 

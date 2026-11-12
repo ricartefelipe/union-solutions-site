@@ -1,0 +1,47 @@
+/*
+ * Tema do portal (claro e escuro). Os tokens compartilhados com o site ficam em tokens.css e não mudam;
+ * este arquivo é só do portal, como src/styles/tema.css é só do site. O claro é o padrão; o escuro vale
+ * quando <html data-theme="dark">, definido pelo script do layout raiz antes da primeira pintura.
+ *
+ * --brand continua sendo o fundo das superfícies escuras (cabeçalho, menu, páginas públicas) nos dois
+ * modos. Texto, borda e botão sobre o papel usam --brand-ink e --btn-*, que invertem no escuro.
+ */
+:root {
+  color-scheme: light;
+  --brand-ink: var(--brand);
+  --btn-bg: var(--brand);
+  --btn-fg: var(--on-dark);
+  --btn-bg-hover: var(--brand-lift);
+  --btn-fg-hover: var(--on-dark);
+  --backdrop: rgb(18 13 71 / 0.55);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  /* O corpo (--mist) fica mais escuro que as seções (--paper), como no claro, só que invertido em luz. */
+  --mist: #0c0930;
+  --paper: #141047;
+  --ink: #ecebf7;
+  --ink-soft: #bcbad6;
+  --line: #2f2b6e;
+  --line-strong: #8b88b5;
+
+  --brand-ink: #d3cfff;
+  --btn-bg: #d3cfff;
+  --btn-fg: #120d47;
+  --btn-bg-hover: var(--accent);
+  --btn-fg-hover: #120d47;
+  --backdrop: rgb(0 0 0 / 0.65);
+
+  --danger: #ff9fb0;
+  --danger-bg: #3b1621;
+  --danger-deep: #ffb7c3;
+  --notice-bg: #33260b;
+  --notice-line: #f2b45c;
+  --notice-ink: #fde7bd;
+  --success: #86e0b4;
+  --success-bg: #0f3827;
+  --neutral-bg: #26234f;
+  --neutral-ink: #dcdaf0;
+  --info-bg: #231f63;
+}
