@@ -13,6 +13,8 @@
   --btn-bg-hover: var(--brand-lift);
   --btn-fg-hover: var(--on-dark);
   --white-fixed: #ffffff;
+  /* Cor da logo: branca no índigo; nas outras paletas, o acento. */
+  --logo-ink: var(--on-dark);
 
   /*
    * Tokens só do site, que o portal não usa: rótulos, cartões, capturas de tela e brilho do topo da home.
@@ -100,6 +102,7 @@
   --brand-deep: #460e2c;
   --brand-lift: #7e2554;
   --accent: #ffb8d9;
+  --logo-ink: var(--accent);
   --on-dark-soft: #dfc8d4;
   --info-bg: #f5e4ed;
   --eyebrow-ink: #c1347f;
@@ -141,6 +144,7 @@
   --brand-deep: #340d47;
   --brand-lift: #612380;
   --accent: #f2b45c;
+  --logo-ink: var(--accent);
   --on-dark-soft: #d8c7e0;
   --info-bg: #efe4f5;
   --eyebrow-ink: #a03fd0;
@@ -182,6 +186,7 @@
   --brand-deep: #460e13;
   --brand-lift: #7e252d;
   --accent: #ffc078;
+  --logo-ink: var(--accent);
   --on-dark-soft: #dfc8ca;
   --info-bg: #f5e4e6;
   --eyebrow-ink: #c93743;
@@ -223,6 +228,7 @@
   --brand-deep: #0b2f20;
   --brand-lift: #1b553d;
   --accent: #b9f27c;
+  --logo-ink: var(--accent);
   --on-dark-soft: #c8dfd5;
   --info-bg: #e5f4ee;
   --eyebrow-ink: #247b57;
@@ -264,6 +270,7 @@
   --brand-deep: #0e2c41;
   --brand-lift: #214e6e;
   --accent: #a8dcff;
+  --logo-ink: var(--accent);
   --on-dark-soft: #c8d5df;
   --info-bg: #e4eef5;
   --eyebrow-ink: #2c73a5;
@@ -305,6 +312,7 @@
   --brand-deep: #34280c;
   --brand-lift: #5c4a1e;
   --accent: #ffd84d;
+  --logo-ink: var(--accent);
   --on-dark-soft: #dfd8c8;
   --info-bg: #f4f0e5;
   --eyebrow-ink: #876a28;
