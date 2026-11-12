@@ -81,6 +81,11 @@ const structuredData = origin
           theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         }
         document.documentElement.dataset.theme = theme;
+        var palette = null;
+        try { palette = localStorage.getItem('paleta'); } catch (e) {}
+        if (['rosa', 'roxo', 'vermelho', 'verde', 'azul', 'amarelo'].indexOf(palette) !== -1) {
+          document.documentElement.dataset.palette = palette;
+        }
       })();
     </script>
   </head>

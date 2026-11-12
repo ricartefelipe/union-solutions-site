@@ -34,6 +34,20 @@ def resize(image: Image.Image, width: int) -> Image.Image:
     return image.resize((width, height), Image.LANCZOS)
 
 
+def transparent(image: Image.Image) -> Image.Image:
+    """Troca o fundo chapado por transparência: a marca é branca, então a opacidade de cada ponto é o quanto
+    ele se afasta do fundo. Assim a logo acompanha qualquer cor de marca do site, não só a original."""
+    rgb = image.convert("RGB")
+    alpha = Image.new("L", rgb.size)
+    alpha.putdata([
+        max(0, min(255, round(max((value - base) * 255 / (255 - base) for value, base in zip(pixel, BG)))))
+        for pixel in rgb.getdata()
+    ])
+    out = Image.new("RGBA", rgb.size, (255, 255, 255, 0))
+    out.putalpha(alpha)
+    return out
+
+
 def on_bg(mark: Image.Image, size: tuple[int, int]) -> Image.Image:
     canvas = Image.new("RGB", size, BG)
     canvas.paste(mark, ((size[0] - mark.width) // 2, (size[1] - mark.height) // 2))
@@ -58,9 +72,9 @@ def main() -> None:
     print(f"marca completa recortada: {full.size}; símbolo recortado: {symbol.size}")
 
     for width in (168, 196, 336, 392, 688):
-        resize(full, width).save(OUT / f"brand/union-solutions-{width}.webp", lossless=True, quality=100, method=6)
+        transparent(resize(full, width)).save(OUT / f"brand/union-solutions-{width}.webp", lossless=True, quality=100, method=6)
     for width in (480, 960):
-        resize(symbol, width).save(OUT / f"brand/union-simbolo-{width}.webp", lossless=True, quality=100, method=6)
+        transparent(resize(symbol, width)).save(OUT / f"brand/union-simbolo-{width}.webp", lossless=True, quality=100, method=6)
 
     icons = {size: icon(symbol, size, 0.92, gain) for size, gain in ((16, 16), (32, 10), (48, 6))}
     icons[48].save(OUT / "favicon.ico", sizes=[(16, 16), (32, 32), (48, 48)], append_images=[icons[16], icons[32]])
