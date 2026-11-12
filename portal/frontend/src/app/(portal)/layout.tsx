@@ -5,6 +5,7 @@ import { apiGetOptional, currentSession, getMe } from '@/lib/api';
 import type { UnreadCount } from '@/lib/types';
 import { label } from '@/lib/labels';
 import { NavLinks } from '@/components/nav';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default async function PortalLayout({ children }: Readonly<{ children: ReactNode }>) {
   const session = await currentSession();
@@ -50,6 +51,7 @@ export default async function PortalLayout({ children }: Readonly<{ children: Re
               <input type="hidden" name="csrf" value={session.csrf} />
               <button className="linklike" type="submit">Sair</button>
             </form>
+            <ThemeToggle />
           </div>
         </div>
       </header>
