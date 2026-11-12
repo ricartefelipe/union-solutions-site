@@ -1,23 +1,45 @@
 ---
 import { site } from '../config/site';
 
-// Proporção do recorte: 870 × 256. A marca é branca com fundo transparente e acompanha a paleta escolhida.
+// Proporção do recorte: 870 × 256. O arquivo é a marca em branco com fundo transparente; aqui ele serve de máscara,
+// e a cor vem de --logo-ink, que cada paleta define em tema.css. Sem suporte a máscara, aparece a imagem branca.
 ---
 
-<img
-  class="logo"
-  src="/brand/union-solutions-392.webp"
-  srcset="/brand/union-solutions-168.webp 168w, /brand/union-solutions-196.webp 196w, /brand/union-solutions-336.webp 336w, /brand/union-solutions-392.webp 392w, /brand/union-solutions-688.webp 688w"
-  sizes="(min-width: 62rem) 196px, 168px"
-  width="196"
-  height="58"
-  alt={site.name}
-  decoding="async"
-/>
+<span class="logo" role="img" aria-label={site.name}>
+  <img
+    src="/brand/union-solutions-392.webp"
+    srcset="/brand/union-solutions-168.webp 168w, /brand/union-solutions-196.webp 196w, /brand/union-solutions-336.webp 336w, /brand/union-solutions-392.webp 392w, /brand/union-solutions-688.webp 688w"
+    sizes="(min-width: 62rem) 196px, 168px"
+    width="196"
+    height="58"
+    alt=""
+    decoding="async"
+  />
+</span>
 
 <style>
   .logo {
+    display: block;
     width: 168px;
+    aspect-ratio: 196 / 58;
+  }
+
+  .logo img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  @supports (mask-image: url('/brand/union-solutions-392.webp')) or (-webkit-mask-image: url('/brand/union-solutions-392.webp')) {
+    .logo {
+      background: var(--logo-ink);
+      -webkit-mask: url('/brand/union-solutions-688.webp') center / contain no-repeat;
+      mask: url('/brand/union-solutions-688.webp') center / contain no-repeat;
+    }
+
+    .logo img {
+      visibility: hidden;
+    }
   }
 
   @media (min-width: 62rem) {
