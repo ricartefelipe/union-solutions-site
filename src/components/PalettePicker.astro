@@ -1,0 +1,175 @@
+---
+/**
+ * Seletor de paleta de cor. Só aparece com JavaScript (classe .js); sem ele, o site fica no índigo.
+ * A escolha fica no localStorage deste navegador (chave `paleta`), sem cookie e sem envio a terceiros.
+ * As cores de cada paleta estão em src/styles/tema.css; a amostra abaixo repete a cor da marca e o acento.
+ */
+const palettes = [
+  { id: 'indigo', label: 'Índigo', brand: '#1a1360', accent: '#f2b45c' },
+  { id: 'rosa', label: 'Rosa', brand: '#5e153c', accent: '#ffb8d9' },
+  { id: 'roxo', label: 'Roxo', brand: '#461360', accent: '#f2b45c' },
+  { id: 'vermelho', label: 'Vermelho', brand: '#5e151b', accent: '#ffc078' },
+  { id: 'verde', label: 'Verde', brand: '#0f3b29', accent: '#b9f27c' },
+  { id: 'azul', label: 'Azul-bebê', brand: '#123752', accent: '#a8dcff' },
+  { id: 'amarelo', label: 'Amarelo', brand: '#443411', accent: '#ffd84d' },
+];
+---
+
+<div class="palette" data-palette-picker>
+  <button class="palette__toggle" type="button" aria-expanded="false" aria-controls="paletas" data-palette-toggle>
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+      <path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.8-.9 1.8-1.8 0-.5-.2-.9-.5-1.3-.3-.3-.5-.7-.5-1.2 0-1 .8-1.7 1.8-1.7H17a4 4 0 0 0 4-4c0-4.4-4-8-9-8z"></path>
+      <circle cx="7.5" cy="11" r="1"></circle><circle cx="10.5" cy="7.5" r="1"></circle><circle cx="15" cy="8" r="1"></circle>
+    </svg>
+    <span class="sr-only">Cores do site</span>
+  </button>
+  <ul class="palette__list" id="paletas" hidden>
+    {palettes.map((item) => (
+      <li>
+        <button type="button" aria-pressed="false" data-palette-option={item.id}>
+          <span class="palette__swatch" style={`--swatch: ${item.brand}; --swatch-accent: ${item.accent}`} aria-hidden="true"></span>
+          {item.label}
+        </button>
+      </li>
+    ))}
+  </ul>
+</div>
+
+<script>
+  const KEY = 'paleta';
+  const root = document.documentElement;
+  const picker = document.querySelector<HTMLElement>('[data-palette-picker]');
+  const toggle = picker?.querySelector<HTMLButtonElement>('[data-palette-toggle]');
+  const list = picker?.querySelector<HTMLElement>('.palette__list');
+  const options = Array.from(picker?.querySelectorAll<HTMLButtonElement>('[data-palette-option]') ?? []);
+
+  const current = () => root.dataset.palette ?? 'indigo';
+  const mark = () => options.forEach((option) => option.setAttribute('aria-pressed', String(option.dataset.paletteOption === current())));
+  const close = () => {
+    if (!list || !toggle) return;
+    list.hidden = true;
+    toggle.setAttribute('aria-expanded', 'false');
+  };
+
+  mark();
+
+  toggle?.addEventListener('click', () => {
+    if (!list) return;
+    list.hidden = !list.hidden;
+    toggle.setAttribute('aria-expanded', String(!list.hidden));
+  });
+
+  options.forEach((option) => {
+    option.addEventListener('click', () => {
+      const id = option.dataset.paletteOption ?? 'indigo';
+      if (id === 'indigo') delete root.dataset.palette;
+      else root.dataset.palette = id;
+      try {
+        localStorage.setItem(KEY, id);
+      } catch {
+        /* sem armazenamento: vale só nesta página */
+      }
+      mark();
+      close();
+      toggle?.focus();
+    });
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && list && !list.hidden) {
+      close();
+      toggle?.focus();
+    }
+  });
+  document.addEventListener('click', (event) => {
+    if (picker && !picker.contains(event.target as Node)) close();
+  });
+</script>
+
+<style>
+  .palette {
+    position: relative;
+    display: none;
+  }
+
+  :global(.js) .palette {
+    display: block;
+  }
+
+  .palette__toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid rgb(255 255 255 / 0.45);
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--on-dark);
+    cursor: pointer;
+  }
+
+  .palette__toggle:hover {
+    background: rgb(255 255 255 / 0.12);
+  }
+
+  .palette__list {
+    position: absolute;
+    z-index: 30;
+    top: calc(100% + var(--space-2));
+    right: 0;
+    display: grid;
+    gap: 0.125rem;
+    min-width: 11.5rem;
+    margin: 0;
+    padding: var(--space-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    background: var(--paper);
+    box-shadow: var(--shadow-raised);
+    list-style: none;
+  }
+
+  .palette__list[hidden] {
+    display: none;
+  }
+
+  .palette__list button {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0 var(--space-3);
+    border: 0;
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--ink);
+    font: 500 var(--text-sm) / 1.2 var(--font-body);
+    text-align: left;
+    cursor: pointer;
+    --focus: var(--brand-ink);
+  }
+
+  .palette__list button:hover {
+    background: var(--mist);
+  }
+
+  .palette__list button[aria-pressed='true'] {
+    font-weight: 700;
+  }
+
+  .palette__list button[aria-pressed='true']::after {
+    content: '✓';
+    margin-left: auto;
+  }
+
+  .palette__swatch {
+    flex: none;
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 1px solid var(--line-strong);
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--swatch) 0 62%, var(--swatch-accent) 62%);
+  }
+</style>
