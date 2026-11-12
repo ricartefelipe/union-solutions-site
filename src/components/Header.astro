@@ -1,5 +1,6 @@
 ---
 import Logo from './Logo.astro';
+import PalettePicker from './PalettePicker.astro';
 import ThemeToggle from './ThemeToggle.astro';
 import { clientPortal, nav, primaryCta, site } from '../config/site';
 
@@ -14,6 +15,7 @@ const isCurrent = (href: string) => path === href || path.startsWith(href);
     </a>
 
     <div class="site-header__actions">
+      <PalettePicker />
       <ThemeToggle />
       <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="menu-principal" data-menu-toggle>
         <span class="menu-toggle__icon" aria-hidden="true"></span>

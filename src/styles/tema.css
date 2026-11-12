@@ -87,3 +87,256 @@
   --shot-line: rgb(255 255 255 / 0.16);
   --shot-dot: rgb(255 255 255 / 0.32);
 }
+
+/*
+ * Paletas de cor. O índigo acima é o padrão; cada paleta troca a cor da marca e os tons que derivam dela, nos dois
+ * temas, por <html data-palette="...">. A logo é branca com fundo transparente e acompanha qualquer uma. Os valores
+ * foram gerados girando o matiz dos tons do índigo, com a claridade corrigida até o contraste AA sobre o fundo.
+ * Azul-bebê e amarelo dão nome ao acento: como fundo seriam claros demais para texto e logo brancos.
+ */
+
+:root[data-palette='rosa'] {
+  --brand: #5e153c;
+  --brand-deep: #460e2c;
+  --brand-lift: #7e2554;
+  --accent: #ffb8d9;
+  --on-dark-soft: #dfc8d4;
+  --info-bg: #f5e4ed;
+  --eyebrow-ink: #c1347f;
+  --card-line-hover: #d5a7c0;
+  --glow: rgb(251 108 184 / 0.42);
+}
+
+:root[data-palette='rosa'][data-theme='dark'] {
+  --paper: #2f0a1e;
+  --mist: #46112d;
+  --ink: #f7ebf1;
+  --ink-soft: #d5bbc9;
+  --line: #6c2d4f;
+  --line-strong: #b489a0;
+  --brand-ink: #fed0e9;
+  --btn-bg: #fed0e9;
+  --btn-fg: #460e2c;
+  --btn-fg-hover: #460e2c;
+  --neutral-bg: #4e243a;
+  --neutral-ink: #efdbe6;
+  --info-bg: #612143;
+  --eyebrow-ink: var(--accent);
+  --card: #3f0f29;
+  --card-line: #662849;
+  --card-line-hover: #a1587f;
+  --shot-bg: #2f0a1e;
+  --shot-bar: #541838;
+  --shot-dot: #8e476d;
+}
+
+:root[data-palette='rosa'] .surface-dark,
+:root[data-palette='rosa'] .surface-deep {
+  --shot-bg: #460e2c;
+  --shot-bar: #711f4b;
+}
+
+:root[data-palette='roxo'] {
+  --brand: #461360;
+  --brand-deep: #340d47;
+  --brand-lift: #612380;
+  --accent: #f2b45c;
+  --on-dark-soft: #d8c7e0;
+  --info-bg: #efe4f5;
+  --eyebrow-ink: #a03fd0;
+  --card-line-hover: #c6a6d6;
+  --glow: rgb(205 104 255 / 0.42);
+}
+
+:root[data-palette='roxo'][data-theme='dark'] {
+  --paper: #230930;
+  --mist: #351047;
+  --ink: #f3ebf7;
+  --ink-soft: #cdbad6;
+  --line: #582b6e;
+  --line-strong: #a688b5;
+  --brand-ink: #efcfff;
+  --btn-bg: #efcfff;
+  --btn-fg: #340d47;
+  --btn-fg-hover: #340d47;
+  --neutral-bg: #40234f;
+  --neutral-ink: #e9daf0;
+  --info-bg: #4c1f63;
+  --eyebrow-ink: var(--accent);
+  --card: #2f0e40;
+  --card-line: #522668;
+  --card-line-hover: #8956a3;
+  --shot-bg: #230930;
+  --shot-bar: #411656;
+  --shot-dot: #774590;
+}
+
+:root[data-palette='roxo'] .surface-dark,
+:root[data-palette='roxo'] .surface-deep {
+  --shot-bg: #340d47;
+  --shot-bar: #561d73;
+}
+
+:root[data-palette='vermelho'] {
+  --brand: #5e151b;
+  --brand-deep: #460e13;
+  --brand-lift: #7e252d;
+  --accent: #ffc078;
+  --on-dark-soft: #dfc8ca;
+  --info-bg: #f5e4e6;
+  --eyebrow-ink: #c93743;
+  --card-line-hover: #d5a7ab;
+  --glow: rgb(251 108 120 / 0.42);
+}
+
+:root[data-palette='vermelho'][data-theme='dark'] {
+  --paper: #2f0a0d;
+  --mist: #461116;
+  --ink: #f7ebec;
+  --ink-soft: #d5bbbd;
+  --line: #6c2d32;
+  --line-strong: #b4898d;
+  --brand-ink: #fed0d4;
+  --btn-bg: #fed0d4;
+  --btn-fg: #460e13;
+  --btn-fg-hover: #460e13;
+  --neutral-bg: #4e2428;
+  --neutral-ink: #efdbdc;
+  --info-bg: #612126;
+  --eyebrow-ink: var(--accent);
+  --card: #3f0f13;
+  --card-line: #66282d;
+  --card-line-hover: #a1585e;
+  --shot-bg: #2f0a0d;
+  --shot-bar: #54181d;
+  --shot-dot: #8e474d;
+}
+
+:root[data-palette='vermelho'] .surface-dark,
+:root[data-palette='vermelho'] .surface-deep {
+  --shot-bg: #460e13;
+  --shot-bar: #711f26;
+}
+
+:root[data-palette='verde'] {
+  --brand: #0f3b29;
+  --brand-deep: #0b2f20;
+  --brand-lift: #1b553d;
+  --accent: #b9f27c;
+  --on-dark-soft: #c8dfd5;
+  --info-bg: #e5f4ee;
+  --eyebrow-ink: #247b57;
+  --card-line-hover: #a8d4c2;
+  --glow: rgb(112 247 191 / 0.42);
+}
+
+:root[data-palette='verde'][data-theme='dark'] {
+  --paper: #0b2e1f;
+  --mist: #134430;
+  --ink: #ecf6f2;
+  --ink-soft: #bbd5ca;
+  --line: #2e6b52;
+  --line-strong: #8ab3a2;
+  --brand-ink: #d1fdeb;
+  --btn-bg: #d1fdeb;
+  --btn-fg: #0b2f20;
+  --btn-fg-hover: #0b2f20;
+  --neutral-bg: #254d3c;
+  --neutral-ink: #dbefe7;
+  --info-bg: #226046;
+  --eyebrow-ink: var(--accent);
+  --card: #113e2b;
+  --card-line: #29654c;
+  --card-line-hover: #5a9f82;
+  --shot-bg: #0b2e1f;
+  --shot-bar: #19533b;
+  --shot-dot: #498c70;
+}
+
+:root[data-palette='verde'] .surface-dark,
+:root[data-palette='verde'] .surface-deep {
+  --shot-bg: #0b2f20;
+  --shot-bar: #216f4e;
+}
+
+:root[data-palette='azul'] {
+  --brand: #123752;
+  --brand-deep: #0e2c41;
+  --brand-lift: #214e6e;
+  --accent: #a8dcff;
+  --on-dark-soft: #c8d5df;
+  --info-bg: #e4eef5;
+  --eyebrow-ink: #2c73a5;
+  --card-line-hover: #a7c2d5;
+  --glow: rgb(108 191 251 / 0.42);
+}
+
+:root[data-palette='azul'][data-theme='dark'] {
+  --paper: #0a202f;
+  --mist: #113046;
+  --ink: #ebf2f7;
+  --ink-soft: #bbcad5;
+  --line: #2d526c;
+  --line-strong: #89a2b4;
+  --brand-ink: #d0ebfe;
+  --btn-bg: #d0ebfe;
+  --btn-fg: #0e2c41;
+  --btn-fg-hover: #0e2c41;
+  --neutral-bg: #243c4e;
+  --neutral-ink: #dbe7ef;
+  --info-bg: #214661;
+  --eyebrow-ink: var(--accent);
+  --card: #0f2b3f;
+  --card-line: #284c66;
+  --card-line-hover: #5883a1;
+  --shot-bg: #0a202f;
+  --shot-bar: #183b54;
+  --shot-dot: #47708e;
+}
+
+:root[data-palette='azul'] .surface-dark,
+:root[data-palette='azul'] .surface-deep {
+  --shot-bg: #0e2c41;
+  --shot-bar: #1f4f71;
+}
+
+:root[data-palette='amarelo'] {
+  --brand: #443411;
+  --brand-deep: #34280c;
+  --brand-lift: #5c4a1e;
+  --accent: #ffd84d;
+  --on-dark-soft: #dfd8c8;
+  --info-bg: #f4f0e5;
+  --eyebrow-ink: #876a28;
+  --card-line-hover: #d4c7a8;
+  --glow: rgb(247 207 112 / 0.42);
+}
+
+:root[data-palette='amarelo'][data-theme='dark'] {
+  --paper: #2e240b;
+  --mist: #443513;
+  --ink: #f6f3ec;
+  --ink-soft: #d5cdbb;
+  --line: #6b592e;
+  --line-strong: #b3a78a;
+  --brand-ink: #fdf0d1;
+  --btn-bg: #fdf0d1;
+  --btn-fg: #34280c;
+  --btn-fg-hover: #34280c;
+  --neutral-bg: #4d4125;
+  --neutral-ink: #efe9db;
+  --info-bg: #604d22;
+  --eyebrow-ink: var(--accent);
+  --card: #3e3011;
+  --card-line: #655329;
+  --card-line-hover: #9f8a5a;
+  --shot-bg: #2e240b;
+  --shot-bar: #534219;
+  --shot-dot: #8c7849;
+}
+
+:root[data-palette='amarelo'] .surface-dark,
+:root[data-palette='amarelo'] .surface-deep {
+  --shot-bg: #34280c;
+  --shot-bar: #6f5721;
+}
