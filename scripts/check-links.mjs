@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Verifica se links e recursos internos do build apontam para arquivos existentes
-// e se cada página tem exatamente um H1. Rode depois de `npm run build`.
+// se cada página tem exatamente um H1 e ids únicos, e se cada ficha de produto tem
+// as seções da ficha uma única vez. Rode depois de `npm run build`.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 
@@ -37,7 +38,16 @@ for (const page of pages) {
   const h1Count = (html.match(/<h1[\s>]/g) ?? []).length;
   if (h1Count !== 1) problems.push(`${name}: ${h1Count} elementos H1`);
 
-  const ids = new Set(Array.from(html.matchAll(/\sid="([^"]+)"/g), (match) => match[1]));
+  const idList = Array.from(html.matchAll(/\sid="([^"]+)"/g), (match) => match[1]);
+  const ids = new Set(idList);
+  const repeated = [...new Set(idList.filter((id, index) => idList.indexOf(id) !== index))];
+  if (repeated.length) problems.push(`${name}: id repetido (${repeated.join(', ')})`);
+
+  // Uma seção fora do lugar some das fichas sem exemplo ou se repete a cada caso dele.
+  if (/^produtos\/[^/]+\/index\.html$/.test(name)) {
+    const flows = (html.match(/\sid="como-funciona"/g) ?? []).length;
+    if (flows !== 1) problems.push(`${name}: ${flows} seções "Como funciona"`);
+  }
   const references = [
     ...Array.from(html.matchAll(/\s(?:href|src)="([^"]+)"/g), (match) => match[1]),
     ...Array.from(html.matchAll(/\ssrcset="([^"]+)"/g), (match) =>

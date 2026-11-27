@@ -135,6 +135,37 @@ const structuredData = origin
                     ))}
                   </dl>
                 )}
+                {item.events && <div class="sample__table" tabindex="0">
+                  <table>
+                    <caption class="sr-only">Eventos normalizados de {item.input.label}</caption>
+                    <thead>
+                      <tr><th scope="col">Data</th><th scope="col">Tipo</th><th scope="col">Valor</th><th scope="col">Descrição</th><th scope="col">Origem</th></tr>
+                    </thead>
+                    <tbody>
+                      {item.events.map((event) => (
+                        <tr>
+                          <td>{event.date}</td>
+                          <td>{event.direction}</td>
+                          <td class="sample__amount">{event.amount}</td>
+                          <td>{event.description}</td>
+                          <td>{event.source}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>}
+                <ul class="node-list sample__findings">
+                  {item.findings.map((finding) => <li>{finding}</li>)}
+                </ul>
+                <a class="text-link" href={item.output.href} download>Baixar {item.output.label}</a>
+              </div>
+            </div>
+          </article>
+        ))}
+        <p class="muted sample__provenance">{product.sample.provenance}</p>
+      </div>
+    </section>
+  )}
 
   <section class="section surface-mist">
     <div class="wrap split">
@@ -181,38 +212,6 @@ const structuredData = origin
       </div>
     </div>
   </section>
-
-                {item.events && <div class="sample__table" tabindex="0">
-                  <table>
-                    <caption class="sr-only">Eventos normalizados de {item.input.label}</caption>
-                    <thead>
-                      <tr><th scope="col">Data</th><th scope="col">Tipo</th><th scope="col">Valor</th><th scope="col">Descrição</th><th scope="col">Origem</th></tr>
-                    </thead>
-                    <tbody>
-                      {item.events.map((event) => (
-                        <tr>
-                          <td>{event.date}</td>
-                          <td>{event.direction}</td>
-                          <td class="sample__amount">{event.amount}</td>
-                          <td>{event.description}</td>
-                          <td>{event.source}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>}
-                <ul class="node-list sample__findings">
-                  {item.findings.map((finding) => <li>{finding}</li>)}
-                </ul>
-                <a class="text-link" href={item.output.href} download>Baixar {item.output.label}</a>
-              </div>
-            </div>
-          </article>
-        ))}
-        <p class="muted sample__provenance">{product.sample.provenance}</p>
-      </div>
-    </section>
-  )}
 
   {galleryScreens.length > 0 && (
     <section class="section surface-mist" aria-labelledby="na-demonstracao">
