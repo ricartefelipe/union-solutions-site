@@ -215,3 +215,4 @@ Medição de 03/11/2026, sonda de login no Keycloak logo depois de o banco aceit
 | Convite "não pode ser aceito" | A pessoa entrou com outro e-mail, ou o e-mail ainda não foi verificado |
 | Arquivo fica "Em verificação" | Saúde do serviço `clamav` e logs da API; `docker exec <clamav> ps` mostrando `[clamd]` indica processo morto, e `docker compose restart clamav` resolve |
 | API não inicia em produção | A mensagem `Configuração inválida para produção` lista cada problema |
+| `atualizar` para em "Autenticação no realm master falhou" ou a API responde 401 ao convidar | Desde o Keycloak 26.8.2, o `portal-admin` precisa do escopo `kc-admin-api`. O passo `portal-escopo-admin.sh` o atribui com a conta `KC_BOOTSTRAP_ADMIN_*` do realm `master`; se a senha dela mudou, atualize o `.env` e rode `sh portal-prod.sh atualizar` de novo |
