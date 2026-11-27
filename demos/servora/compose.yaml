@@ -1,0 +1,185 @@
+# Demonstração pública do Servora na VPS das demonstrações: as duas organizações fictícias da carga do produto
+# (db/seeds), com contas compartilhadas. Mesmo desenho de produção do produto (papel owner só nas migrations, papel app
+# sob Row-Level Security nos processos), com contêineres somente leitura e sem saída para a internet: os e-mails ficam
+# num Mailpit interno, cuja caixa é pública em /caixa-de-entrada (o link do portal do cliente só chega por e-mail), e
+# os pagamentos usam o simulador do produto. As imagens são construídas numa máquina de trabalho e carregadas na VPS
+# (ver demo.sh); nada compila aqui.
+name: demo-servora
+
+x-comum: &comum
+  restart: unless-stopped
+  oom_score_adj: 500
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+# Ambiente dos processos Rails. Os processos permanentes usam o papel app (sem BYPASSRLS); só o migrate recebe também
+# o papel owner.
+x-ambiente: &ambiente
+  RAILS_ENV: production
+  TZ: America/Sao_Paulo
+  APP_HOST: ${DEMO_HOST:?}
+  SECRET_KEY_BASE: ${SECRET_KEY_BASE:?}
+  ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY: ${AR_ENCRYPTION_PRIMARY_KEY:?}
+  ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY: ${AR_ENCRYPTION_DETERMINISTIC_KEY:?}
+  ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT: ${AR_ENCRYPTION_KEY_DERIVATION_SALT:?}
+  DB_HOST: postgres
+  DB_PORT: "5432"
+  DB_SSLMODE: disable
+  DB_APP_USER: servora_app
+  DB_APP_PASSWORD: ${DB_APP_PASSWORD:?}
+  LOG_FORMAT: json
+  # O bootsnap usa o cache pré-compilado na imagem, sem tentar gravar no sistema de arquivos somente leitura.
+  BOOTSNAP_READONLY: "1"
+  # Anexos das ordens de serviço no disco local (volume do web), e não em object storage.
+  ACTIVE_STORAGE_SERVICE: local
+  STORAGE_ROOT: /rails/storage
+  # Os e-mails vão para o Mailpit interno, que não repassa nada: sem relay configurado. A produção sempre pede
+  # autenticação (SMTP_AUTHENTICATION tem padrão "plain" e o net-smtp recusa autenticar sem usuário), então o usuário e
+  # a senha são fictícios e o Mailpit aceita qualquer um, sem TLS, só na rede interna.
+  SMTP_ADDRESS: mailpit
+  SMTP_PORT: "1025"
+  SMTP_USERNAME: servora
+  SMTP_PASSWORD: demo
+  MAILER_FROM: Servora <nao-responda@${DEMO_HOST:?}>
+  # Simulador nos pagamentos da assinatura da plataforma; o das organizações já é o padrão. Um Asaas cadastrado por
+  # visitante falha logo: o endereço não existe e a rede não tem saída.
+  PLATFORM_PAYMENT_PROVIDER: simulator
+  ASAAS_BASE_URL: https://asaas.invalid/v3
+  # Sem METRICS_TOKEN, /metrics responde 404.
+  METRICS_TOKEN: ""
+
+x-app: &app
+  <<: *comum
+  image: demo-servora-app:${SERVORA_TAG:?}
+  environment: *ambiente
+  read_only: true
+  tmpfs:
+    # Uploads multipart (anexos de até 15 MiB) passam por aqui; o Puma e o Rack guardam até duas cópias por envio.
+    - /tmp:uid=1000,gid=1000,mode=1777,size=192m
+    - /rails/tmp/pids:uid=1000,gid=1000,mode=0755,size=1m
+    - /rails/tmp/sockets:uid=1000,gid=1000,mode=0755,size=1m
+  cap_drop: [ALL]
+  networks: [interna]
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+services:
+  postgres:
+    <<: *comum
+    image: postgres:18.7-alpine3.24
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_SUPERUSER_PASSWORD:?}
+      POSTGRES_DB: postgres
+      SERVORA_DB_OWNER_USER: servora_owner
+      SERVORA_DB_OWNER_PASSWORD: ${DB_OWNER_PASSWORD:?}
+      SERVORA_DB_APP_USER: servora_app
+      SERVORA_DB_APP_PASSWORD: ${DB_APP_PASSWORD:?}
+    volumes:
+      - dados:/var/lib/postgresql
+      # Papéis owner e app do produto (db/setup/create_roles.sh da tag em SERVORA_TAG).
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    shm_size: 256m
+    networks: [interna]
+    mem_limit: 512m
+    healthcheck:
+      # Por TCP: durante a inicialização o servidor temporário só atende pelo socket, antes de os papéis existirem.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  mailpit:
+    <<: *comum
+    image: axllent/mailpit:v1.34.0
+    environment:
+      MP_WEBROOT: /caixa-de-entrada/
+      MP_MAX_MESSAGES: "2000"
+      MP_DATABASE: /data/mailpit.db
+      MP_DISABLE_VERSION_CHECK: "true"
+      MP_SMTP_DISABLE_RDNS: "true"
+      MP_SMTP_AUTH_ACCEPT_ANY: "true"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "true"
+      MP_BLOCK_REMOTE_CSS_AND_FONTS: "true"
+    # A imagem roda como root; aqui, sem privilégios.
+    user: "1000:1000"
+    read_only: true
+    tmpfs:
+      - /tmp:mode=1777,size=16m
+      - /data:uid=1000,gid=1000,mode=0700,size=64m
+    cap_drop: [ALL]
+    networks:
+      interna:
+      demos:
+        aliases: [servora-mailpit]
+    # O banco do Mailpit fica no tmpfs, que conta no limite de memória.
+    mem_limit: 192m
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz", "--webroot", "/caixa-de-entrada/"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 5s
+
+  web:
+    <<: *app
+    volumes:
+      - arquivos:/rails/storage
+    # Nome curto não é seguro: outras demonstrações têm um "web" na rede union-demos.
+    networks:
+      interna:
+      demos:
+        aliases: [servora-web]
+    mem_limit: 640m
+    healthcheck:
+      # /ready confere os bancos e as migrations; /up e /ready dispensam o Host público.
+      test: ["CMD", "curl", "--fail", "--silent", "--output", "/dev/null", "http://127.0.0.1:3000/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
+  worker:
+    <<: *app
+    command: ["./bin/jobs"]
+    stop_grace_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+    mem_limit: 768m
+    healthcheck:
+      disable: true
+
+  # Migrations com o papel owner, privilégios do papel app e a carga de demonstração com o papel app (demo.sh).
+  migrate:
+    <<: *app
+    profiles: ["ferramentas"]
+    restart: "no"
+    environment:
+      <<: *ambiente
+      DB_OWNER_USER: servora_owner
+      DB_OWNER_PASSWORD: ${DB_OWNER_PASSWORD:?}
+      SEED_PASSWORD: ${SERVORA_DEMO_PASSWORD:?}
+    command: ["ruby", "bin/db-prepare", "--seed"]
+    mem_limit: 768m
+    healthcheck:
+      disable: true
+
+volumes:
+  dados:
+  arquivos:
+
+networks:
+  interna:
+    internal: true
+  demos:
+    external: true
+    name: ${DEMOS_NETWORK:-union-demos}

@@ -4,10 +4,10 @@ Cada pasta (`demos/<produto>/`) é uma demonstração pública de um produto da 
 
 | Aspecto | Como |
 | --- | --- |
-| Rede | Banco numa rede interna própria; o proxy alcança a aplicação pela rede `union-demos`; só HookGuard e FileNorm têm saída para a internet, por uma rede só da API (entrega de webhooks e e-mail do link de acesso) |
+| Rede | Banco numa rede interna própria; o proxy alcança a aplicação pela rede `union-demos`; só HookGuard e FileNorm têm saída para a internet, por uma rede só da API (entrega de webhooks e e-mail do link de acesso), e o `freshclam` do Pactor, por uma rede só dele, para baixar as assinaturas de vírus |
 | Memória | Limite de memória em cada container; em falta de memória na máquina, o kernel encerra primeiro as demonstrações, antes do proxy (`oom_score_adj: 500`) |
-| Dados | Descartados e recriados todo dia, em horários escalonados entre 04:30 e 05:40 UTC (`demo.sh reiniciar-dados`, timer `systemd`); nada de cliente entra aqui |
-| Entrada | Pelo proxy das demonstrações, com certificado próprio por ACME; só as rotas do produto, sem `actuator` além da vivacidade |
+| Dados | Descartados e recriados todo dia, em horários escalonados entre 04:30 e 07:10 UTC (`demo.sh reiniciar-dados`, timer `systemd`); nada de cliente entra aqui |
+| Entrada | Pelo proxy das demonstrações, com certificado próprio por ACME; só as rotas do produto, sem `actuator` além da vivacidade; a exceção é a caixa do Mailpit do Servora em `/caixa-de-entrada/`, por onde chega o link do portal do cliente |
 | Limites do produto | Ver a tabela de cada demonstração abaixo |
 
 ## Demonstrações
@@ -26,8 +26,11 @@ Cada pasta (`demos/<produto>/`) é uma demonstração pública de um produto da 
 | VueMind Wallet | `demo-vuemind.unionsolutions.tech` | `demo@vuemind.dev`, senha `demo123`: saldo, extrato, favorecidos e PIX, com o front Vue e a `vuemind-api` na mesma origem | cerca de 125 MB | API em memória. Arquivo sem documentos |
 | SpringMind | `demo-springmind.unionsolutions.tech` | `demo@vuemind.dev`, senha `demo123`: carteira completa, com o front ReactMind na mesma origem e dados em PostgreSQL | cerca de 300 MB | Conta compartilhada. Arquivo sem documentos |
 | Skillforge | `demo-skillforge.unionsolutions.tech` | Contas `aluno`, `docente` e `administracao`, senha `union-demo`: a administração cria curso e turma e matricula, o docente publica, o aluno conclui a aula | cerca de 700 MB, Keycloak incluso | Só o login do Keycloak é público; console, contas e outros realms fechados no proxy. Uploads até 8 MB. Contas compartilhadas: não informe dados reais |
+| Fornevia | `demo-fornevia.unionsolutions.tech` | Contas `compras@serraazul.example` (comprador), `vendas@pedrabranca.example` (equipe do distribuidor) e `estoque@pedrabranca.example` (expedição), senha `fornevia-demo`: o comprador faz o pedido ou pede cotação, a equipe responde e acompanha até a expedição; pagamento pelo simulador | cerca de 490 MB | Cadastro, recuperação e troca de senha, perfil e segundo fator fechados no proxy; `/horizon`, `/metrics`, `/docs` e webhooks fechados. O site não publica as contas de dono e financeiro, que mexem em equipe, assinatura e meio de pagamento, mas elas seguem ativas, com a mesma senha, e estão no repositório público do produto: o `demo.sh` ainda não as desativa depois da carga, como faz o da Fluxe |
+| Pactor | `demo-pactor.unionsolutions.tech` | Contas `gestora.a@exemplo.test` e `aprovador.a@exemplo.test`, senha `Pactor-Demo-2026!` (a da carga do produto): a gestora gera a revisão pelo modelo e envia à aprovação, o aprovador aprova, a gestora assina pelo simulador | cerca de 2,2 GB, ClamAV com cerca de 960 MB | Assinatura só pelo simulador (`PACTOR_SIGNATURE_PROVIDER=simulator`, aceito porque `PACTOR_ENVIRONMENT=staging`); e-mails no Mailpit interno, sem interface publicada; só o `freshclam` sai para a internet. Cadastro, senha, TOTP, sessões, organizações e membros fechados no proxy. O site não publica as contas de proprietária e admin, mas elas seguem ativas, com a mesma senha e o TOTP de segredo público, no repositório do produto: o `demo.sh` ainda não as desativa depois da carga |
+| Servora | `demo-servora.unionsolutions.tech` | Contas `bruno@clima-norte.test` (coordenação), `diego@clima-norte.test` (técnico) e `gabriela@clima-norte.test` (financeiro), senha `servora-demo-2026`: orçamento aprovado pelo portal do cliente com o link da caixa de entrada pública (`/caixa-de-entrada/`), ordem de serviço, agenda da equipe e cobrança pelo simulador | cerca de 740 MB | Cadastro, senha, 2FA, convites, organizações e credenciais de integração fechados no proxy; configurações, equipe e contratos só para leitura. O site não publica a conta da proprietária, mas ela segue ativa, com a mesma senha, e está no repositório público do produto; com ela, `/configuracoes/assinatura` mostra preços de plano. O `demo.sh` ainda não a desativa depois da carga |
 
-Medido na VPS em 03/11/2026, depois das atualizações e do reinício dos dados, com as onze demonstrações no ar e sem visitantes: cerca de 5,9 GB em uso e 2,0 GB disponíveis de 7,9 GB, com 114 MB de swap. Cada um dos dois Keycloak usa cerca de 450 MB. Os dados são recriados todo dia. No modo de demonstração do ComercialCloud, o locatário e o usuário são fixos no servidor (`COMERCIAL_CLOUD_TENANT_RESOLUTION: demo`): o navegador não escolhe o locatário.
+Medido na VPS em 03/11/2026, depois das atualizações e do reinício dos dados, com as onze demonstrações no ar e sem visitantes: cerca de 5,9 GB em uso e 2,0 GB disponíveis de 7,9 GB, com 114 MB de swap. Cada um dos dois Keycloak usa cerca de 450 MB. Em 26/11/2026, com a VPS em 32 GB e as catorze demonstrações no ar, cerca de 10,3 GB em uso e 21 GB disponíveis. Os dados são recriados todo dia. No modo de demonstração do ComercialCloud, o locatário e o usuário são fixos no servidor (`COMERCIAL_CLOUD_TENANT_RESOLUTION: demo`): o navegador não escolhe o locatário.
 
 ## Fluxe B2B Suite: o que a demonstração muda em relação ao produto
 
@@ -50,6 +53,9 @@ Na versão v1.5.7 o dono de uma conta `admin` lista só o próprio locatário, a
 | AssinaFlow | v1.0.11, com o RabbitMQ 4.4.0 na imagem do produto e as rotas públicas respondendo 4xx, e não 500, a corpo vazio ou JSON inválido |
 | order-service | v2.0.2 |
 | HookGuard | v1.0.9, com a API sem root e o código de acesso da demonstração |
+| Fornevia | v1.2.0 (desde 25/11/2026) |
+| Pactor | v0.3.2 (desde 25/11/2026) |
+| Servora | v1.6.0 (desde 25/11/2026) |
 
 Achados HIGH e CRITICAL com correção disponível (Trivy 0.70.0, `--ignore-unfixed`), antes e depois:
 

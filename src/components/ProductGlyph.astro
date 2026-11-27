@@ -147,6 +147,50 @@ const figures: Record<ProductSlug, Figure> = {
       { x: 0, y: 150, text: 'retaguarda' },
     ],
   },
+  // O pedido sai do catálogo, passa pelo portão da aprovação e segue para a expedição.
+  fornevia: {
+    lines: [
+      'M0 24C60 24 70 70 120 70',
+      'M0 76H120',
+      'M0 128C60 128 70 82 120 82',
+      'M120 70H320',
+      'M120 82H320',
+      'M160 40V60',
+      'M160 92V112',
+    ],
+    nodes: [{ x: 160, y: 76 }, { x: 280, y: 76 }],
+    labels: [
+      { x: 0, y: 164, text: 'catálogo' },
+      { x: 160, y: 164, text: 'aprovação', anchor: 'middle' },
+      { x: 320, y: 164, text: 'expedição', anchor: 'end' },
+    ],
+  },
+  // A revisão aprovada segue em linha reta até a assinatura e entra no ciclo de vigência e renovação.
+  pactor: {
+    lines: ['M0 76H198', 'M0 86H198'],
+    rings: [{ cx: 256, cy: 81, r: 50 }, { cx: 256, cy: 81, r: 58 }],
+    nodes: [{ x: 40, y: 81 }, { x: 160, y: 81 }, { x: 256, y: 23 }],
+    labels: [
+      { x: 0, y: 164, text: 'revisão' },
+      { x: 160, y: 164, text: 'assinatura', anchor: 'middle' },
+      { x: 320, y: 164, text: 'renovação', anchor: 'end' },
+    ],
+  },
+  // Do orçamento ao financeiro: no meio, a ordem de serviço leva o técnico ao cliente e volta.
+  servora: {
+    lines: [
+      'M0 110H320',
+      'M0 120H320',
+      'M100 110C100 20 220 20 220 110',
+      'M114 110C114 38 206 38 206 110',
+    ],
+    nodes: [{ x: 40, y: 115 }, { x: 160, y: 43 }, { x: 280, y: 115 }],
+    labels: [
+      { x: 0, y: 164, text: 'orçamento' },
+      { x: 160, y: 164, text: 'ordem de serviço', anchor: 'middle' },
+      { x: 320, y: 164, text: 'financeiro', anchor: 'end' },
+    ],
+  },
 };
 
 const figure = figures[slug];

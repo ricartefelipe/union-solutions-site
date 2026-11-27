@@ -18,7 +18,10 @@ export type ProductSlug =
   | 'fluxe-b2b-suite'
   | 'comercialcloud'
   | 'skillforge'
-  | 'cards-api';
+  | 'cards-api'
+  | 'fornevia'
+  | 'pactor'
+  | 'servora';
 
 /** Credencial pública de uma demonstração. `copy` só vale para valor sem espaços (aparece o botão Copiar). */
 export interface DemoAccess {
@@ -37,7 +40,7 @@ export interface ProductScreen {
 }
 
 /** Necessidades do comprador, na ordem do catálogo. Cada produto pertence a uma. */
-export type NeedSlug = 'comercio' | 'integracoes' | 'financeiro' | 'ensino' | 'java';
+export type NeedSlug = 'comercio' | 'integracoes' | 'financeiro' | 'servicos' | 'ensino' | 'java';
 
 export interface Need {
   slug: NeedSlug;
@@ -47,9 +50,10 @@ export interface Need {
 }
 
 export const needs: Need[] = [
-  { slug: 'comercio', title: 'Comércio e vendas', text: 'Vender no balcão ou para outras empresas, com caixa, pedidos e administração ligados.' },
+  { slug: 'comercio', title: 'Comércio e vendas', text: 'Vender no balcão ou para outras empresas, com caixa, pedidos, preço por cliente e administração ligados.' },
   { slug: 'integracoes', title: 'Integrações', text: 'Receber eventos de outros sistemas sem operar fila, novas tentativas e reprocessamento.' },
   { slug: 'financeiro', title: 'Financeiro: arquivos, cobrança e cartões', text: 'Ler extratos e retornos bancários, cobrar assinaturas e emitir cartões por API.' },
+  { slug: 'servicos', title: 'Serviços e contratos', text: 'Atender no local do cliente com orçamento, ordem de serviço e agenda, e aprovar, assinar e acompanhar contratos.' },
   { slug: 'ensino', title: 'Ensino a distância', text: 'Ministrar cursos online e acompanhar turmas, notas, presença e certificados.' },
   { slug: 'java', title: 'Modernização Java', text: 'Entender uma aplicação Java pouco documentada antes de decidir como evoluí-la.' },
 ];

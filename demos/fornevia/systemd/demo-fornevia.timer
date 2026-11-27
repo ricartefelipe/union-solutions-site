@@ -1,0 +1,10 @@
+[Unit]
+Description=Reinício diário da demonstração do Fornevia
+
+[Timer]
+OnCalendar=*-*-* 06:40:00
+RandomizedDelaySec=5m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

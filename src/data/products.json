@@ -785,5 +785,253 @@
       "title": "Cards API: emissão e gestão de cartões físicos e virtuais por API",
       "description": "API para contas, clientes e cartões físicos e virtuais, da emissão à entrega, validação, reemissão e cancelamento, com transportadora e processadora ligadas por webhook. Demonstração com simuladores."
     }
+  },
+  {
+    "slug": "fornevia",
+    "name": "Fornevia",
+    "area": "Vendas B2B para distribuidores",
+    "need": "comercio",
+    "purpose": "Portal de vendas B2B para distribuidores e atacadistas, com preço por cliente, cotações, aprovação de compras e crédito, e dados separados por distribuidor.",
+    "screens": [
+      {
+        "id": "fornevia-catalogo",
+        "alt": "Catálogo do portal do comprador no Fornevia, para uma construtora fictícia: busca por nome, marca ou código, filtro por categoria e cada item com o código, a compra mínima e o preço da tabela."
+      },
+      {
+        "id": "fornevia-pedidos",
+        "alt": "Pedido na visão da equipe do distribuidor no Fornevia: a empresa compradora fictícia, as situações comercial, de aprovação, de atendimento e financeira, a condição de pagamento, a ordem de compra e o quadro de valores e crédito."
+      }
+    ],
+    "context": "Para distribuidores e atacadistas que vendem a empresas com preços e condições negociados por cliente.",
+    "capabilities": [
+      "Preços por empresa ou grupo de clientes, com faixas de quantidade e condições negociadas",
+      "Cotações em versões e aprovação de compras por alçada na empresa compradora",
+      "Pedidos com reserva de estoque e limite de crédito, expedição, devoluções e faturas"
+    ],
+    "onHome": false,
+    "situations": [
+      "Cada cliente empresarial tem preço, condição de pagamento e limite de crédito próprios.",
+      "Cotações e descontos são negociados por e-mail, sem registro de quem aprovou o quê.",
+      "A empresa compradora precisa aprovar a compra internamente antes de o pedido seguir."
+    ],
+    "flow": [
+      {
+        "title": "Catálogo",
+        "text": "O comprador vê o catálogo com os preços e as condições da própria empresa e monta o pedido ou pede uma cotação."
+      },
+      {
+        "title": "Aprovação",
+        "text": "O pedido passa pelas alçadas da empresa compradora e, na confirmação, reserva estoque e crédito."
+      },
+      {
+        "title": "Atendimento",
+        "text": "A equipe do distribuidor separa, expede, trata devoluções e emite a fatura comercial."
+      }
+    ],
+    "goodToKnow": "As faturas são comerciais, sem nota fiscal eletrônica. A cobrança pelo Asaas foi verificada só com respostas simuladas, e a demonstração usa o simulador de pagamento. A API ainda não cria pedidos: a ligação com o ERP do distribuidor entra na conversa.",
+    "availability": "Disponível para demonstração e avaliação de piloto. A forma de implantação é definida na proposta.",
+    "ctaLabel": "Avaliar piloto",
+    "objective": "piloto",
+    "contact": {
+      "subject": "Avaliação de piloto do Fornevia",
+      "hint": "Quantos clientes empresariais e itens de catálogo, como preços e cotações são negociados hoje e qual ERP precisa ser considerado?"
+    },
+    "conversationTopics": [
+      "Como preços, condições e cotações são negociados com seus clientes",
+      "Como o pedido segue da venda até a expedição e a cobrança",
+      "Quais sistemas, como ERP e meio de pagamento, precisam ser considerados"
+    ],
+    "liveDemo": {
+      "url": "https://demo-fornevia.unionsolutions.tech/",
+      "note": "Entre como comprador para fazer um pedido ou pedir uma cotação (no pedido rápido, use códigos como DJ-32A ou CB-25-100), como equipe do distribuidor para responder à cotação e acompanhar os pedidos, e como expedição para separar e expedir. Distribuidores, clientes e pagamento são fictícios. O ambiente é compartilhado e apagado todos os dias: não informe dados reais.",
+      "access": [
+        {
+          "label": "Comprador",
+          "value": "compras@serraazul.example"
+        },
+        {
+          "label": "Equipe do distribuidor",
+          "value": "vendas@pedrabranca.example"
+        },
+        {
+          "label": "Expedição",
+          "value": "estoque@pedrabranca.example"
+        },
+        {
+          "label": "Senha",
+          "value": "fornevia-demo"
+        }
+      ]
+    },
+    "seo": {
+      "title": "Fornevia: portal de vendas B2B para distribuidores e atacadistas",
+      "description": "Portal B2B com preço por cliente, cotações, aprovação de compras, crédito, expedição e faturas comerciais para distribuidores e atacadistas. Demonstração online e avaliação de piloto."
+    }
+  },
+  {
+    "slug": "pactor",
+    "name": "Pactor",
+    "area": "Gestão de contratos",
+    "need": "servicos",
+    "purpose": "Organiza o ciclo de vida dos contratos, da solicitação à aprovação, assinatura, vigência, renovação e encerramento, com os dados de cada organização isolados.",
+    "screens": [
+      {
+        "id": "pactor-aprovacao",
+        "alt": "Aba Aprovação de um contrato fictício no Pactor, já aprovado: a aprovação vinculada à revisão 1 e à sua impressão digital, e a rodada da etapa Jurídico com quórum 1, a decisão, o comentário e a data."
+      },
+      {
+        "id": "pactor-painel",
+        "alt": "Painel do Pactor numa organização fictícia: contratos visíveis, aprovações pendentes, prazos dos próximos 30 dias, obrigações em atraso e a situação dos contratos na elaboração e na vigência."
+      }
+    ],
+    "context": "Para empresas de serviços e departamentos jurídicos e administrativos que administram contratos com clientes e fornecedores.",
+    "capabilities": [
+      "Aprovação vinculada à revisão exata, invalidada quando uma nova revisão é publicada",
+      "Assinatura da revisão aprovada, hoje pelo simulador, com webhooks assinados e sem efeito duplicado",
+      "Prazos em dias úteis, renovação automática só quando autorizada e alertas sem duplicidade"
+    ],
+    "onHome": false,
+    "situations": [
+      "Os contratos circulam por e-mail e ninguém sabe qual versão foi aprovada.",
+      "Prazos de renovação e obrigações dependem de planilha e de memória.",
+      "Gestão, jurídico e financeiro precisam do mesmo contrato, cada um com o seu papel."
+    ],
+    "flow": [
+      {
+        "title": "Elaboração",
+        "text": "A solicitação vira contrato, e o texto pode ser gerado a partir de um modelo. Cada revisão publicada fica imutável, com impressão digital."
+      },
+      {
+        "title": "Aprovação",
+        "text": "Os aprovadores aprovam a revisão exata. Uma nova revisão exige nova aprovação."
+      },
+      {
+        "title": "Assinatura e vigência",
+        "text": "A revisão aprovada segue para assinatura, e o Pactor acompanha vigência, prazos, renovação e obrigações."
+      }
+    ],
+    "goodToKnow": "Hoje a assinatura funciona só com o simulador, que o produto recusa em produção. O adaptador para o Docusign tem testes, mas ainda não rodou com credenciais reais. O Pactor organiza o processo e não interpreta cláusulas nem garante a validade jurídica dos documentos.",
+    "availability": "Disponível para demonstração e avaliação de piloto com dados de teste.",
+    "ctaLabel": "Avaliar piloto",
+    "objective": "piloto",
+    "contact": {
+      "subject": "Avaliação de piloto do Pactor",
+      "hint": "Quantos contratos, quem participa da aprovação, como a assinatura é feita hoje e quais prazos e renovações precisam ser acompanhados?"
+    },
+    "conversationTopics": [
+      "Como seus contratos são elaborados, aprovados e assinados hoje",
+      "Quem participa da aprovação e quais regras de alçada existem",
+      "Quais prazos, renovações e obrigações precisam de acompanhamento"
+    ],
+    "liveDemo": {
+      "url": "https://demo-pactor.unionsolutions.tech/",
+      "note": "Entre como gestora para gerar a revisão a partir do modelo e enviá-la à aprovação, como aprovador para aprová-la em Aprovações e de novo como gestora para assinar pelo simulador. Se o contrato de exemplo já estiver aprovado por outro visitante, crie outro em Novo contrato. Nenhum e-mail sai da demonstração, e o ambiente é compartilhado e apagado todos os dias: não informe dados reais.",
+      "access": [
+        {
+          "label": "Gestora",
+          "value": "gestora.a@exemplo.test"
+        },
+        {
+          "label": "Aprovador",
+          "value": "aprovador.a@exemplo.test"
+        },
+        {
+          "label": "Senha",
+          "value": "Pactor-Demo-2026!"
+        }
+      ]
+    },
+    "seo": {
+      "title": "Pactor: gestão de contratos com aprovação por revisão, prazos e renovação",
+      "description": "Contratos da solicitação à aprovação da revisão exata, assinatura, vigência e renovação, com prazos em dias úteis. Assinatura por simulador. Demonstração online e piloto com dados de teste."
+    }
+  },
+  {
+    "slug": "servora",
+    "name": "Servora",
+    "area": "Serviços de campo e manutenção",
+    "need": "servicos",
+    "purpose": "Acompanha a operação de serviços de campo e manutenção, da solicitação do cliente à execução e ao resultado financeiro de cada serviço, com dados separados por empresa.",
+    "screens": [
+      {
+        "id": "servora-ordem",
+        "alt": "Ordem de serviço no Servora gerada de um orçamento aprovado: manutenção preventiva de ar-condicionado num cliente fictício, na situação Agendada, com a visita da equipe, os prazos de atendimento e o endereço."
+      },
+      {
+        "id": "servora-agenda",
+        "alt": "Agenda do Servora na visão Dia: linha do tempo por técnico, com a visita da ordem de serviço ocupando a manhã dos dois técnicos da equipe."
+      }
+    ],
+    "context": "Para empresas de climatização, manutenção predial, assistência técnica e manutenção de equipamentos comerciais.",
+    "capabilities": [
+      "Orçamentos com versões, aprovação do cliente pelo portal e conversão em ordem de serviço",
+      "Agenda de técnicos e equipes sem conflito de horário, e área do técnico que guarda os registros sem conexão",
+      "Estoque, contas a receber e margem prevista e realizada de cada ordem"
+    ],
+    "onHome": false,
+    "situations": [
+      "Orçamentos, ordens de serviço e a agenda dos técnicos vivem em planilhas e mensagens.",
+      "A aprovação do cliente e o que foi feito em cada visita ficam sem registro.",
+      "A empresa não sabe quanto cada serviço custou em material e mão de obra."
+    ],
+    "flow": [
+      {
+        "title": "Orçamento",
+        "text": "O orçamento é enviado ao cliente, que aprova pelo portal, e vira ordem de serviço."
+      },
+      {
+        "title": "Ordem de serviço",
+        "text": "A coordenação agenda o técnico ou a equipe. No celular, o técnico registra deslocamento, checklist, diagnóstico e horas, mesmo sem conexão."
+      },
+      {
+        "title": "Financeiro",
+        "text": "A ordem concluída gera o relatório em PDF. O financeiro fatura, cobra e acompanha a margem prevista e a realizada."
+      }
+    ],
+    "goodToKnow": "A ligação com o Asaas para cobrança, estorno e nota fiscal de serviço aceita só o ambiente de teste e foi verificada apenas com respostas simuladas, sem contato real com o Asaas. Sem ela, tudo passa por um simulador e nada é cobrado nem emitido. A ligação com os sistemas que você já usa entra na conversa sobre o seu caso.",
+    "availability": "Disponível para demonstração e avaliação de piloto.",
+    "ctaLabel": "Avaliar piloto",
+    "objective": "piloto",
+    "contact": {
+      "subject": "Avaliação de piloto do Servora",
+      "hint": "Quantos técnicos e equipes atendem, que serviços são feitos no cliente e como orçamentos, agenda e cobrança funcionam hoje?"
+    },
+    "conversationTopics": [
+      "Como os chamados chegam e como os orçamentos são aprovados hoje",
+      "Quantos técnicos e equipes atendem e como a agenda é montada",
+      "Como a cobrança e a nota fiscal de serviço são feitas hoje"
+    ],
+    "liveDemo": {
+      "url": "https://demo-servora.unionsolutions.tech/",
+      "note": "Entre como coordenação para montar um orçamento, aprová-lo pelo portal do cliente com o link que chega na caixa de entrada da demonstração (o link vale uma vez; se fechar sem aprovar, reenvie pelo orçamento), gerar a ordem e agendar a equipe; como técnico para registrar a visita; e como financeiro para faturar com cobrança simulada. A empresa de climatização e os clientes são fictícios. O ambiente é compartilhado e apagado todos os dias: não informe dados reais.",
+      "access": [
+        {
+          "label": "Coordenação",
+          "value": "bruno@clima-norte.test"
+        },
+        {
+          "label": "Técnico",
+          "value": "diego@clima-norte.test"
+        },
+        {
+          "label": "Financeiro",
+          "value": "gabriela@clima-norte.test"
+        },
+        {
+          "label": "Senha",
+          "value": "servora-demo-2026"
+        }
+      ],
+      "links": [
+        {
+          "label": "Caixa de entrada da demonstração",
+          "url": "https://demo-servora.unionsolutions.tech/caixa-de-entrada/"
+        }
+      ]
+    },
+    "seo": {
+      "title": "Servora: gestão de ordens de serviço e agenda de técnicos para serviços de campo",
+      "description": "Sistema web para serviços de campo e manutenção: orçamento aprovado pelo cliente, ordem de serviço, agenda de técnicos, área do técnico sem conexão, estoque e financeiro. Demonstração online e piloto."
+    }
   }
 ]
