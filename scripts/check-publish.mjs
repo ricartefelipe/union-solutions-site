@@ -115,7 +115,16 @@ if (!existsSync(join(DIST, 'contato/index.html'))) {
   const exposed = all.filter((path) => basename(path).startsWith('.env') || path.endsWith('.map') || /^(artifacts|docs|scripts|src)\//.test(label(path)));
   for (const path of exposed) blockers.push(`${distName}/: arquivo interno exposto: ${label(path)}.`);
 
-  const text = all.filter((path) => /\.(html|js|css|xml|txt|json|webmanifest)$/.test(path)).map((path) => ({ path, content: readFileSync(path, 'utf8') }));
+  // As contas públicas das demonstrações usam domínios reservados de propósito (fictícios, sem dono real).
+  // Só os valores declarados em liveDemo.access ficam fora da busca; qualquer outro resto continua bloqueando.
+  const demoAccess = JSON.parse(readFileSync('src/data/products.json', 'utf8'))
+    .flatMap((product) => product.liveDemo?.access ?? [])
+    .map((item) => item.value)
+    .filter((value) => value.includes('@'));
+  const withoutDemoAccess = (content) => demoAccess.reduce((rest, value) => rest.split(value).join(''), content);
+  const text = all
+    .filter((path) => /\.(html|js|css|xml|txt|json|webmanifest)$/.test(path))
+    .map((path) => ({ path, content: withoutDemoAccess(readFileSync(path, 'utf8')) }));
   const leftovers = [
     [/\bPUBLIC_[A-Z_]+\b/, 'nome de variável de configuração'],
     [/SUBSTITUIR/i, 'valor de exemplo'],
