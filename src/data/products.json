@@ -1033,5 +1033,79 @@
       "title": "Servora: gestão de ordens de serviço e agenda de técnicos para serviços de campo",
       "description": "Sistema web para serviços de campo e manutenção: orçamento aprovado pelo cliente, ordem de serviço, agenda de técnicos, área do técnico sem conexão, estoque e financeiro. Demonstração online e piloto."
     }
+  },
+  {
+    "slug": "recorvia",
+    "name": "Recorvia",
+    "area": "Faturamento recorrente",
+    "need": "financeiro",
+    "purpose": "Gera as faturas dos contratos recorrentes, pede a cobrança ao provedor de pagamento e registra recebimentos, taxas e reembolsos num ledger de partidas dobradas.",
+    "screens": [
+      {
+        "id": "recorvia-painel",
+        "alt": "Painel financeiro do Recorvia numa empresa fictícia: receita faturada e recebida do mês, valor a receber do provedor, MRR, ARR e assinaturas ativas, novas e canceladas."
+      },
+      {
+        "id": "recorvia-fatura",
+        "alt": "Fatura paga no Recorvia de um cliente fictício: aviso de que é fatura comercial e não documento fiscal, período faturado, datas de emissão, vencimento e pagamento, e os totais com o saldo devedor zerado."
+      }
+    ],
+    "context": "Para prestadores de serviços recorrentes, como software houses, consultorias e suporte de TI.",
+    "capabilities": [
+      "Assinaturas e faturas recorrentes, com troca de plano, prorrata, cupons e consumo medido",
+      "Cobrança pelo checkout do provedor, com reembolsos, disputas e régua de cobrança por e-mail",
+      "Ledger de partidas dobradas e conciliação com o provedor, que aponta as divergências para resolução auditada"
+    ],
+    "onHome": false,
+    "situations": [
+      "Os contratos recorrentes viram faturas em planilha, e alguém confere à mão o que foi pago.",
+      "Taxas, reembolsos e chargebacks do provedor não batem com o que o financeiro registrou.",
+      "Lembretes de vencimento e suspensão por atraso dependem de alguém lembrar."
+    ],
+    "flow": [
+      {
+        "title": "Faturamento",
+        "text": "O motor de recorrência gera a fatura de cada assinatura no ciclo, com os itens e o preço vigente."
+      },
+      {
+        "title": "Cobrança",
+        "text": "O Recorvia pede a cobrança ao provedor, e o cliente paga no checkout dele. A confirmação chega por webhook. O Recorvia não guarda dinheiro nem processa cartões."
+      },
+      {
+        "title": "Conciliação",
+        "text": "Pagamentos, taxas e reembolsos entram no ledger, e a conciliação aponta o que diverge do provedor."
+      }
+    ],
+    "goodToKnow": "Hoje a cobrança funciona com um simulador de pagamentos. O adaptador do Asaas ainda não foi validado no sandbox, e a cobrança real não está liberada. O ledger é operacional e não substitui a contabilidade, a conciliação não cobre o extrato bancário, e as faturas não são documentos fiscais.",
+    "availability": "Disponível para demonstração e piloto com dados de teste.",
+    "ctaLabel": "Avaliar piloto",
+    "objective": "piloto",
+    "contact": {
+      "subject": "Avaliação de piloto do Recorvia",
+      "hint": "Quantos contratos recorrentes existem, como são faturados e cobrados hoje e qual provedor de pagamento a empresa usa?"
+    },
+    "conversationTopics": [
+      "Como seus contratos recorrentes são faturados e cobrados hoje",
+      "Qual provedor de pagamento sua empresa usa ou pretende usar",
+      "Como o financeiro confere recebimentos, taxas e reembolsos"
+    ],
+    "liveDemo": {
+      "url": "https://demo-recorvia.unionsolutions.tech/",
+      "note": "Entre com a conta abaixo numa empresa fictícia. Cadastre um cliente (o CNPJ precisa ter dígitos válidos), um produto, um plano mensal e a assinatura; em Faturas, execute o faturamento, abra o checkout do simulador pela fatura e confirme o pagamento para ver a fatura paga, o ledger e a auditoria. Nada é cobrado e nenhum e-mail é enviado. O ambiente é compartilhado e apagado todos os dias: não informe dados reais.",
+      "access": [
+        {
+          "label": "E-mail",
+          "value": "ana.owner@acme.test"
+        },
+        {
+          "label": "Senha",
+          "value": "Recorvia#Demo2026"
+        }
+      ]
+    },
+    "seo": {
+      "title": "Recorvia: faturamento recorrente, cobrança e conciliação para prestadores de serviço",
+      "description": "Gera faturas das assinaturas, pede a cobrança ao provedor e concilia recebimentos num ledger de partidas dobradas. Cobrança com simulador. Demonstração online e piloto com dados de teste."
+    }
   }
 ]

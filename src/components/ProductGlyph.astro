@@ -191,6 +191,22 @@ const figures: Record<ProductSlug, Figure> = {
       { x: 320, y: 164, text: 'financeiro', anchor: 'end' },
     ],
   },
+  // A fatura vai ao provedor e o recebimento volta para o ledger de partidas dobradas, onde é conciliado.
+  recorvia: {
+    lines: [
+      'M0 100H100',
+      'M100 94C130 30 190 30 220 94',
+      'M220 106C190 150 130 150 100 106',
+      'M220 94H320',
+      'M220 106H320',
+    ],
+    nodes: [{ x: 40, y: 100 }, { x: 160, y: 46 }, { x: 280, y: 100 }],
+    labels: [
+      { x: 0, y: 172, text: 'fatura' },
+      { x: 160, y: 172, text: 'cobrança', anchor: 'middle' },
+      { x: 320, y: 172, text: 'conciliação', anchor: 'end' },
+    ],
+  },
 };
 
 const figure = figures[slug];

@@ -1,0 +1,76 @@
+# Instalado em demos/proxy/sites/ por demo.sh instalar. Só a interface, o login do realm recorvia e o checkout do simulador de
+# pagamentos. Console administrativo, contas e outros realms do Keycloak, prontidão, webhooks dos provedores, documentação da
+# API e a API e os controles do simulador ficam fechados.
+demo-recorvia.unionsolutions.tech {
+	encode gzip
+	# O mesmo limite do nginx da interface.
+	request_body {
+		max_size 1MB
+	}
+	header {
+		>Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+	# Sem a query string: o link do portal do cliente (/portal/access) leva um token de uso único nela.
+	log {
+		output stdout
+		format filter {
+			wrap json
+			fields {
+				request>uri regexp \?.* ?[removido]
+			}
+		}
+	}
+	# Sonda de vivacidade da API, pela interface; não consulta dependências.
+	handle /livez {
+		reverse_proxy recorvia-web:8080
+	}
+	# Ações do Keycloak pedidas pela URL de autorização (troca de senha, TOTP, chave de acesso, perfil): com a senha pública das
+	# contas compartilhadas, um visitante tomaria a conta para si. Também desligadas no realm (demo.sh). O matcher "query" vê o
+	# nome do parâmetro já decodificado; a expressão pega variações de maiúsculas e a codificação do "_".
+	@kc_action {
+		path /realms/recorvia/protocol/openid-connect/auth
+		query kc_action=*
+	}
+	handle @kc_action {
+		respond 404
+	}
+	@kc_action_variante {
+		path /realms/recorvia/protocol/openid-connect/auth
+		expression {query}.matches("(?i)kc(_|%5f)action")
+	}
+	handle @kc_action_variante {
+		respond 404
+	}
+	# Só o login e o logout do realm recorvia, com as páginas e os arquivos do tema. A troca do código e as chaves passam pela
+	# rede interna; a revogação, que o Keycloak anuncia no endereço público, fica fechada, e a v0.4.1 trata a falha.
+	@keycloak path /realms/recorvia/protocol/openid-connect/auth /realms/recorvia/protocol/openid-connect/logout /realms/recorvia/protocol/openid-connect/logout/* /realms/recorvia/login-actions/* /resources/*
+	handle @keycloak {
+		reverse_proxy recorvia-keycloak:8080
+	}
+	# Página de pagamento do simulador e as ações dela; o resto do simulador não é público.
+	@checkout {
+		method GET POST
+		path /checkout/*
+	}
+	handle @checkout {
+		reverse_proxy recorvia-paysim:8090
+	}
+	# Prefixos sem barra, que pegam também o caminho sem a barra no fim. /admin/servicos é uma tela da própria interface (equipe
+	# da plataforma), servida pelo nginx dela; o console do Keycloak, em /admin/, fica fechado.
+	@fechado {
+		path /actuator* /internal* /admin* /q/* /swagger* /v3/api-docs* /openapi* /realms* /readyz* /webhooks* /api/openapi.yaml
+		not path /admin/servicos
+	}
+	handle @fechado {
+		respond 404
+	}
+	handle {
+		reverse_proxy recorvia-web:8080
+	}
+	handle_errors 502 503 504 {
+		header Content-Type "text/plain; charset=utf-8"
+		respond "A demonstração está temporariamente indisponível. Tente novamente em instantes." {err.status_code}
+	}
+}

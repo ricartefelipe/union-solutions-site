@@ -103,7 +103,7 @@ Domínio e caixa postal **não são pendências**. A confirmação de que funcio
 8. SSH da VPS só por chave; repositório público sem identificadores da hospedagem; aceite dos cinco achados de vulnerabilidade restantes registrado, com validade até 01/12/2026.
 
 9. Demonstrações públicas em 02/11/2026, em VPS própria, separada do portal (`demos/README.md`): `demo-hookguard`, `demo-filenorm`, `demo-comercialcloud`, `demo-archlens`, `demo-assinaflow`, `demo-fluxe`, `demo-cards`, `demo-orders`, `demo-vuemind`, `demo-springmind` e `demo-skillforge` em `unionsolutions.tech`, cada uma com certificado próprio, dados apagados todo dia e rotas internas fechadas. O portal está na 1.4.0, com 2 GB de swap criados na VPS.
-10. Em 27/11/2026, mais três demonstrações na VPS 2, com certificado próprio: `demo-fornevia`, `demo-pactor` e `demo-servora` em `unionsolutions.tech` (`demos/README.md`).
+10. Em 27/11/2026, mais três demonstrações na VPS 2, com certificado próprio: `demo-fornevia`, `demo-pactor` e `demo-servora` em `unionsolutions.tech` (`demos/README.md`). O Recorvia entrou em seguida, em `demo-recorvia.unionsolutions.tech`, também em 27/11/2026.
 
 ### Modelo comercial
 

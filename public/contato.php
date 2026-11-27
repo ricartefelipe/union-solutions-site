@@ -19,7 +19,7 @@ const LIMITE_ENVIOS = 5;          // por endereço IP
 const JANELA_SEGUNDOS = 3600;     // na última hora
 const TAMANHO_MAXIMO = 16 * 1024; // bytes do corpo JSON
 const INTERESSES = ['produto', 'consultoria', 'arquitetura', 'desenvolvimento', 'parceria'];
-const PRODUTOS = ['hookguard', 'filenorm', 'assinaflow', 'archlens', 'fluxe-b2b-suite', 'comercialcloud', 'skillforge', 'cards-api', 'fornevia', 'pactor', 'servora', 'ainda-nao-sei'];
+const PRODUTOS = ['hookguard', 'filenorm', 'assinaflow', 'archlens', 'fluxe-b2b-suite', 'comercialcloud', 'skillforge', 'cards-api', 'fornevia', 'pactor', 'servora', 'recorvia', 'ainda-nao-sei'];
 // Intenção que o visitante escolheu: a comercial de cada produto (src/data/products.json) ou a demonstração.
 // Valor fora da lista é descartado, nunca recusado: links antigos seguem funcionando.
 const OBJETIVOS_POR_PRODUTO = [
@@ -34,6 +34,7 @@ const OBJETIVOS_POR_PRODUTO = [
     'fornevia' => ['piloto', 'demo'],
     'pactor' => ['piloto', 'demo'],
     'servora' => ['piloto', 'demo'],
+    'recorvia' => ['piloto', 'demo'],
     'ainda-nao-sei' => ['demo'],
 ];
 
