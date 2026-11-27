@@ -207,6 +207,22 @@ const figures: Record<ProductSlug, Figure> = {
       { x: 320, y: 172, text: 'conciliação', anchor: 'end' },
     ],
   },
+  // Um período na linha do tempo: a reserva marca o intervalo, a retirada leva o equipamento e a devolução o traz de volta.
+  locentra: {
+    lines: [
+      'M0 112H320',
+      'M40 112V52H280V112',
+      'M52 112V64H268V112',
+      'M40 32V44',
+      'M280 32V44',
+    ],
+    nodes: [{ x: 40, y: 112 }, { x: 160, y: 58 }, { x: 280, y: 112 }],
+    labels: [
+      { x: 0, y: 150, text: 'reserva' },
+      { x: 160, y: 150, text: 'retirada', anchor: 'middle' },
+      { x: 320, y: 150, text: 'devolução', anchor: 'end' },
+    ],
+  },
 };
 
 const figure = figures[slug];

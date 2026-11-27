@@ -1,0 +1,17 @@
+# Instale em /etc/systemd/system. Reinicia os dados da demonstração do Locentra uma vez por dia.
+[Unit]
+Description=Reinício diário dos dados da demonstração do Locentra
+After=docker.service
+Requires=docker.service
+# Até 3 tentativas em 2 horas; depois a unidade fica em failed (systemctl --failed).
+StartLimitIntervalSec=2h
+StartLimitBurst=3
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/union-solutions/demos/locentra
+ExecStart=/bin/sh demo.sh reiniciar-dados
+# O reinício começa descartando tudo (down -v): se uma etapa falhar, a demonstração ficaria fora do ar até o dia
+# seguinte. Cada nova tentativa refaz o ciclo inteiro.
+Restart=on-failure
+RestartSec=5min
