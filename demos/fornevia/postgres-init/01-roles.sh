@@ -19,18 +19,18 @@ DATABASES="${FORNEVIA_DATABASES:-fornevia fornevia_test fornevia_browser}"
 SUPERUSER="${POSTGRES_USER:-postgres}"
 
 psql -v ON_ERROR_STOP=1 --username "$SUPERUSER" --dbname postgres \
-    -v owner_pw="$FORNEVIA_OWNER_PASSWORD" \
-    -v app_pw="$FORNEVIA_APP_PASSWORD" \
-    -v relay_pw="$FORNEVIA_RELAY_PASSWORD" <<'SQL'
+    -v owner_password="$FORNEVIA_OWNER_PASSWORD" \
+    -v app_password="$FORNEVIA_APP_PASSWORD" \
+    -v relay_password="$FORNEVIA_RELAY_PASSWORD" <<'SQL'
 SELECT 'CREATE ROLE fornevia_owner LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS NOREPLICATION'
 WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'fornevia_owner') \gexec
 SELECT 'CREATE ROLE fornevia_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS NOREPLICATION NOINHERIT'
 WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'fornevia_app') \gexec
 SELECT 'CREATE ROLE fornevia_relay LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS NOREPLICATION NOINHERIT'
 WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'fornevia_relay') \gexec
-ALTER ROLE fornevia_owner PASSWORD :'owner_pw';
-ALTER ROLE fornevia_app PASSWORD :'app_pw';
-ALTER ROLE fornevia_relay PASSWORD :'relay_pw';
+ALTER ROLE fornevia_owner PASSWORD :'owner_password';
+ALTER ROLE fornevia_app PASSWORD :'app_password';
+ALTER ROLE fornevia_relay PASSWORD :'relay_password';
 ALTER ROLE fornevia_app SET statement_timeout = '30s';
 ALTER ROLE fornevia_app SET lock_timeout = '10s';
 ALTER ROLE fornevia_app SET idle_in_transaction_session_timeout = '60s';
