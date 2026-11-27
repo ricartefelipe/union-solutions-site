@@ -1121,7 +1121,7 @@
       },
       {
         "id": "locentra-reserva",
-        "alt": "Reserva confirmada no Locentra para uma produtora fictícia: contrato emitido aguardando aceite, período de retirada e devolução, total contratado e caução prevista."
+        "alt": "Reserva confirmada no Locentra para uma produtora fictícia: contrato emitido aguardando aceite, o item com a unidade alocada, a cobrança da locação em aberto, o período de retirada e devolução e o total contratado."
       }
     ],
     "context": "Para locadoras de ferramentas, equipamentos audiovisuais, materiais para eventos e equipamentos profissionais.",
