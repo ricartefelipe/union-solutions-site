@@ -1,0 +1,202 @@
+# Demonstração pública do Locentra na VPS das demonstrações: as duas organizações fictícias da carga do produto
+# (lib/locentra/seed.rb, `db:seed --allow-production`), com contas compartilhadas. Mesmo desenho de produção do produto:
+# APP_ENV=production, papel owner só nas migrations, papéis app e worker sob Row-Level Security nos processos,
+# contêineres somente leitura e sem saída para a internet. Os e-mails ficam num Mailpit interno, sem interface
+# publicada (quem lesse a caixa redefiniria a senha das contas compartilhadas), com STARTTLS por uma CA própria da
+# demonstração: em produção o produto só envia por SMTP com TLS verificado. Os pagamentos usam o simulador do produto.
+# A imagem é construída numa máquina de trabalho e carregada na VPS (ver demo.sh); nada compila aqui.
+name: demo-locentra
+
+x-comum: &comum
+  restart: unless-stopped
+  oom_score_adj: 500
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+# Ambiente comum da web, do worker e da carga. Nomes de host com prefixo: a web também está na rede union-demos, onde
+# "postgres" e "mailpit" podem ser de outra demonstração.
+x-ambiente: &ambiente
+  APP_ENV: production
+  APP_BASE_URL: https://${DEMO_HOST:?}
+  APP_SECRET_KEY_BASE: ${APP_SECRET_KEY_BASE:?}
+  APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:?}
+  DATABASE_URL: postgres://locentra_app:${LOCENTRA_APP_PASSWORD:?}@locentra-postgres:5432/locentra
+  # IP do proxy das demonstrações na rede union-demos (/32), lido pelo demo.sh a cada execução: o IP do visitante vem
+  # do X-Forwarded-For que só o proxy pode enviar (os contêineres das outras demonstrações, na mesma rede, não). Sem
+  # isso, todos os visitantes dividiriam os limites por IP do produto.
+  TRUSTED_PROXIES: ${DEMOS_PROXY_IP:?rode os comandos pelo demo.sh}
+  PUMA_THREADS: "5"
+  WEB_CONCURRENCY: "0"
+  WORKER_CONCURRENCY: "3"
+  WEBHOOK_CONCURRENCY: "1"
+  LOG_LEVEL: info
+  SMTP_HOST: locentra-mailpit
+  SMTP_PORT: "1025"
+  SMTP_TLS: starttls
+  MAIL_FROM: Locentra <nao-responda@${DEMO_HOST:?}>
+  # CA da demonstração (demo.sh segredos), que assina só o certificado do Mailpit interno. Não há outra saída TLS:
+  # o Asaas fica desligado e a rede não tem internet.
+  SSL_CERT_FILE: /etc/locentra-demo/ca.crt
+  PAYMENT_PROVIDERS: simulator
+  # Anexos de até 5 MiB (o produto aceita 10 MiB); o proxy limita /anexos a este valor mais 64 KiB de envelope.
+  MAX_UPLOAD_BYTES: "5242880"
+  # Sem METRICS_TOKEN, /metrics responde 404 (e o proxy também fecha).
+  METRICS_TOKEN: ""
+
+x-app: &app
+  <<: *comum
+  image: demo-locentra-app:${LOCENTRA_TAG:?}
+  read_only: true
+  tmpfs:
+    # Corpo multipart dos anexos (até 5 MiB, com até duas cópias por envio) e o arquivo de vida do worker.
+    - /tmp:uid=10001,gid=10001,mode=1777,size=64m
+    - /app/tmp:uid=10001,gid=10001,mode=0755,size=1m
+  cap_drop: [ALL]
+  volumes:
+    - ./tls/ca.crt:/etc/locentra-demo/ca.crt:ro
+  networks: [interna]
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+services:
+  postgres:
+    <<: *comum
+    image: postgres:18.7-alpine3.24
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_SUPERUSER_PASSWORD:?}
+      LOCENTRA_OWNER_PASSWORD: ${LOCENTRA_OWNER_PASSWORD:?}
+      LOCENTRA_APP_PASSWORD: ${LOCENTRA_APP_PASSWORD:?}
+      LOCENTRA_WORKER_PASSWORD: ${LOCENTRA_WORKER_PASSWORD:?}
+      LOCENTRA_BACKUP_PASSWORD: ${LOCENTRA_BACKUP_PASSWORD:?}
+    volumes:
+      - dados:/var/lib/postgresql
+      # Papéis e bancos do produto (docker/postgres/init/01-roles.sh da tag em LOCENTRA_TAG).
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    networks:
+      interna:
+        aliases: [locentra-postgres]
+    mem_limit: 512m
+    healthcheck:
+      # Por TCP e no banco da aplicação: durante a inicialização o servidor temporário só atende pelo socket, antes de
+      # os papéis e o banco existirem.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d locentra"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  mailpit:
+    <<: *comum
+    image: axllent/mailpit:v1.34.0
+    environment:
+      MP_MAX_MESSAGES: "1000"
+      MP_DISABLE_VERSION_CHECK: "true"
+      MP_SMTP_DISABLE_RDNS: "true"
+      MP_SMTP_TLS_CERT: /etc/mailpit-tls/mailpit.crt
+      MP_SMTP_TLS_KEY: /etc/mailpit-tls/mailpit.key
+      MP_SMTP_REQUIRE_STARTTLS: "true"
+    user: "65534:65534"
+    read_only: true
+    tmpfs:
+      - /tmp:uid=65534,gid=65534,mode=0700,size=32m
+    cap_drop: [ALL]
+    volumes:
+      - ./tls/mailpit.crt:/etc/mailpit-tls/mailpit.crt:ro
+      - ./tls/mailpit.key:/etc/mailpit-tls/mailpit.key:ro
+    networks:
+      interna:
+        aliases: [locentra-mailpit]
+    # A caixa fica no tmpfs, que conta no limite de memória.
+    mem_limit: 96m
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 5s
+
+  web:
+    <<: *app
+    environment: *ambiente
+    volumes:
+      - ./tls/ca.crt:/etc/locentra-demo/ca.crt:ro
+      - arquivos:/app/storage
+    # Nome curto não é seguro: outras demonstrações têm um "web" na rede union-demos.
+    networks:
+      interna:
+      demos:
+        aliases: [locentra-web]
+    stop_grace_period: 30s
+    mem_limit: 512m
+    healthcheck:
+      # /health/ready confere o banco e as migrations; o proxy não o publica.
+      test: ["CMD", "ruby", "-rnet/http", "-e", "exit(Net::HTTP.get_response(URI('http://127.0.0.1:9292/health/ready')).is_a?(Net::HTTPSuccess) ? 0 : 1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+
+  worker:
+    <<: *app
+    command: ["ruby", "bin/worker"]
+    environment:
+      <<: *ambiente
+      WORKER_DATABASE_URL: postgres://locentra_worker:${LOCENTRA_WORKER_PASSWORD:?}@locentra-postgres:5432/locentra
+    volumes:
+      - ./tls/ca.crt:/etc/locentra-demo/ca.crt:ro
+      - arquivos:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+    stop_grace_period: 30s
+    mem_limit: 384m
+    healthcheck:
+      test: ["CMD", "ruby", "bin/worker", "--check"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Migrations com o papel owner (só ele recebe essa credencial).
+  migrate:
+    <<: *app
+    profiles: ["ferramentas"]
+    restart: "no"
+    environment:
+      APP_ENV: production
+      MIGRATION_DATABASE_URL: postgres://locentra_owner:${LOCENTRA_OWNER_PASSWORD:?}@locentra-postgres:5432/locentra
+    command: ["ruby", "bin/locentra-admin", "db:migrate"]
+    mem_limit: 384m
+    healthcheck:
+      disable: true
+
+  # Carga de demonstração do produto, com o papel app, sob Row-Level Security. O produto recusa a carga em produção
+  # sem --allow-production, porque ela cria contas com senha pública: é exatamente o caso da demonstração.
+  seed:
+    <<: *app
+    profiles: ["ferramentas"]
+    restart: "no"
+    environment: *ambiente
+    command: ["ruby", "bin/locentra-admin", "db:seed", "--allow-production", "--json"]
+    mem_limit: 384m
+    healthcheck:
+      disable: true
+
+volumes:
+  dados:
+  arquivos:
+
+networks:
+  interna:
+    internal: true
+  demos:
+    external: true
+    name: ${DEMOS_NETWORK:-union-demos}

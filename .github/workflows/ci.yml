@@ -114,6 +114,7 @@ jobs:
           sh -n demos/pactor/demo.sh
           sh -n demos/servora/demo.sh
           sh -n demos/recorvia/demo.sh
+          sh -n demos/locentra/demo.sh
       - name: Compose de produção válido com o modelo de configuração
         run: |
           cd portal/deploy/production
@@ -152,6 +153,11 @@ jobs:
             echo 'DEMOS_PROXY_SUBNET=172.30.0.0/16' >> "$RUNNER_TEMP/$demo.env"
             docker compose --env-file "$RUNNER_TEMP/$demo.env" -f compose.yaml config -q
           done
+          # O Locentra recebe do demo.sh o IP do proxy na rede union-demos: aqui vai um fixo.
+          cd ../locentra
+          sed 's/GERADO/x/g' .env.example > "$RUNNER_TEMP/locentra.env"
+          echo 'DEMOS_PROXY_IP=172.30.0.2' >> "$RUNNER_TEMP/locentra.env"
+          docker compose --env-file "$RUNNER_TEMP/locentra.env" -f compose.yaml config -q
       - name: Imagens de produção constroem
         run: |
           docker build -q portal/backend

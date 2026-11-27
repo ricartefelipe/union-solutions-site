@@ -1107,5 +1107,79 @@
       "title": "Recorvia: faturamento recorrente, cobrança e conciliação para prestadores de serviço",
       "description": "Gera faturas das assinaturas, pede a cobrança ao provedor e concilia recebimentos num ledger de partidas dobradas. Cobrança com simulador. Demonstração online e piloto com dados de teste."
     }
+  },
+  {
+    "slug": "locentra",
+    "name": "Locentra",
+    "area": "Locação de equipamentos",
+    "need": "servicos",
+    "purpose": "Gerencia a locação de equipamentos, da consulta de disponibilidade ao orçamento, contrato, retirada, devolução e acerto da caução, sem alocar a mesma unidade duas vezes.",
+    "screens": [
+      {
+        "id": "locentra-disponibilidade",
+        "alt": "Disponibilidade do Locentra numa locadora fictícia de audiovisual: unidades livres de cada produto nos próximos sete dias, com a câmera reservada em dois dias e parte dos tripés bloqueada em outros três."
+      },
+      {
+        "id": "locentra-reserva",
+        "alt": "Reserva confirmada no Locentra para uma produtora fictícia: contrato emitido aguardando aceite, período de retirada e devolução, total contratado e caução prevista."
+      }
+    ],
+    "context": "Para locadoras de ferramentas, equipamentos audiovisuais, materiais para eventos e equipamentos profissionais.",
+    "capabilities": [
+      "Disponibilidade por período para ativos com patrimônio, estoque por quantidade e kits",
+      "Orçamento com versões, contrato em PDF com aceite eletrônico simples e aditivos",
+      "Retirada, devolução parcial, inspeção, avarias com evidência e caução separada da receita"
+    ],
+    "onHome": false,
+    "situations": [
+      "As reservas ficam em planilhas e agendas, e a mesma unidade acaba prometida a dois clientes.",
+      "Na devolução, avarias e faltas são discutidas sem registro nem evidência.",
+      "A caução se mistura ao faturamento, e o acerto com o cliente vira trabalho manual."
+    ],
+    "flow": [
+      {
+        "title": "Reserva",
+        "text": "A equipe consulta a disponibilidade do período e monta o orçamento. Aprovado, ele vira reserva com a unidade alocada."
+      },
+      {
+        "title": "Retirada",
+        "text": "O contrato sai em PDF. Na retirada, a equipe confere patrimônios e quantidades e registra quem levou."
+      },
+      {
+        "title": "Devolução",
+        "text": "A devolução pode ser parcial. O que voltou com problema vai para inspeção, e a avaria aprovada com evidência pode ser descontada da caução."
+      }
+    ],
+    "goodToKnow": "Os pagamentos online usam um simulador: a cobrança por um provedor real ainda não foi testada com conta real. Há fatura comercial, mas não nota fiscal de serviço nem pré-autorização de cartão, e os anexos ficam no próprio servidor.",
+    "availability": "Disponível para demonstração e avaliação de piloto com dados de teste.",
+    "ctaLabel": "Avaliar piloto",
+    "objective": "piloto",
+    "contact": {
+      "subject": "Avaliação de piloto do Locentra",
+      "hint": "Quantas filiais e quantos equipamentos, como reservas e devoluções são controladas hoje e como a caução é acertada com o cliente?"
+    },
+    "conversationTopics": [
+      "Quais equipamentos sua locadora aluga e se são controlados por patrimônio ou por quantidade",
+      "Como reservas, retiradas e devoluções são registradas hoje",
+      "Como caução, avarias e cobranças são acertadas com o cliente"
+    ],
+    "liveDemo": {
+      "url": "https://demo-locentra.unionsolutions.tech/",
+      "note": "Entre com a conta abaixo e escolha a locadora fictícia Alfa Audiovisual. A carga já traz reservas: consulte a disponibilidade, abra a reserva confirmada, gere o contrato e registre caução, retirada e devolução, ou monte um orçamento e converta em reserva. Pagamentos simulados. O ambiente é compartilhado e apagado todos os dias: não informe dados reais.",
+      "access": [
+        {
+          "label": "E-mail",
+          "value": "ana@alfa.demo"
+        },
+        {
+          "label": "Senha",
+          "value": "locentra-local-demo"
+        }
+      ]
+    },
+    "seo": {
+      "title": "Locentra: gestão de locação de equipamentos, com reservas, contratos e devoluções",
+      "description": "Gestão de locadoras de equipamentos: disponibilidade por período, orçamento, contrato em PDF, retirada, devolução com inspeção e caução separada da receita. Demonstração online com locadora fictícia e avaliação de piloto com dados de teste."
+    }
   }
 ]
