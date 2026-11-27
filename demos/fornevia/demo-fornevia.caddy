@@ -1,0 +1,44 @@
+# Instalado em demos/proxy/sites/ por demo.sh instalar (que troca __DEMO_HOST__ pelo DEMO_HOST do .env). Contas
+# compartilhadas: autocadastro, recuperação e troca de senha, troca de e-mail e segundo fator fechados no proxy;
+# Horizon, métricas, documentação da API, prontidão e webhook do gateway não são públicos.
+__DEMO_HOST__ {
+	encode gzip
+	request_body {
+		max_size 8MB
+	}
+	header {
+		>Strict-Transport-Security "max-age=31536000"
+		X-Robots-Tag "noindex, nofollow"
+		-Server
+	}
+	log {
+		output stdout
+		format filter {
+			wrap json
+			fields {
+				request>uri regexp \?.* ?[removido]
+			}
+		}
+	}
+	@internas path /horizon /horizon/* /metrics /docs/* /health/ready /webhooks/*
+	handle @internas {
+		respond 404
+	}
+	@contas path /user/password /user/profile-information /user/two-factor-authentication /user/confirmed-two-factor-authentication /user/two-factor-recovery-codes /email/verification-notification
+	handle @contas {
+		header Content-Type "text/plain; charset=utf-8"
+		respond "Indisponível na demonstração: as contas são compartilhadas. Use as contas informadas na página do produto." 403
+	}
+	@cadastro path /register /forgot-password /reset-password /reset-password/* /onboarding /email/verify /email/verify/*
+	handle @cadastro {
+		# O "*" é obrigatório: sem ele, "/login" seria lido como filtro de caminho, e não como destino.
+		redir * /login 302
+	}
+	handle {
+		reverse_proxy fornevia-web:8080
+	}
+	handle_errors 502 503 504 {
+		header Content-Type "text/plain; charset=utf-8"
+		respond "A demonstração está temporariamente indisponível. Tente novamente em instantes." {err.status_code}
+	}
+}

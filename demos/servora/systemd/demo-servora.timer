@@ -1,0 +1,11 @@
+[Unit]
+Description=Reinício diário da demonstração do Servora
+
+[Timer]
+# Depois do Fornevia (06:40) e da geração diária das preventivas do produto (01:30 em Brasília, 04:30 UTC).
+OnCalendar=*-*-* 06:55:00 UTC
+RandomizedDelaySec=5m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

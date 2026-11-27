@@ -1,0 +1,223 @@
+# Demonstração pública do Fornevia na VPS das demonstrações: os dois distribuidores fictícios da carga de demonstração do
+# produto (demo:seed), com contas compartilhadas. Mesmo desenho do compose.prod.yaml do produto (processos sem
+# privilégios, sistema de arquivos somente leitura, migrations num processo separado com o papel de manutenção), sem
+# saída para a internet: e-mail só em log e pagamentos pelo simulador do produto. As imagens são construídas numa
+# máquina de trabalho e carregadas na VPS (ver demo.sh); nada compila aqui.
+name: demo-fornevia
+
+x-comum: &comum
+  restart: unless-stopped
+  oom_score_adj: 500
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+# Ambiente dos processos PHP. APP_ENV fica em production: é onde o Horizon tem workers. Só a carga de demonstração
+# roda com outro nome, num processo avulso (demo.sh).
+x-ambiente: &ambiente
+  APP_NAME: Fornevia
+  APP_ENV: production
+  APP_DEBUG: "false"
+  APP_KEY: ${APP_KEY:?}
+  APP_URL: https://${DEMO_HOST:?}
+  APP_LOCALE: pt_BR
+  APP_FALLBACK_LOCALE: pt_BR
+  APP_TIMEZONE_DISPLAY: America/Sao_Paulo
+  LOG_CHANNEL: stack
+  LOG_STACK: json
+  LOG_LEVEL: info
+  DB_CONNECTION: pgsql
+  DB_HOST: postgres
+  DB_PORT: "5432"
+  DB_DATABASE: fornevia
+  DB_PASSWORD: ${DB_PASSWORD:?}
+  DB_OWNER_PASSWORD: ${DB_OWNER_PASSWORD:?}
+  DB_RELAY_PASSWORD: ${DB_RELAY_PASSWORD:?}
+  DB_SSLMODE: prefer
+  SESSION_DRIVER: database
+  SESSION_LIFETIME: "120"
+  SESSION_ENCRYPT: "true"
+  SESSION_SECURE_COOKIE: "true"
+  SESSION_SAME_SITE: lax
+  FILESYSTEM_DISK: private
+  QUEUE_CONNECTION: redis
+  REDIS_QUEUE_RETRY_AFTER: "330"
+  CACHE_STORE: redis
+  CACHE_PREFIX: fornevia-cache-
+  REDIS_CLIENT: phpredis
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  REDIS_PASSWORD: ${REDIS_PASSWORD:?}
+  # Os usuários da carga têm domínios .example: nada sai da máquina, as mensagens ficam no log do contêiner.
+  MAIL_MAILER: log
+  MAIL_FROM_ADDRESS: nao-responda@${DEMO_HOST:?}
+  MAIL_FROM_NAME: Fornevia
+  # Só o X-Forwarded-* vindo da rede do proxy das demonstrações é aceito; demo.sh lê a faixa dela a cada execução.
+  TRUSTED_PROXIES: ${DEMOS_PROXY_SUBNET:?rode pelo demo.sh}
+  HORIZON_ALLOWED_EMAILS: ""
+  # Simulador de pagamentos do produto: "Pagar" funciona de ponta a ponta sem gateway e sem dinheiro.
+  PAYMENTS_SIMULATOR: "true"
+  ASAAS_BASE_URL: https://api-sandbox.asaas.com/v3
+  METRICS_TOKEN: ${METRICS_TOKEN:?}
+  METRICS_SCRAPE_HOSTS: web
+  METRICS_PER_TENANT: "false"
+  # Contas compartilhadas: o segundo fator não é exigido, e ativá-lo fica fechado no proxy.
+  TWO_FACTOR_ENFORCE: "false"
+  # Sem saída para a internet: a consulta de senhas vazadas não teria resposta.
+  PASSWORD_BREACH_CHECK: "false"
+  # Processos por contêiner, para o tráfego de uma demonstração.
+  FPM_MAX_CHILDREN: "6"
+  HORIZON_OPERACAO_MAX_PROCESSES: "3"
+  HORIZON_INTEGRACOES_MAX_PROCESSES: "1"
+
+x-app: &app
+  <<: *comum
+  image: demo-fornevia-app:${FORNEVIA_TAG:?}
+  environment: *ambiente
+  read_only: true
+  tmpfs:
+    - /tmp
+    - /var/www/html/bootstrap/cache:uid=82,gid=82
+    - /var/www/html/storage/framework:uid=82,gid=82
+    - /var/www/html/storage/logs:uid=82,gid=82
+  volumes:
+    - arquivos:/var/www/html/storage/app
+  cap_drop: [ALL]
+  networks: [interna]
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  postgres:
+    <<: *comum
+    image: postgres:18.7-alpine3.24
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_SUPERUSER_PASSWORD:?}
+      FORNEVIA_OWNER_PASSWORD: ${DB_OWNER_PASSWORD:?}
+      FORNEVIA_APP_PASSWORD: ${DB_PASSWORD:?}
+      FORNEVIA_RELAY_PASSWORD: ${DB_RELAY_PASSWORD:?}
+      FORNEVIA_DATABASES: fornevia
+    volumes:
+      - dados:/var/lib/postgresql
+      # Papéis owner, app e relay do produto (docker/postgres/init/01-roles.sh da tag em FORNEVIA_TAG).
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    shm_size: 256m
+    networks: [interna]
+    mem_limit: 768m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d fornevia"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    <<: *comum
+    image: redis:8.8.4-alpine3.23
+    # A senha vai para um arquivo de configuração, e não para a linha de comando.
+    command: ["sh", "-c", "umask 077 && printf 'requirepass %s\\n' \"$$REDIS_PASSWORD\" > /tmp/redis.conf && chown redis:redis /tmp/redis.conf && exec docker-entrypoint.sh redis-server /tmp/redis.conf --appendonly yes --save 60 1000"]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?}
+    volumes:
+      - filas:/data
+    networks: [interna]
+    mem_limit: 128m
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$REDIS_PASSWORD\" redis-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  app:
+    <<: *app
+    # Nome curto não é seguro: o nginx também está na rede union-demos, onde outras demonstrações têm um "app".
+    networks:
+      interna:
+        aliases: [fornevia-app]
+    mem_limit: 512m
+
+  web:
+    <<: *comum
+    image: demo-fornevia-web:${FORNEVIA_TAG:?}
+    environment:
+      FPM_HOST: fornevia-app
+      FPM_PORT: "9000"
+    read_only: true
+    tmpfs:
+      - /tmp:uid=101,gid=101
+      - /var/cache/nginx:uid=101,gid=101
+      - /etc/nginx/conf.d:uid=101,gid=101
+    cap_drop: [ALL]
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      interna:
+      demos:
+        aliases: [fornevia-web]
+    mem_limit: 64m
+    healthcheck:
+      # Host "web" está em METRICS_SCRAPE_HOSTS: a aplicação recusa com 400 qualquer outro além do público.
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "--header", "Host: web", "http://127.0.0.1:8080/health/live"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+  horizon:
+    <<: *app
+    command: ["fornevia-start", "php", "artisan", "horizon"]
+    stop_grace_period: 60s
+    mem_limit: 768m
+    healthcheck:
+      test: ["CMD", "php", "artisan", "horizon:status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  scheduler:
+    <<: *app
+    command: ["fornevia-start", "php", "artisan", "schedule:work"]
+    mem_limit: 384m
+    healthcheck:
+      disable: true
+
+  outbox:
+    <<: *app
+    command: ["fornevia-start", "php", "artisan", "outbox:relay"]
+    stop_grace_period: 30s
+    mem_limit: 256m
+    healthcheck:
+      disable: true
+
+  # Migrations com o papel de manutenção, antes dos processos da aplicação (demo.sh).
+  migrate:
+    <<: *app
+    profiles: ["ferramentas"]
+    restart: "no"
+    environment:
+      <<: *ambiente
+      DB_CONNECTION: pgsql_owner
+    command: ["fornevia-start", "php", "artisan", "migrate", "--force"]
+    mem_limit: 512m
+    healthcheck:
+      disable: true
+
+volumes:
+  dados:
+  filas:
+  arquivos:
+
+networks:
+  interna:
+    internal: true
+  demos:
+    external: true
+    name: ${DEMOS_NETWORK:-union-demos}

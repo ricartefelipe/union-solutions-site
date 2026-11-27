@@ -1,0 +1,91 @@
+# Instalado em demos/proxy/sites/ por demo.sh instalar, que troca __DEMO_HOST__ pelo DEMO_HOST e __ADMIN_PREFIX__ pelo
+# PACTOR_ADMIN_PATH do .env, sem a barra final. Contas compartilhadas: cadastro, recuperação e troca de senha, troca de
+# e-mail, segundo fator, sessões dos outros visitantes, criação de organizações e alteração de membros fechados no
+# proxy; saúde, métricas, esquema da API, admin do Django, tokens OAuth e webhook do Docusign não são públicos.
+
+# Recusa no formato de erro da API ({"error": {...}}), que a interface mostra ao visitante. Nome com prefixo: os
+# snippets valem para todos os sites importados pelo proxy.
+(pactor_contas_compartilhadas) {
+	header Content-Type "application/json; charset=utf-8"
+	respond `{"error": {"code": "demo_shared_accounts", "message": "Indisponível na demonstração: as contas são compartilhadas entre os visitantes."}}` 403
+}
+
+__DEMO_HOST__ {
+	encode gzip
+	# Anexos: o limite do produto (20 MiB) é conferido só depois de ler o corpo; aqui ele vale antes.
+	@anexos path /api/v1/files
+	request_body @anexos {
+		max_size 21MB
+	}
+	@demais not path /api/v1/files
+	request_body @demais {
+		max_size 3MB
+	}
+	header {
+		>Strict-Transport-Security "max-age=31536000"
+		X-Robots-Tag "noindex, nofollow"
+		-Server
+	}
+	log {
+		output stdout
+		format filter {
+			wrap json
+			fields {
+				request>uri regexp \?.* ?[removido]
+			}
+		}
+	}
+
+	@internas path /health/* /metrics /metrics/* /api/v1/schema /api/v1/schema/* /o/* /webhooks/signatures/docusign /__ADMIN_PREFIX__ /__ADMIN_PREFIX__/*
+	handle @internas {
+		respond 404
+	}
+
+	@contas {
+		path /_allauth/browser/v1/auth/signup /_allauth/browser/v1/auth/password/* /_allauth/browser/v1/account/password/*
+		path /_allauth/browser/v1/account/email /_allauth/browser/v1/account/email/* /_allauth/browser/v1/auth/email/*
+		path /_allauth/browser/v1/account/phone /_allauth/browser/v1/auth/phone/* /_allauth/browser/v1/auth/code/*
+		path /_allauth/browser/v1/auth/reauthenticate/code/* /_allauth/browser/v1/auth/sessions
+		path /_allauth/browser/v1/account/authenticators/recovery-codes
+	}
+	@segundo_fator {
+		path /_allauth/browser/v1/account/authenticators/totp
+		not method GET HEAD
+	}
+	@organizacoes {
+		path /api/v1/organizations
+		not method GET HEAD
+	}
+	# Leitura (inclusive o diretório) continua aberta; qualquer escrita em membros é recusada.
+	@membros {
+		path /api/v1/members/*
+		not method GET HEAD
+	}
+	handle @contas {
+		import pactor_contas_compartilhadas
+	}
+	handle @segundo_fator {
+		import pactor_contas_compartilhadas
+	}
+	handle @organizacoes {
+		import pactor_contas_compartilhadas
+	}
+	handle @membros {
+		import pactor_contas_compartilhadas
+	}
+
+	# Páginas da interface que dependem das rotas fechadas acima.
+	@paginas_fechadas path /cadastro /cadastro/* /conta/redefinir-senha /conta/redefinir-senha/* /conta/confirmar-email/*
+	handle @paginas_fechadas {
+		# O "*" é obrigatório: sem ele, "/entrar" seria lido como filtro de caminho, e não como destino.
+		redir * /entrar 302
+	}
+
+	handle {
+		reverse_proxy pactor-web:8000
+	}
+	handle_errors 502 503 504 {
+		header Content-Type "text/plain; charset=utf-8"
+		respond "A demonstração está temporariamente indisponível. Tente novamente em instantes." {err.status_code}
+	}
+}
