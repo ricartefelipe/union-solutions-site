@@ -235,6 +235,9 @@ case "$command" in
       $COMPOSE up -d --no-deps --wait --wait-timeout 300 postgres armazenamento
       $COMPOSE run --rm --no-deps db-init
       wait_ready 900
+      # Realm criado antes do Keycloak 26.8.2: o portal-admin precisa do escopo kc-admin-api para usar a API de
+      # administração. Idempotente; falha aqui interrompe a atualização com o Keycloak novo já no ar (ver OPERACAO.md).
+      $COMPOSE exec -T keycloak sh /opt/keycloak/bin/portal-escopo-admin.sh
     }
     with_lock do_update
     ;;

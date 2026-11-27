@@ -98,7 +98,7 @@ jobs:
           sh -n portal/deploy/local/portal.sh
           bash -n portal/deploy/production/ops/backup.sh portal/deploy/production/ops/restore.sh portal/deploy/production/ops/reconciliar.sh portal/deploy/production/ops/mfa-reset-portal.sh portal/deploy/production/teste/prova.sh portal/deploy/production/teste/testa-operacao.sh portal/deploy/production/teste/sftp-alvo-entrada.sh
           sh -n portal/deploy/production/ops/restic.sh
-          sh -n portal/deploy/keycloak/portal-mfa-reset.sh
+          sh -n portal/deploy/keycloak/portal-mfa-reset.sh portal/deploy/keycloak/portal-escopo-admin.sh
           sh -n demos/hookguard/demo.sh
           sh -n demos/filenorm/demo.sh
           sh -n demos/comercialcloud/demo.sh
