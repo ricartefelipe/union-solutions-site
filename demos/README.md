@@ -59,7 +59,7 @@ Na versão v1.5.7 o dono de uma conta `admin` lista só o próprio locatário, a
 | Pactor | v0.3.2 (desde 25/11/2026) |
 | Servora | v1.6.0 (desde 25/11/2026) |
 | Recorvia | v0.4.1 |
-| Locentra | v1.4.0 (desde 27/11/2026) |
+| Locentra | v1.5.0 (desde 27/11/2026, com o visual novo da interface) |
 
 Achados HIGH e CRITICAL com correção disponível (Trivy 0.70.0, `--ignore-unfixed`), antes e depois:
 
