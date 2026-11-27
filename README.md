@@ -215,7 +215,7 @@ Para atualizar o site, gere o build de novo e substitua os arquivos. Apague os a
 
 ```bash
 DOMINIO=https://unionsolutions.tech
-for rota in / /produtos/ /produtos/hookguard/ /produtos/filenorm/ /produtos/assinaflow/ /produtos/archlens/ /produtos/fluxe-b2b-suite/ /produtos/comercialcloud/ /produtos/skillforge/ /produtos/cards-api/ /demonstracoes/ /servicos/ /servicos/consultoria/ /servicos/arquitetura/ /servicos/desenvolvimento/ /sobre/ /contato/ /robots.txt /sitemap-index.xml /og/union-solutions.png /nao-existe/; do
+for rota in / /produtos/ /produtos/hookguard/ /produtos/filenorm/ /produtos/assinaflow/ /produtos/archlens/ /produtos/fluxe-b2b-suite/ /produtos/comercialcloud/ /produtos/skillforge/ /produtos/cards-api/ /produtos/fornevia/ /produtos/pactor/ /produtos/servora/ /demonstracoes/ /servicos/ /servicos/consultoria/ /servicos/arquitetura/ /servicos/desenvolvimento/ /sobre/ /contato/ /robots.txt /sitemap-index.xml /og/union-solutions.png /nao-existe/; do
   printf '%s %s\n' "$(curl -s -o /dev/null -w '%{http_code}' "$DOMINIO$rota")" "$rota"
 done
 ```

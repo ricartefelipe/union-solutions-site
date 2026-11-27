@@ -1,0 +1,150 @@
+# Instalado em demos/proxy/sites/ por demo.sh instalar (que troca __DEMO_HOST__ pelo DEMO_HOST do .env).
+# Contas compartilhadas: autocadastro (de conta e de organização), senha, e-mail, segundo fator, sessões, desbloqueio e
+# convites ficam fechados. Ficam só para leitura as configurações e os cadastros de base que o roteiro usa e que um
+# visitante não teria como desfazer (equipe, configurações, SLA, plano, pagamentos, integrações, contratos; edição e
+# exclusão de equipes, técnicos, catálogo, tipos de serviço e depósitos). Métricas, prontidão, API com token e webhooks
+# dos provedores não são públicos. A caixa do Mailpit é pública, só para leitura: o link do portal do cliente só chega
+# por e-mail.
+#
+# Bloqueio por caminho e sem olhar o método quando a rota inteira fica fechada: o Rails aceita POST com _method=patch.
+# Onde a leitura continua aberta, fecha-se tudo que não é GET/HEAD. O Caddy decodifica e normaliza o caminho (barras
+# repetidas, %xx, maiúsculas no matcher path) antes de comparar.
+__DEMO_HOST__ {
+	encode gzip
+	# Anexos das ordens de serviço até 15 MiB, mais o envelope multipart; o resto (formulários e a fila offline do
+	# técnico, em JSON) cabe com folga em 1 MiB.
+	@anexos path_regexp anexos ^/+ordens-de-servico/+[^/]+/+anexos/*$
+	request_body @anexos {
+		max_size 16MiB
+	}
+	@nao_anexos not path_regexp nao_anexos ^/+ordens-de-servico/+[^/]+/+anexos/*$
+	request_body @nao_anexos {
+		max_size 1MiB
+	}
+	header {
+		>Strict-Transport-Security "max-age=31536000"
+		X-Robots-Tag "noindex, nofollow"
+		-Server
+	}
+	log {
+		output stdout
+		format filter {
+			wrap json
+			fields {
+				request>uri regexp \?.* ?[removido]
+			}
+		}
+	}
+
+	@internas {
+		path /metrics /metrics.* /metrics/* /ready /ready.* /ready/* /webhooks /webhooks/* /webhooks.*
+	}
+	handle @internas {
+		respond 404
+	}
+	# API com token: sem credencial ela não serve ao visitante, e a emissão fica fechada. A especificação continua pública.
+	@api {
+		path /api /api/*
+		not path /api/v1/openapi /api/v1/openapi.*
+	}
+	handle @api {
+		respond 404
+	}
+
+	@fechadas {
+		path /conta/cadastro /conta/cadastro/* /conta/cadastro.*
+		path /conta/senha /conta/senha/* /conta/senha.*
+		path /conta/confirmacao /conta/confirmacao/* /conta/confirmacao.*
+		path /conta/desbloqueio /conta/desbloqueio/* /conta/desbloqueio.*
+		path /conta/seguranca /conta/seguranca/* /conta/seguranca.*
+		path /conta/sessoes /conta/sessoes/* /conta/sessoes.*
+		path /conta/verificacao-em-duas-etapas /conta/verificacao-em-duas-etapas/* /conta/verificacao-em-duas-etapas.*
+		path /convites /convites/* /equipe/convites /equipe/convites/*
+		path /organizacoes/novo /organizacoes/novo/* /organizacoes/novo.*
+		path /configuracoes/integracoes/credenciais* /configuracoes/integracoes/webhooks* /configuracoes/integracoes/entregas* /configuracoes/integracoes/token-pagamentos*
+	}
+	# Leitura aberta, escrita fechada. Nos cadastros de base, criar um item novo continua aberto (POST na coleção); só a
+	# edição e a exclusão dos itens existentes (caminho com o id) ficam fechadas. Nos contratos, só "Gerar ocorrências"
+	# do plano preventivo continua aberto (passo 13 do roteiro; a geração é idempotente).
+	@somente_leitura {
+		not method GET HEAD
+		path_regexp somente_leitura ^/+organizacoes(\.[A-Za-z0-9]+)?/*$|^/+(configuracoes|equipe|contratos)(/|\.|$)|^/+(equipes|tecnicos|catalogo|tipos-de-servico|estoque/+depositos)/+[^/]
+		not path_regexp gerar ^/+contratos/+[^/]+/+planos/+[^/]+/+gerar/*$
+	}
+	# Formulários enviados pelo Turbo descartam uma página HTML de erro sem os assets da aplicação (recarregam a tela sem
+	# aviso); para eles, a resposta é um turbo-stream que mostra o aviso no lugar das mensagens da aplicação (#flash).
+	@turbo header Accept *text/vnd.turbo-stream.html*
+	handle @fechadas {
+		handle @turbo {
+			header Content-Type "text/vnd.turbo-stream.html; charset=utf-8"
+			respond 403 {
+				body <<STREAM
+				<turbo-stream action="update" target="flash"><template><div class="pointer-events-none fixed inset-x-0 bottom-4 z-50 flex flex-col items-center gap-2 px-4 sm:inset-x-auto sm:bottom-6 sm:right-6 sm:items-end sm:px-0"><div class="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl bg-noir-900 py-3 pl-3.5 pr-2.5 text-white shadow-[var(--shadow-float)] ring-1 ring-white/10 animate-slide-up motion-reduce:animate-none sm:w-96" role="alert" data-controller="flash" data-flash-timeout-value="0" data-turbo-temporary><p class="min-w-0 flex-1 text-[13px] font-medium leading-5 text-white">Indisponível na demonstração pública: as contas são compartilhadas por todos os visitantes.</p><button type="button" class="-my-2 -mr-1 grid size-11 shrink-0 sm:-my-0.5 sm:mr-0 sm:size-8 place-items-center rounded-md text-white/55 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-white" data-action="flash#dismiss" aria-label="Fechar aviso">×</button></div></div></template></turbo-stream>
+				STREAM
+			}
+		}
+		handle {
+			header Content-Type "text/html; charset=utf-8"
+			respond 403 {
+				body <<HTML
+				<!doctype html><html lang="pt-BR"><meta charset="utf-8"><link rel="icon" href="/icon.png" type="image/png"><title>Indisponível na demonstração</title>
+				<body style="font-family:system-ui,sans-serif;max-width:36rem;margin:4rem auto;padding:0 1rem;line-height:1.5">
+				<h1 style="font-size:1.25rem">Indisponível na demonstração pública</h1>
+				<p>As contas desta demonstração são compartilhadas por todos os visitantes. Por isso, cadastro, troca e
+				recuperação de senha, desbloqueio, verificação em duas etapas, sessões, convites e credenciais de integração
+				ficam fechados. Para entrar, use as contas informadas na página do produto.</p>
+				<p><a href="/">Voltar ao início</a></p></body></html>
+				HTML
+			}
+		}
+	}
+	handle @somente_leitura {
+		handle @turbo {
+			header Content-Type "text/vnd.turbo-stream.html; charset=utf-8"
+			respond 403 {
+				body <<STREAM
+				<turbo-stream action="update" target="flash"><template><div class="pointer-events-none fixed inset-x-0 bottom-4 z-50 flex flex-col items-center gap-2 px-4 sm:inset-x-auto sm:bottom-6 sm:right-6 sm:items-end sm:px-0"><div class="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl bg-noir-900 py-3 pl-3.5 pr-2.5 text-white shadow-[var(--shadow-float)] ring-1 ring-white/10 animate-slide-up motion-reduce:animate-none sm:w-96" role="alert" data-controller="flash" data-flash-timeout-value="0" data-turbo-temporary><p class="min-w-0 flex-1 text-[13px] font-medium leading-5 text-white">Somente leitura na demonstração pública: todos os visitantes compartilham as mesmas contas e organizações, e isto não pode ser alterado aqui. Os dados são recriados todos os dias.</p><button type="button" class="-my-2 -mr-1 grid size-11 shrink-0 sm:-my-0.5 sm:mr-0 sm:size-8 place-items-center rounded-md text-white/55 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-white" data-action="flash#dismiss" aria-label="Fechar aviso">×</button></div></div></template></turbo-stream>
+				STREAM
+			}
+		}
+		handle {
+			header Content-Type "text/html; charset=utf-8"
+			respond 403 {
+				body <<HTML
+				<!doctype html><html lang="pt-BR"><meta charset="utf-8"><link rel="icon" href="/icon.png" type="image/png"><title>Somente leitura na demonstração</title>
+				<body style="font-family:system-ui,sans-serif;max-width:36rem;margin:4rem auto;padding:0 1rem;line-height:1.5">
+				<h1 style="font-size:1.25rem">Somente leitura na demonstração pública</h1>
+				<p>Todos os visitantes compartilham as mesmas contas e organizações. Para o roteiro continuar funcionando para
+				todos, novas organizações, equipe, configurações (inclusive SLA, plano, pagamentos, nota fiscal e
+				integrações) e contratos podem ser vistos, mas não alterados; equipes, técnicos, catálogo, tipos de serviço e
+				depósitos aceitam itens novos, mas os existentes não podem ser editados nem excluídos. Os dados são recriados
+				todos os dias.</p>
+				<p><a href="/painel">Voltar ao painel</a></p></body></html>
+				HTML
+			}
+		}
+	}
+
+	# Caixa do Mailpit, só para leitura (e marcar como lida). Envio pela API, exclusão, liberação e "chaos" fechados.
+	@caixa path /caixa-de-entrada /caixa-de-entrada/*
+	handle @caixa {
+		@caixa_escrita {
+			not method GET HEAD
+			not {
+				method PUT
+				path /caixa-de-entrada/api/v1/messages
+			}
+		}
+		respond @caixa_escrita 403
+		redir /caixa-de-entrada /caixa-de-entrada/ 302
+		reverse_proxy servora-mailpit:8025
+	}
+
+	handle {
+		reverse_proxy servora-web:3000
+	}
+	handle_errors 502 503 504 {
+		header Content-Type "text/plain; charset=utf-8"
+		respond "A demonstração está temporariamente indisponível. Tente novamente em instantes." {err.status_code}
+	}
+}
