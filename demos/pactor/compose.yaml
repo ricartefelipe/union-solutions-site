@@ -1,0 +1,278 @@
+# Demonstração pública do Pactor na VPS das demonstrações: as duas organizações fictícias da carga de demonstração do
+# produto (seed_demo), com contas compartilhadas. Mesmo desenho do compose.yaml do produto (migrations com o papel
+# proprietário, aplicação com o papel sem privilégios e RLS), com os processos da aplicação sem privilégios e com o
+# sistema de arquivos somente leitura. Sem saída para a internet: e-mails ficam no Mailpit interno, a assinatura usa o
+# simulador do produto e só o freshclam alcança a internet, por uma rede própria, para baixar as assinaturas de vírus.
+# As imagens são construídas numa máquina de trabalho e carregadas na VPS (ver demo.sh); nada compila aqui.
+name: demo-pactor
+
+x-comum: &comum
+  restart: unless-stopped
+  oom_score_adj: 500
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+# Ambiente dos processos da aplicação. "staging" porque o simulador de assinatura e a carga de demonstração são
+# recusados em "production"; as proteções que "production" ligaria sozinho estão definidas aqui uma a uma.
+x-ambiente: &ambiente
+  PACTOR_ENVIRONMENT: staging
+  PACTOR_DEBUG: "false"
+  PACTOR_SECRET_KEY: ${PACTOR_SECRET_KEY:?}
+  # 127.0.0.1: verificação de saúde do contêiner, que não passa pelo proxy.
+  PACTOR_ALLOWED_HOSTS: ${DEMO_HOST:?},127.0.0.1
+  PACTOR_CSRF_TRUSTED_ORIGINS: https://${DEMO_HOST:?}
+  PACTOR_PUBLIC_URL: https://${DEMO_HOST:?}
+  PACTOR_SECURE_COOKIES: "true"
+  # O proxy redireciona HTTP para HTTPS e envia o HSTS; aqui o redirecionamento quebraria a verificação de saúde.
+  PACTOR_SSL_REDIRECT: "false"
+  PACTOR_HSTS_SECONDS: "0"
+  PACTOR_ADMIN_PATH: ${PACTOR_ADMIN_PATH:?}
+  PACTOR_LOG_LEVEL: INFO
+  PACTOR_TRIAL_PLAN: profissional
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: pactor
+  POSTGRES_USER: pactor_app
+  POSTGRES_PASSWORD: ${PACTOR_APP_PASSWORD:?}
+  CELERY_BROKER_URL: amqp://pactor:${RABBITMQ_PASSWORD:?}@rabbitmq:5672/pactor
+  REDIS_URL: redis://:${REDIS_PASSWORD:?}@redis:6379/0
+  # As contas da carga usam o domínio reservado exemplo.test: nenhuma mensagem sai da máquina.
+  EMAIL_HOST: mailpit
+  EMAIL_PORT: "1025"
+  PACTOR_FROM_EMAIL: Pactor <nao-responda@${DEMO_HOST:?}>
+  CLAMAV_HOST: clamav
+  CLAMAV_PORT: "3310"
+  # Vazio desliga /metrics (responde 404).
+  PACTOR_METRICS_TOKEN: ""
+  PACTOR_SIGNATURE_PROVIDER: simulator
+  PACTOR_SIMULATOR_WEBHOOK_SECRET: ${PACTOR_SIMULATOR_WEBHOOK_SECRET:?}
+  # Só o X-Forwarded-* vindo da rede do proxy das demonstrações é aceito; demo.sh lê a faixa dela a cada execução.
+  PACTOR_FORWARDED_ALLOW_IPS: ${DEMOS_PROXY_SUBNET:?rode pelo demo.sh}
+  # O proxy das demonstrações reescreve o X-Forwarded-For com o IP do visitante: os limites por IP contam cada um.
+  PACTOR_TRUSTED_PROXY_COUNT: "1"
+  # Senha pública: sem o limite por conta, que deixaria qualquer visitante bloquear uma conta compartilhada.
+  PACTOR_LOGIN_FAILED_RATE: 10/m/ip
+  PACTOR_WEB_WORKERS: "4"
+  # Anexos de até 20 MiB em conexões lentas: o padrão de 30 s encerraria o envio no meio.
+  PACTOR_WEB_TIMEOUT: "120"
+
+x-app: &app
+  <<: *comum
+  image: demo-pactor:${PACTOR_TAG:?}
+  environment: *ambiente
+  read_only: true
+  tmpfs:
+    - /tmp:uid=10001,gid=10001
+  volumes:
+    - midia:/srv/pactor/media
+  cap_drop: [ALL]
+  networks: [interna]
+  depends_on:
+    postgres:
+      condition: service_healthy
+    rabbitmq:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  postgres:
+    <<: *comum
+    image: postgres:17.12-alpine3.24
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?}
+      POSTGRES_DB: postgres
+      PACTOR_OWNER_PASSWORD: ${PACTOR_OWNER_PASSWORD:?}
+      PACTOR_APP_PASSWORD: ${PACTOR_APP_PASSWORD:?}
+      PACTOR_BACKUP_PASSWORD: ${PACTOR_BACKUP_PASSWORD:?}
+    volumes:
+      - dados:/var/lib/postgresql/data
+      # Papéis pactor_owner, pactor_app e pactor_backup (docker/postgres/10-roles.sh da tag em PACTOR_TAG).
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    shm_size: 128m
+    networks: [interna]
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d pactor"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  rabbitmq:
+    <<: *comum
+    # Sem o painel de administração, que a demonstração não expõe.
+    image: rabbitmq:4.2.9-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: pactor
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?}
+      RABBITMQ_DEFAULT_VHOST: pactor
+    volumes:
+      - filas:/var/lib/rabbitmq
+    networks: [interna]
+    mem_limit: 384m
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+
+  redis:
+    <<: *comum
+    image: redis:8.2.11-alpine
+    # Sem persistência (cache e controles temporários). A senha vai para um arquivo de configuração, e não para a
+    # linha de comando.
+    command: ["sh", "-c", "umask 077 && printf 'requirepass %s\\n' \"$$REDIS_PASSWORD\" > /tmp/redis.conf && chown redis:redis /tmp/redis.conf && exec docker-entrypoint.sh redis-server /tmp/redis.conf --save '' --appendonly no"]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?}
+    networks: [interna]
+    mem_limit: 128m
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$REDIS_PASSWORD\" redis-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Captura os e-mails da aplicação (convites, alertas) só na rede interna; a interface não é publicada.
+  mailpit:
+    <<: *comum
+    image: axllent/mailpit:v1.34.0
+    networks: [interna]
+    mem_limit: 128m
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+
+  # Assinaturas de vírus: único serviço com saída para a internet, numa rede só dele, sem acesso aos dados. O volume
+  # fica fora do projeto (demo.sh), para o reinício diário não baixar a base inteira de novo.
+  freshclam:
+    <<: *comum
+    image: clamav/clamav:1.4.7-debian13-slim
+    environment:
+      CLAMAV_NO_CLAMD: "true"
+      CLAMAV_NO_MILTERD: "true"
+    volumes:
+      - assinaturas:/var/lib/clamav
+    networks: [saida]
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD-SHELL", "test -s /var/lib/clamav/main.cvd -o -s /var/lib/clamav/main.cld"]
+      interval: 10s
+      timeout: 5s
+      retries: 60
+      start_period: 600s
+
+  # Antivírus dos anexos: um arquivo só é liberado com a resposta "OK" do clamd. Analisa arquivos enviados pelo
+  # público, então fica sem internet e numa rede só com o worker que o consulta; relê a base que o freshclam atualiza.
+  clamav:
+    <<: *comum
+    image: clamav/clamav:1.4.7-debian13-slim
+    environment:
+      CLAMAV_NO_FRESHCLAMD: "true"
+      CLAMAV_NO_MILTERD: "true"
+    volumes:
+      - assinaturas:/var/lib/clamav
+    networks: [antivirus]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, SETUID, SETGID, DAC_OVERRIDE, FOWNER]
+    depends_on:
+      freshclam:
+        condition: service_healthy
+    mem_limit: 3g
+    healthcheck:
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 20
+      start_period: 300s
+
+  # Migrations com o papel proprietário, antes dos processos da aplicação (demo.sh).
+  migrate:
+    <<: *app
+    profiles: ["ferramentas"]
+    restart: "no"
+    environment:
+      <<: *ambiente
+      POSTGRES_USER: pactor_owner
+      POSTGRES_PASSWORD: ${PACTOR_OWNER_PASSWORD:?}
+    command: ["python", "manage.py", "migrate", "--noinput"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    mem_limit: 512m
+
+  web:
+    <<: *app
+    environment:
+      <<: *ambiente
+      PROMETHEUS_MULTIPROC_DIR: /tmp/pactor-metrics
+      # O socket de controle do gunicorn 27 (gunicornc) fica na pasta da aplicação, somente leitura aqui; a demonstração
+      # não usa o controle em tempo de execução.
+      GUNICORN_CMD_ARGS: --no-control-socket
+    networks:
+      interna:
+      demos:
+        # Nome curto não é seguro na rede union-demos: outras demonstrações têm "web".
+        aliases: [pactor-web]
+    mem_limit: 768m
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/live', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+
+  worker:
+    <<: *app
+    command: ["celery", "-A", "pactor", "worker", "--loglevel=INFO", "--queues=default,notifications", "--concurrency=2", "--hostname=default@%h"]
+    mem_limit: 512m
+
+  worker-integrations:
+    <<: *app
+    command: ["celery", "-A", "pactor", "worker", "--loglevel=INFO", "--queues=integrations", "--concurrency=2", "--hostname=integrations@%h"]
+    mem_limit: 512m
+
+  worker-extraction:
+    <<: *app
+    command: ["celery", "-A", "pactor", "worker", "--loglevel=INFO", "--queues=extraction", "--concurrency=1", "--max-tasks-per-child=20", "--hostname=extraction@%h"]
+    # Único processo que consulta o antivírus.
+    networks: [interna, antivirus]
+    mem_limit: 768m
+    pids_limit: 128
+
+  scheduler:
+    <<: *app
+    command: ["celery", "-A", "pactor", "beat", "--loglevel=INFO", "--schedule=/tmp/celerybeat-schedule"]
+    mem_limit: 256m
+
+volumes:
+  dados:
+  filas:
+  # Anexos em memória, com teto: um visitante que envie arquivos sem parar esgota só este espaço, e não o disco
+  # compartilhado com as outras demonstrações. Como os dados, são descartados todo dia.
+  midia:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      o: size=2g,uid=10001,gid=10001,mode=0750
+  assinaturas:
+    external: true
+    name: demo-pactor-clamav
+
+networks:
+  interna:
+    internal: true
+  antivirus:
+    internal: true
+  saida:
+  demos:
+    external: true
+    name: ${DEMOS_NETWORK:-union-demos}

@@ -83,6 +83,21 @@ const copiable = (value: string) => /^\S+$/.test(value);
     font-weight: 600;
   }
 
+  /* Com rótulos de tamanhos diferentes, valores e botões começam na mesma coluna. */
+  @media (min-width: 48rem) {
+    .access__list {
+      grid-template-columns: max-content minmax(0, 1fr);
+      column-gap: var(--space-3);
+    }
+
+    .access__row {
+      display: grid;
+      grid-column: 1 / -1;
+      grid-template-columns: subgrid;
+      align-items: center;
+    }
+  }
+
   .access__row dd {
     display: flex;
     flex-wrap: wrap;

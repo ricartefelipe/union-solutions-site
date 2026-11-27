@@ -1,0 +1,15 @@
+# Instale em /etc/systemd/system. Reinicia os dados da demonstração do Pactor uma vez por dia.
+[Unit]
+Description=Reinício diário dos dados da demonstração do Pactor
+After=docker.service
+Requires=docker.service
+# Até 3 tentativas: uma falha passageira não deixa a demonstração fora do ar até o dia seguinte.
+StartLimitIntervalSec=1h
+StartLimitBurst=3
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/union-solutions/demos/pactor
+ExecStart=/bin/sh demo.sh reiniciar-dados
+Restart=on-failure
+RestartSec=5min

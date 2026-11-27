@@ -1,0 +1,10 @@
+[Unit]
+Description=Reinício diário da demonstração do Pactor
+
+[Timer]
+OnCalendar=*-*-* 07:10:00 UTC
+RandomizedDelaySec=5m
+Persistent=true
+
+[Install]
+WantedBy=timers.target
