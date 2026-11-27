@@ -1,0 +1,11 @@
+[Unit]
+Description=Reinício diário da demonstração do Locentra
+
+[Timer]
+# Depois do Recorvia (07:25 UTC, com até 5 minutos de atraso).
+OnCalendar=*-*-* 07:40:00 UTC
+RandomizedDelaySec=5m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

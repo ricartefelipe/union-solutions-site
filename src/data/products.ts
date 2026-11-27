@@ -22,7 +22,8 @@ export type ProductSlug =
   | 'fornevia'
   | 'pactor'
   | 'servora'
-  | 'recorvia';
+  | 'recorvia'
+  | 'locentra';
 
 /** Credencial pública de uma demonstração. `copy` só vale para valor sem espaços (aparece o botão Copiar). */
 export interface DemoAccess {
@@ -54,7 +55,7 @@ export const needs: Need[] = [
   { slug: 'comercio', title: 'Comércio e vendas', text: 'Vender no balcão ou para outras empresas, com caixa, pedidos, preço por cliente e administração ligados.' },
   { slug: 'integracoes', title: 'Integrações', text: 'Receber eventos de outros sistemas sem operar fila, novas tentativas e reprocessamento.' },
   { slug: 'financeiro', title: 'Financeiro: arquivos, cobrança e cartões', text: 'Ler extratos e retornos bancários, cobrar assinaturas, faturar contratos recorrentes e emitir cartões por API.' },
-  { slug: 'servicos', title: 'Serviços e contratos', text: 'Atender no local do cliente com orçamento, ordem de serviço e agenda, e aprovar, assinar e acompanhar contratos.' },
+  { slug: 'servicos', title: 'Serviços, contratos e locação', text: 'Atender no local do cliente, aprovar e acompanhar contratos e alugar equipamentos sem prometer a mesma unidade a dois clientes.' },
   { slug: 'ensino', title: 'Ensino a distância', text: 'Ministrar cursos online e acompanhar turmas, notas, presença e certificados.' },
   { slug: 'java', title: 'Modernização Java', text: 'Entender uma aplicação Java pouco documentada antes de decidir como evoluí-la.' },
 ];

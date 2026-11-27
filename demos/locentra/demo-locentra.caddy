@@ -1,0 +1,113 @@
+# Instalado em demos/proxy/sites/ por demo.sh instalar (que troca __DEMO_HOST__ pelo DEMO_HOST do .env).
+# Contas compartilhadas: autocadastro, recuperação e redefinição de senha, confirmação e correção de e-mail, convites
+# (da equipe e do portal do cliente) e as ações que um visitante usaria para tirar o acesso ou mudar a carga que o
+# roteiro dos outros usa (papel e revogação de membros, revogação de credenciais, provedor de pagamentos, integrações,
+# cupons, tarifas e condições negociadas existentes) ficam fechados. Métricas, saúde e o webhook do gateway não são
+# públicos. O Mailpit não é publicado: quem lesse a caixa redefiniria a senha das contas.
+#
+# O roteador do produto compara o caminho cru, com diferença entre maiúsculas e minúsculas e sem barra final, e não
+# decodifica %xx: uma variação que escape destes filtros não chega a nenhuma rota. Mesmo assim os filtros aceitam barras
+# repetidas e barra final. O produto não aceita _method: o método é o da requisição.
+__DEMO_HOST__ {
+	encode gzip
+	# Anexos até MAX_UPLOAD_BYTES (5 MiB) mais o envelope multipart que o produto admite (64 KiB); o resto em 1 MiB, o
+	# mesmo limite do produto. O corpo fica no proxy até o fim, para chegar ao Puma com Content-Length: corpo chunked
+	# recebe 413 do produto.
+	@anexos path_regexp anexos ^/+anexos/*$
+	request_body @anexos {
+		max_size 5308416
+	}
+	@nao_anexos not path_regexp nao_anexos ^/+anexos/*$
+	request_body @nao_anexos {
+		max_size 1MiB
+	}
+	header {
+		>Strict-Transport-Security "max-age=31536000"
+		X-Robots-Tag "noindex, nofollow"
+		-Server
+	}
+	log {
+		output stdout
+		format filter {
+			wrap json
+			fields {
+				request>uri regexp \?.* ?[removido]
+			}
+		}
+	}
+
+	@internas path_regexp internas ^/+(metrics|health|webhooks)(/.*)?$
+	handle @internas {
+		respond 404
+	}
+
+	# Fechadas em qualquer método.
+	@fechadas {
+		path_regexp fechadas ^/+(cadastro|recuperar-senha|redefinir-senha|convites|confirmar-email(/.*)?|portal/+convite|usuarios/+(convites|[^/]+/+(papel|revogar))|credenciais/+[^/]+/+revogar|clientes/+[^/]+/+(portal/.*|condicoes/+[^/]+/+encerrar)|integracoes/.+|financeiro/+provedor/.+|cupons/+[^/]+/+(desativar|excluir)|tarifas/+[^/]+/+desativar|api/+v1/+(coupons|fees)/+[^/]+/+deactivate|api/+v1/+price-agreements/.*)/*$
+	}
+	# Leitura aberta, escrita fechada: o formulário de integrações e de provedor e a edição de cupons e tarifas existentes
+	# (cadastrar um novo, em /cupons e /tarifas, continua aberto: é o passo 15 do roteiro).
+	@somente_leitura {
+		not method GET HEAD
+		path_regexp somente_leitura ^/+(integracoes|financeiro/+provedor|cupons/+[^/]+|tarifas/+[^/]+|api/+v1/+(coupons|fees)/+[^/]+)/*$
+	}
+	handle @fechadas {
+		header Content-Type "text/html; charset=utf-8"
+		header Cache-Control "no-store"
+		respond 403 {
+			body <<HTML
+			<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Indisponível na demonstração</title>
+			<body style="font-family:system-ui,sans-serif;max-width:36rem;margin:4rem auto;padding:0 1rem;line-height:1.5">
+			<h1 style="font-size:1.25rem">Indisponível na demonstração pública</h1>
+			<p>As contas desta demonstração são compartilhadas por todos os visitantes. Por isso, cadastro, recuperação de
+			senha, confirmação de e-mail, convites e as ações que tirariam o acesso de outros visitantes ficam fechados. Para
+			entrar, use as contas informadas na página do produto. Os dados são recriados todos os dias.</p>
+			<p><a href="/entrar">Voltar ao login</a></p></body></html>
+			HTML
+		}
+	}
+	handle @somente_leitura {
+		header Content-Type "text/html; charset=utf-8"
+		header Cache-Control "no-store"
+		respond 403 {
+			body <<HTML
+			<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Somente leitura na demonstração</title>
+			<body style="font-family:system-ui,sans-serif;max-width:36rem;margin:4rem auto;padding:0 1rem;line-height:1.5">
+			<h1 style="font-size:1.25rem">Somente leitura na demonstração pública</h1>
+			<p>Todos os visitantes compartilham as mesmas contas e organizações. Para o roteiro continuar funcionando para
+			todos, o provedor de pagamentos, as integrações e os cupons e tarifas já cadastrados podem ser vistos, mas não
+			alterados; cupons e tarifas novos podem ser cadastrados. Os dados são recriados todos os dias.</p>
+			<p><a href="/">Voltar ao painel</a></p></body></html>
+			HTML
+		}
+	}
+
+	handle {
+		reverse_proxy locentra-web:9292 {
+			request_buffers 5308416
+			# Abaixo do persistent_timeout do Puma (20 s), para não reaproveitar uma conexão que ele já fechou.
+			transport http {
+				keepalive 15s
+			}
+		}
+	}
+	# Corpo acima do limite (anexo acima de 5 MiB): sem isto o navegador mostraria uma página vazia.
+	handle_errors 413 {
+		header Content-Type "text/html; charset=utf-8"
+		header Cache-Control "no-store"
+		respond 413 {
+			body <<HTML
+			<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Arquivo grande demais</title>
+			<body style="font-family:system-ui,sans-serif;max-width:36rem;margin:4rem auto;padding:0 1rem;line-height:1.5">
+			<h1 style="font-size:1.25rem">Arquivo acima do limite da demonstração</h1>
+			<p>Na demonstração pública, os anexos podem ter até 5 MB (PDF, PNG, JPEG ou WebP). Volte e envie um arquivo
+			menor.</p>
+			<p><a href="javascript:history.back()">Voltar</a> · <a href="/">Painel</a></p></body></html>
+			HTML
+		}
+	}
+	handle_errors 502 503 504 {
+		header Content-Type "text/plain; charset=utf-8"
+		respond "A demonstração está temporariamente indisponível. Tente novamente em instantes." {err.status_code}
+	}
+}
