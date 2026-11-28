@@ -5,6 +5,7 @@ import PageHero from '../../components/PageHero.astro';
 import ProductGlyph from '../../components/ProductGlyph.astro';
 import ProductShot from '../../components/ProductShot.astro';
 import { productContactUrl, productDemoUrl, productSocialImage, products, type Product } from '../../data/products';
+import { versioned } from '../../lib/asset-version';
 
 export function getStaticPaths() {
   return products.map((product) => ({ params: { slug: product.slug }, props: { product } }));
@@ -15,6 +16,8 @@ interface Props {
 }
 
 const { product } = Astro.props;
+const baseSocialImage = productSocialImage(product);
+const socialImage = { ...baseSocialImage, src: versioned(baseSocialImage.src) };
 const contactUrl = productContactUrl(product.slug);
 const [mainScreen, ...moreScreens] = product.screens;
 // Com exemplo, o topo mostra entrada e saída em texto e todas as telas vão para a seção da demonstração.
@@ -42,7 +45,7 @@ const structuredData = origin
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web',
     url: pageUrl,
-    image: new URL(productSocialImage(product).src, origin).href,
+    image: new URL(socialImage.src, origin).href,
     ...(product.liveDemo ? { installUrl: product.liveDemo.url } : {}),
     provider: { '@type': 'Organization', name: 'Union Solutions', url: origin },
   },
@@ -50,7 +53,7 @@ const structuredData = origin
   : [];
 ---
 
-<BaseLayout title={product.seo.title} description={product.seo.description} image={productSocialImage(product)} structuredData={structuredData}>
+<BaseLayout title={product.seo.title} description={product.seo.description} image={socialImage} structuredData={structuredData}>
   <PageHero
     title={product.name}
     intro={product.purpose}

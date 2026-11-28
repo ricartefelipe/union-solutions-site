@@ -5,6 +5,7 @@
  * Os arquivos são gerados por `npm run assets:shots` em public/capturas/.
  */
 import type { ProductScreen } from '../data/products';
+import { versioned } from '../lib/asset-version';
 
 interface Props {
   screen: ProductScreen;
@@ -21,7 +22,8 @@ const { screen, sizes, priority = false, frame = true, class: className } = Astr
 
 // As mesmas larguras de scripts/prepare-product-shots.mjs.
 const WIDTHS = [640, 1024, 1600];
-const path = (width: number, ext: string) => `/capturas/${screen.id}-${width}.${ext}`;
+// Com a versão do conteúdo no endereço, uma tela refeita chega ao visitante mesmo com o cache longo das capturas.
+const path = (width: number, ext: string) => versioned(`/capturas/${screen.id}-${width}.${ext}`);
 const srcset = (ext: string) => WIDTHS.map((width) => `${path(width, ext)} ${width}w`).join(', ');
 ---
 
