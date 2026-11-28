@@ -35,10 +35,22 @@ export interface DemoAccess {
  * Captura de uma tela da demonstração pública, com dados fictícios e sem credenciais.
  * `id` é o nome dos arquivos em public/capturas/ (gerados por `npm run assets:shots`); a primeira é a principal.
  */
+/**
+ * Recorte ampliado da tela, em pixels de uma janela de 1280 × 720, com proporção 16:9 (a altura é width × 9 / 16).
+ * Nas imagens pequenas (topo da ficha, catálogo, demonstrações e home), a tela inteira encolhe demais e o texto fica
+ * ilegível: com o foco, elas mostram só a parte que importa. A galeria da ficha continua com a tela inteira.
+ */
+export interface ScreenFocus {
+  x: number;
+  y: number;
+  width: number;
+}
+
 export interface ProductScreen {
   id: string;
   /** Descreve o que a tela mostra, para quem não a vê. */
   alt: string;
+  focus?: ScreenFocus;
 }
 
 /** Necessidades do comprador, na ordem do catálogo. Cada produto pertence a uma. */

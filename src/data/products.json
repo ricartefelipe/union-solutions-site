@@ -8,7 +8,12 @@
     "screens": [
       {
         "id": "hookguard-entrada",
-        "alt": "Tela de entrada da demonstração do HookGuard; com o código de acesso da demonstração, o link de entrada aparece na tela."
+        "alt": "Tela de entrada da demonstração do HookGuard; com o código de acesso da demonstração, o link de entrada aparece na tela.",
+        "focus": {
+          "x": 0,
+          "y": 91,
+          "width": 740
+        }
       }
     ],
     "context": "Para equipes que recebem webhooks e não querem operar fila e novas tentativas.",
@@ -74,7 +79,12 @@
     "screens": [
       {
         "id": "filenorm-entrada",
-        "alt": "Tela de entrada da demonstração do FileNorm, que recebe OFX, CSV, CNAB ou PDF e devolve eventos financeiros normalizados; com o código de acesso da demonstração, o link de entrada aparece na tela."
+        "alt": "Tela de entrada da demonstração do FileNorm, que recebe OFX, CSV, CNAB ou PDF e devolve eventos financeiros normalizados; com o código de acesso da demonstração, o link de entrada aparece na tela.",
+        "focus": {
+          "x": 526,
+          "y": 16,
+          "width": 754
+        }
       }
     ],
     "context": "Para empresas e software houses que recebem extratos em formatos diferentes.",
@@ -243,7 +253,12 @@
     "screens": [
       {
         "id": "assinaflow-assinatura",
-        "alt": "Portal do assinante no AssinaFlow: assinatura Premium ativa, ciclo de um mês com renovação automática e as opções de trocar de plano e cancelar."
+        "alt": "Portal do assinante no AssinaFlow: assinatura Premium ativa, ciclo de um mês com renovação automática ligada.",
+        "focus": {
+          "x": 60,
+          "y": 34,
+          "width": 702
+        }
       }
     ],
     "context": "Para equipes técnicas que buscam uma base em Java e Spring para assinaturas.",
@@ -303,7 +318,12 @@
     "screens": [
       {
         "id": "archlens-achados",
-        "alt": "Achados do ArchLens num projeto Java de exemplo: regra que detectou cada um, severidade, status e os arquivos que servem de evidência."
+        "alt": "Achados do ArchLens num projeto Java de exemplo: cada achado com a regra que o detectou e os arquivos que servem de evidência.",
+        "focus": {
+          "x": 26,
+          "y": 83,
+          "width": 724
+        }
       },
       {
         "id": "archlens-inventario",
@@ -489,7 +509,12 @@
     "screens": [
       {
         "id": "fluxe-operacao",
-        "alt": "Painel do portal de operações da Fluxe B2B Suite numa empresa fictícia: receita dos últimos sete dias, ticket médio, total de pedidos e pedidos por status."
+        "alt": "Painel do portal de operações da Fluxe B2B Suite numa empresa fictícia: receita dos últimos sete dias, ticket médio, falha de pagamentos, total de pedidos, receita total e estoque ativo.",
+        "focus": {
+          "x": 262,
+          "y": 81,
+          "width": 748
+        }
       },
       {
         "id": "fluxe-pedidos",
@@ -573,7 +598,12 @@
     "screens": [
       {
         "id": "comercialcloud-pdv",
-        "alt": "Frente de caixa do ComercialCloud numa loja fictícia: busca de produtos, atalhos de produtos, carrinho com três itens e total da venda."
+        "alt": "Frente de caixa do ComercialCloud numa loja fictícia: busca de produtos, atalhos de produtos, carrinho com três itens e total da venda.",
+        "focus": {
+          "x": 591,
+          "y": 295,
+          "width": 689
+        }
       },
       {
         "id": "comercialcloud-produtos",
@@ -647,7 +677,12 @@
     "screens": [
       {
         "id": "skillforge-turma",
-        "alt": "Turma do Skillforge vista pelo aluno: aulas organizadas por unidade, progresso e abas de provas, práticas, avisos, chamada e certificado."
+        "alt": "Turma do Skillforge vista pelo aluno: aulas organizadas por unidade, progresso e abas de provas, práticas, avisos, chamada e certificado.",
+        "focus": {
+          "x": 258,
+          "y": 21,
+          "width": 860
+        }
       },
       {
         "id": "skillforge-aula",
@@ -721,7 +756,12 @@
     "screens": [
       {
         "id": "cards-api-fisicos",
-        "alt": "Console da Cards API com os cartões físicos emitidos na demonstração: código de rastreio, situação da entrega e do cartão."
+        "alt": "Console da Cards API com os cartões físicos emitidos na demonstração: código de rastreio, situação da entrega e do cartão.",
+        "focus": {
+          "x": 70,
+          "y": 0,
+          "width": 896
+        }
       },
       {
         "id": "cards-api-painel",
@@ -795,7 +835,12 @@
     "screens": [
       {
         "id": "fornevia-catalogo",
-        "alt": "Catálogo do portal do comprador no Fornevia, para uma construtora fictícia: busca por nome, marca ou código, filtro por categoria e cada item com o código, a compra mínima e o preço da tabela."
+        "alt": "Item do catálogo do portal do comprador no Fornevia: cabo flexível 2,5 mm² com o código, a compra mínima e o preço da tabela.",
+        "focus": {
+          "x": 288,
+          "y": 328,
+          "width": 512
+        }
       },
       {
         "id": "fornevia-pedidos",
@@ -877,7 +922,12 @@
     "screens": [
       {
         "id": "pactor-aprovacao",
-        "alt": "Aba Aprovação de um contrato fictício no Pactor, já aprovado: a aprovação vinculada à revisão 1 e à sua impressão digital, e a rodada da etapa Jurídico com quórum 1, a decisão, o comentário e a data."
+        "alt": "Aba Aprovação de um contrato fictício no Pactor, já aprovado: a aprovação vinculada à revisão 1 e à sua impressão digital, e a rodada da etapa Jurídico com quórum 1, a decisão, o comentário e a data.",
+        "focus": {
+          "x": 313,
+          "y": 213,
+          "width": 900
+        }
       },
       {
         "id": "pactor-painel",
@@ -955,7 +1005,12 @@
     "screens": [
       {
         "id": "servora-ordem",
-        "alt": "Ordem de serviço no Servora gerada de um orçamento aprovado: manutenção preventiva de ar-condicionado num cliente fictício, na situação Agendada, com a visita da equipe, os prazos de atendimento e o endereço."
+        "alt": "Ordem de serviço no Servora gerada de um orçamento aprovado: manutenção preventiva de ar-condicionado num cliente fictício, na situação Agendada, com a visita da equipe, os prazos de atendimento e o endereço.",
+        "focus": {
+          "x": 274,
+          "y": 78,
+          "width": 660
+        }
       },
       {
         "id": "servora-agenda",
@@ -1043,7 +1098,12 @@
     "screens": [
       {
         "id": "recorvia-painel",
-        "alt": "Painel financeiro do Recorvia numa empresa fictícia: receita faturada e recebida do mês, valor a receber do provedor, MRR, ARR e assinaturas ativas, novas e canceladas."
+        "alt": "Painel financeiro do Recorvia numa empresa fictícia: receita faturada e receita recebida do mês.",
+        "focus": {
+          "x": 273,
+          "y": 62,
+          "width": 688
+        }
       },
       {
         "id": "recorvia-fatura",
@@ -1117,7 +1177,12 @@
     "screens": [
       {
         "id": "locentra-disponibilidade",
-        "alt": "Disponibilidade do Locentra numa locadora fictícia de audiovisual: unidades livres de cada produto nos próximos sete dias, com a câmera reservada em dois dias e parte dos tripés bloqueada em outros três."
+        "alt": "Disponibilidade do Locentra numa locadora fictícia de audiovisual: unidades livres de cada produto dia a dia, com a câmera reservada em dois dias.",
+        "focus": {
+          "x": 272,
+          "y": 172,
+          "width": 686
+        }
       },
       {
         "id": "locentra-reserva",

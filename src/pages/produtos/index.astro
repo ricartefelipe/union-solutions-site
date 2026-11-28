@@ -32,7 +32,7 @@ import { allHaveDemo, catalog, productDemoUrl } from '../../data/products';
         <ul class="catalog">
           {group.map((product) => (
             <li class="card card--link product reveal" id={product.slug}>
-              <ProductShot screen={product.screens[0]} sizes="(min-width: 62rem) 38vw, 92vw" priority={groupIndex === 0} />
+              <ProductShot screen={product.screens[0]} focus sizes="(min-width: 62rem) 38vw, 92vw" priority={groupIndex === 0} />
               <div class="product__body">
                 <span class="eyebrow">{product.area}</span>
                 <h3><a class="card__link" href={`/produtos/${product.slug}/`}>{product.name}</a></h3>
