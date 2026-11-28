@@ -37,7 +37,7 @@ import { demoProducts } from '../../data/products';
         {demoProducts.map((product) => (
           <li class="card demo reveal" id={product.slug}>
             <div class="demo__shot">
-              <ProductShot screen={product.screens[0]} sizes="(min-width: 62rem) 30vw, 92vw" />
+              <ProductShot screen={product.screens[0]} focus sizes="(min-width: 62rem) 30vw, 92vw" />
             </div>
             <div class="demo__body">
               <span class="eyebrow">{product.area}</span>
