@@ -56,7 +56,7 @@ const sizes = {
       <ul class="bento">
         {showcase.map((product, index) => (
           <li class:list={['card', 'card--link', 'tile', `tile--${kind(index)}`, 'reveal']}>
-            <ProductShot screen={screenFor(product)} sizes={sizes[kind(index)]} />
+            <ProductShot screen={screenFor(product)} focus sizes={sizes[kind(index)]} />
             <div class="tile__body">
               <span class="eyebrow">{product.area}</span>
               <h3><a class="card__link" href={`/produtos/${product.slug}/`}>{product.name}</a></h3>

@@ -5,7 +5,7 @@
  * Os arquivos são gerados por `npm run assets:shots` em public/capturas/.
  */
 import type { ProductScreen } from '../data/products';
-import { versioned } from '../lib/asset-version';
+import { shotWidths, versioned } from '../lib/asset-version';
 
 interface Props {
   screen: ProductScreen;
@@ -15,16 +15,19 @@ interface Props {
   priority?: boolean;
   /** Mostra a barra da janela acima da tela. */
   frame?: boolean;
+  /** Usa o recorte ampliado da tela (`focus` em products.json), quando existir: para imagens pequenas, em que a tela inteira fica ilegível. */
+  focus?: boolean;
   class?: string;
 }
 
-const { screen, sizes, priority = false, frame = true, class: className } = Astro.props;
+const { screen, sizes, priority = false, frame = true, focus = false, class: className } = Astro.props;
 
-// As mesmas larguras de scripts/prepare-product-shots.mjs.
-const WIDTHS = [640, 1024, 1600];
+// As larguras saem dos arquivos gerados por scripts/prepare-product-shots.mjs: a de 2400 só existe para capturas em alta
+// resolução, e o recorte de foco só existe para telas com `focus`.
+const name = focus && screen.focus ? `${screen.id}-foco` : screen.id;
 // Com a versão do conteúdo no endereço, uma tela refeita chega ao visitante mesmo com o cache longo das capturas.
-const path = (width: number, ext: string) => versioned(`/capturas/${screen.id}-${width}.${ext}`);
-const srcset = (ext: string) => WIDTHS.map((width) => `${path(width, ext)} ${width}w`).join(', ');
+const path = (width: number, ext: string) => versioned(`/capturas/${name}-${width}.${ext}`);
+const srcset = (ext: string) => shotWidths(name, ext).map((width) => `${path(width, ext)} ${width}w`).join(', ');
 ---
 
 <div class:list={['shot', { 'shot--frame': frame }, className]}>
